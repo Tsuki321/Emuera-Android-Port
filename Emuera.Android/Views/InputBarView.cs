@@ -72,7 +72,7 @@ public class InputBarView : LinearLayout
     }
 
     /// <summary>Attach the engine console so that submit calls reach the engine.</summary>
-    public void SetConsole(EmueraConsole console)
+    internal void SetConsole(EmueraConsole console)
     {
         _console = console;
     }
