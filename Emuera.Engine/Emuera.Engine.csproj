@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
+    <NoWarn>CS8981;CA1416</NoWarn>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>MinorShift.Emuera</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>

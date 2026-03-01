@@ -102,7 +102,6 @@ internal sealed partial class Process
 	}
 
 	#region normal
-	[SupportedOSPlatform("windows")]
 	void doNormalFunction(InstructionLine func)
 	{
 		Int64 iValue = 0;
