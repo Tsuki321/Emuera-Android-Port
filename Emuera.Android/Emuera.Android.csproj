@@ -11,5 +11,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Emuera.Engine\Emuera.Engine.csproj" />
     <PackageReference Include="SkiaSharp" Version="2.*" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.0" />
   </ItemGroup>
 </Project>
