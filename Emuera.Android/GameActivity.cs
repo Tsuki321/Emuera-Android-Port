@@ -18,7 +18,6 @@ public class GameActivity : Activity
 {
     private Thread? _engineThread;
     private EmueraConsole? _console;
-    private AndroidConsoleHost? _host;
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
@@ -40,8 +39,8 @@ public class GameActivity : Activity
         // 2. Create the engine console host and surface view
         //    Surface view is created first; console is wired after construction.
         var surfaceView = new GameSurfaceView(this);
-        _host = new AndroidConsoleHost(surfaceView);
-        _console = new EmueraConsole(_host);
+        var host = new AndroidConsoleHost(surfaceView);
+        _console = new EmueraConsole(host);
         surfaceView.SetConsole(_console);
 
         // 3. Build layout: console surface + input bar
@@ -52,7 +51,8 @@ public class GameActivity : Activity
             ViewGroup.LayoutParams.MatchParent, 0, 1f);
         rootLayout.AddView(surfaceView, surfaceParams);
 
-        var inputBar = BuildInputBar(this, _host, _console);
+        var inputBar = new InputBarView(this);
+        inputBar.SetConsole(_console);
         var inputParams = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MatchParent,
             ViewGroup.LayoutParams.WrapContent);
@@ -82,34 +82,5 @@ public class GameActivity : Activity
         _console?.Quit();
         GlobalStatic.Reset();
         base.OnDestroy();
-    }
-
-    /// <summary>Builds the bottom input bar with an EditText and submit button.</summary>
-    private static View BuildInputBar(Activity activity, AndroidConsoleHost host, EmueraConsole console)
-    {
-        var layout = new LinearLayout(activity)
-        {
-            Orientation = global::Android.Widget.Orientation.Horizontal,
-        };
-
-        var editText = new EditText(activity)
-        {
-            Hint = "Input…",
-            InputType = global::Android.Text.InputTypes.ClassText,
-        };
-        var editParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WrapContent, 1f);
-        layout.AddView(editText, editParams);
-
-        var submitBtn = new Button(activity) { Text = "OK" };
-        layout.AddView(submitBtn);
-
-        submitBtn.Click += (_, _) =>
-        {
-            string val = editText.Text ?? "";
-            editText.Text = "";
-            console.PressEnterKey(false, val, false);
-        };
-
-        return layout;
     }
 }

@@ -92,7 +92,11 @@ public class GameSurfaceView : View
         int scrollPos = host?.ScrollPosition ?? lines.Count;
         _totalContentHeight = lines.Count * lineHeight;
 
-        int bottomLine = Math.Min(scrollPos, lines.Count) - 1;
+        // Apply user-initiated scroll: offset is pixels scrolled up from the engine's
+        // natural bottom position.  Convert to line units (integer granularity).
+        int userScrollLines = (int)(_scrollOffsetY / lineHeight);
+        int bottomLine = Math.Min(scrollPos, lines.Count) - 1 - userScrollLines;
+        bottomLine = Math.Max(0, bottomLine);
 
         // Walk lines upward from the bottom-most visible line
         float y = viewHeight - lineHeight;
