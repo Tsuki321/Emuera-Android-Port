@@ -1,5 +1,6 @@
 using Android.App;
 using Android.Content;
+using Android.Content.PM;
 using Android.OS;
 using Android.Provider;
 using Android.Views.Animations;
@@ -13,6 +14,7 @@ public class MainActivity : Activity
 {
     private const int RequestPickFolder = 1001;
     private const int RequestManageStorage = 1002;
+    private const int RequestReadStorage = 1003;
 
     // SharedPreferences key for recent game paths
     private const string PrefFile   = "emuera_prefs";
@@ -32,8 +34,10 @@ public class MainActivity : Activity
         LoadRecentGames();
         StartEntryAnimations();
 
-        // Request all-files access so the engine can read game files via System.IO.
-        // This is required on Android 11+ for external storage paths.
+        // Request storage permissions appropriate to the Android version.
+        // Android 8-10: runtime READ_EXTERNAL_STORAGE
+        EnsureReadExternalStoragePermission();
+        // Android 11+: all-files access via MANAGE_EXTERNAL_STORAGE
         EnsureManageExternalStoragePermission();
     }
 
@@ -81,6 +85,40 @@ public class MainActivity : Activity
         anim.AnimationStart += (_, _) => view.Alpha = 1f;
         view.StartAnimation(anim);
     }
+
+    // ── Storage permission (Android 8-10) ────────────────────────────────────
+
+#pragma warning disable CA1416 // API-level guards are checked manually via Build.VERSION.SdkInt
+    private void EnsureReadExternalStoragePermission()
+    {
+        // Only needed on API 26-29; API 30+ uses MANAGE_EXTERNAL_STORAGE instead.
+        if (Build.VERSION.SdkInt < BuildVersionCodes.O ||
+            Build.VERSION.SdkInt >= BuildVersionCodes.R) return;
+
+        if (CheckSelfPermission(global::Android.Manifest.Permission.ReadExternalStorage)
+                == Permission.Granted) return;
+
+        new AlertDialog.Builder(this)!
+            .SetTitle("File Access Required")!
+            .SetMessage("Emuera needs access to external storage to read game folders. " +
+                        "Please grant the storage permission on the next screen.")!
+            .SetPositiveButton("Grant Permission", (_, _) =>
+            {
+                RequestPermissions(
+                    new[] { global::Android.Manifest.Permission.ReadExternalStorage },
+                    RequestReadStorage);
+            })!
+            .SetNegativeButton("Skip", (global::Android.Content.IDialogInterfaceOnClickListener?)null)!
+            .Show();
+    }
+
+    public override void OnRequestPermissionsResult(
+        int requestCode, string[] permissions, Permission[] grantResults)
+    {
+        base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        // Nothing extra to do; the user can still pick a folder via the document picker.
+    }
+#pragma warning restore CA1416
 
     // ── All-files permission (Android 11+) ───────────────────────────────────
 
@@ -223,15 +261,23 @@ public class MainActivity : Activity
                     {
                         // Match by UUID (external SD cards) or by the description-based id.
                         bool matches = vol.Uuid?.Equals(volume, StringComparison.OrdinalIgnoreCase) == true;
-                        if (!matches)
+                        if (!matches && Build.VERSION.SdkInt >= BuildVersionCodes.R)
                         {
-                            // Fallback: check the volume's directory name
+                            // StorageVolume.Directory is only available on API 30+
                             var dir = vol.Directory?.Name;
                             matches = dir?.Equals(volume, StringComparison.OrdinalIgnoreCase) == true;
                         }
 
-                        if (matches && vol.Directory != null)
-                            return Path.Combine(vol.Directory.AbsolutePath, relativePath);
+                        if (matches)
+                        {
+                            // StorageVolume.Directory is only available on API 30+
+                            if (Build.VERSION.SdkInt >= BuildVersionCodes.R && vol.Directory != null)
+                                return Path.Combine(vol.Directory.AbsolutePath, relativePath);
+                            // On API 24-29, construct the path from UUID. Android mounts SD cards at
+                            // /storage/{UUID} by convention; custom ROMs may differ but this is standard.
+                            if (vol.Uuid != null)
+                                return $"/storage/{vol.Uuid}/{relativePath}";
+                        }
                     }
                 }
 
