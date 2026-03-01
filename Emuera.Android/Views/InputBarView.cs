@@ -105,6 +105,20 @@ public class InputBarView : LinearLayout
         _console = console;
     }
 
+    /// <summary>
+    /// Called when the engine enters input-wait state.
+    /// Focuses the text field and raises the soft keyboard so the user can type immediately.
+    /// </summary>
+    internal void RequestFocusForInput()
+    {
+        _editText.Post(() =>
+        {
+            _editText.RequestFocus();
+            var imm = (InputMethodManager?)Context?.GetSystemService(global::Android.Content.Context.InputMethodService);
+            imm?.ShowSoftInput(_editText, ShowFlags.Implicit);
+        });
+    }
+
     /// <summary>Submit the text currently in the EditText.</summary>
     private void SubmitCurrentText()
     {

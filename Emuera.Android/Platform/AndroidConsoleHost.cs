@@ -31,6 +31,12 @@ public class AndroidConsoleHost : IConsoleHost
     public int ConsoleWidth => _view.Width > 0 ? _view.Width : MinorShift.Emuera.Config.WindowX;
     public int ConsoleHeight => _view.Height > 0 ? _view.Height : MinorShift.Emuera.Config.LineHeight * 30;
 
+    /// <summary>
+    /// Optional action invoked by <see cref="BeginWaitInput"/> to show the soft keyboard.
+    /// Wired by <see cref="GameActivity"/> after construction.
+    /// </summary>
+    public Action? ShowKeyboardAction { get; set; }
+
     public int ScrollPosition
     {
         get => _scrollPosition;
@@ -50,8 +56,8 @@ public class AndroidConsoleHost : IConsoleHost
 
     public void BeginWaitInput()
     {
-        // On Android, the soft keyboard is shown when the user taps the input bar.
-        // Actual keyboard show is driven by the GameActivity input bar.
+        // Ask the platform to focus the text field and raise the soft keyboard.
+        ShowKeyboardAction?.Invoke();
     }
 
     public void ScrollToBottom()

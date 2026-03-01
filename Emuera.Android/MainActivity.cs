@@ -1,6 +1,7 @@
 using Android.App;
 using Android.Content;
 using Android.OS;
+using Android.Provider;
 using Android.Views.Animations;
 using Android.Widget;
 using Emuera.Android.Platform;
@@ -11,6 +12,7 @@ namespace Emuera.Android;
 public class MainActivity : Activity
 {
     private const int RequestPickFolder = 1001;
+    private const int RequestManageStorage = 1002;
 
     // SharedPreferences key for recent game paths
     private const string PrefFile   = "emuera_prefs";
@@ -29,6 +31,10 @@ public class MainActivity : Activity
 
         LoadRecentGames();
         StartEntryAnimations();
+
+        // Request all-files access so the engine can read game files via System.IO.
+        // This is required on Android 11+ for external storage paths.
+        EnsureManageExternalStoragePermission();
     }
 
     // ── Entry animations ─────────────────────────────────────────────────────
@@ -75,6 +81,40 @@ public class MainActivity : Activity
         anim.AnimationStart += (_, _) => view.Alpha = 1f;
         view.StartAnimation(anim);
     }
+
+    // ── All-files permission (Android 11+) ───────────────────────────────────
+
+#pragma warning disable CA1416 // API-level guards are checked manually via Build.VERSION.SdkInt
+    private void EnsureManageExternalStoragePermission()
+    {
+        if (Build.VERSION.SdkInt < BuildVersionCodes.R) return;
+        if (global::Android.OS.Environment.IsExternalStorageManager) return;
+
+        // Explain and redirect the user to the system settings screen.
+        new AlertDialog.Builder(this)!
+            .SetTitle("File Access Required")!
+            .SetMessage("Emuera needs access to all files on your device so it can read game folders from external storage. " +
+                        "Please grant \"All files access\" on the next screen.")!
+            .SetPositiveButton("Open Settings", (_, _) =>
+            {
+                try
+                {
+                    var intent = new Intent(global::Android.Provider.Settings.ActionManageAppAllFilesAccessPermission);
+                    intent.SetData(global::Android.Net.Uri.Parse($"package:{PackageName}"));
+                    StartActivityForResult(intent, RequestManageStorage);
+                }
+                catch
+                {
+                    // Fallback: open the general all-files-access list
+                    StartActivityForResult(
+                        new Intent(global::Android.Provider.Settings.ActionManageAllFilesAccessPermission),
+                        RequestManageStorage);
+                }
+            })!
+            .SetNegativeButton("Skip", (global::Android.Content.IDialogInterfaceOnClickListener?)null)!
+            .Show();
+    }
+#pragma warning restore CA1416
 
     // ── Folder picker ────────────────────────────────────────────────────────
 
@@ -149,22 +189,59 @@ public class MainActivity : Activity
 
     // ── URI → path helper ────────────────────────────────────────────────────
 
-    private static string ResolveUriToPath(global::Android.Net.Uri uri)
+    /// <summary>
+    /// Converts an <c>ACTION_OPEN_DOCUMENT_TREE</c> URI to a real file-system path that
+    /// <c>System.IO</c> can use.  Handles the standard document-ID formats:
+    /// <list type="bullet">
+    ///   <item><c>primary:{relative}</c>  → <c>/storage/emulated/0/{relative}</c></item>
+    ///   <item><c>{uuid}:{relative}</c>   → <c>/storage/{uuid}/{relative}</c> (SD cards)</item>
+    /// </list>
+    /// Falls back to the raw URI path when the format is unrecognised.
+    /// </summary>
+#pragma warning disable CA1416 // API-level guards are checked manually via Build.VERSION.SdkInt
+    private string ResolveUriToPath(global::Android.Net.Uri uri)
     {
-        string? docId = global::Android.Provider.DocumentsContract.GetTreeDocumentId(uri);
+        string? docId = DocumentsContract.GetTreeDocumentId(uri);
         if (!string.IsNullOrEmpty(docId))
         {
-            string[] parts = docId.Split(':', 2);
-            if (parts.Length == 2)
+            int colon = docId.IndexOf(':');
+            if (colon > 0)
             {
-                string volume = parts[0];
-                string relativePath = parts[1];
+                string volume       = docId[..colon];
+                string relativePath = docId[(colon + 1)..];
+
                 if (volume.Equals("primary", StringComparison.OrdinalIgnoreCase))
                     return $"/storage/emulated/0/{relativePath}";
+
+                // External SD card or other named volumes (e.g. "1234-5678", "msd", "sdcard").
+                // Try to resolve via StorageManager on API 24+; fall back to /storage/{volume}.
+                if (Build.VERSION.SdkInt >= BuildVersionCodes.N
+                    && GetSystemService(global::Android.Content.Context.StorageService)
+                        is global::Android.OS.Storage.StorageManager sm)
+                {
+                    foreach (var vol in sm.StorageVolumes)
+                    {
+                        // Match by UUID (external SD cards) or by the description-based id.
+                        bool matches = vol.Uuid?.Equals(volume, StringComparison.OrdinalIgnoreCase) == true;
+                        if (!matches)
+                        {
+                            // Fallback: check the volume's directory name
+                            var dir = vol.Directory?.Name;
+                            matches = dir?.Equals(volume, StringComparison.OrdinalIgnoreCase) == true;
+                        }
+
+                        if (matches && vol.Directory != null)
+                            return Path.Combine(vol.Directory.AbsolutePath, relativePath);
+                    }
+                }
+
+                // Generic /storage/{volume}/{relative} — works for UUID-style SD cards.
+                return $"/storage/{volume}/{relativePath}";
             }
         }
         return uri.Path ?? uri.ToString()!;
     }
+#pragma warning restore CA1416
 
     // ── Adapter ──────────────────────────────────────────────────────────────
 

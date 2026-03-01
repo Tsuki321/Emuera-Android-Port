@@ -6,6 +6,7 @@ using MinorShift.Emuera;
 using MinorShift.Emuera.GameView;
 using Emuera.Android.Platform;
 using Emuera.Android.Views;
+using SkiaSharp;
 
 namespace Emuera.Android;
 
@@ -60,6 +61,8 @@ public class GameActivity : Activity
 
         var inputBar = new InputBarView(this);
         inputBar.SetConsole(_console);
+        // Wire the keyboard-show action so BeginWaitInput() opens the soft keyboard.
+        host.ShowKeyboardAction = () => inputBar.RequestFocusForInput();
         var inputParams = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MatchParent,
             ViewGroup.LayoutParams.WrapContent);
@@ -73,6 +76,9 @@ public class GameActivity : Activity
             try
             {
                 ConfigData.Instance.LoadConfig();
+                // Discover TTF/OTF/TTC files in the game's font/ directory so the
+                // engine can report them as "installed" and SkiaSharp can load them.
+                LoadCustomFonts();
                 _console.Initialize();
             }
             catch (Exception ex)
@@ -90,5 +96,36 @@ public class GameActivity : Activity
         _console?.Quit();
         GlobalStatic.Reset();
         base.OnDestroy();
+    }
+
+    // ── Font discovery ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Scans the game's <c>font/</c> directory for TTF/OTF/TTC files and registers
+    /// them in <see cref="GlobalStatic.CustomFontPaths"/> / <see cref="GlobalStatic.CustomFontFamilyNames"/>
+    /// so the engine can report them as "installed" and <see cref="Views.GameSurfaceView"/> can load them.
+    /// </summary>
+    private static void LoadCustomFonts()
+    {
+        var fontDir = MinorShift.Emuera.Program.FontDir;
+        if (!Directory.Exists(fontDir)) return;
+
+        foreach (var file in Directory.GetFiles(fontDir, "*.*", SearchOption.TopDirectoryOnly))
+        {
+            var ext = Path.GetExtension(file).ToLowerInvariant();
+            if (ext != ".ttf" && ext != ".otf" && ext != ".ttc") continue;
+            try
+            {
+                // Load temporarily just to read the family name, then dispose.
+                var tf = SKTypeface.FromFile(file);
+                if (tf != null)
+                {
+                    GlobalStatic.CustomFontPaths.Add(file);
+                    GlobalStatic.CustomFontFamilyNames.Add(tf.FamilyName);
+                    tf.Dispose();
+                }
+            }
+            catch { /* skip unreadable font files */ }
+        }
     }
 }

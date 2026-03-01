@@ -14,6 +14,7 @@ An Android port of [Emuera](http://osdn.jp/projects/emuera/) — the ERA-script 
 - [Building from Source](#building-from-source)
 - [Running on Device / Emulator](#running-on-device--emulator)
 - [Usage](#usage)
+  - [Japanese / CJK Fonts](#japanese--cjk-fonts)
 - [Contributing](#contributing)
 - [License](#license)
 - [Credits](#credits)
@@ -172,6 +173,32 @@ The APK is output to `Emuera.Android/bin/Release/net9.0-android/`.
 - **INPUT** (numeric) — tap one of the digit buttons 0–9 or type a number and press OK
 - **INPUTS** (text) — type into the text box and press OK or the keyboard **Done** action
 - **Button tap** — any ERA `PRINT` button rendered in the game display can be tapped directly
+
+---
+
+## Japanese / CJK Fonts
+
+ERA games are almost always written in Japanese. Without a Japanese font, characters will render as empty boxes (tofu ▯). The app automatically loads any font files you place in the game's `font/` folder.
+
+### Steps
+
+1. **Download a free CJK font.** [Noto Sans JP](https://fonts.google.com/noto/specimen/Noto+Sans+JP) is recommended — it is open-source, covers hiragana, katakana, and common kanji, and is small enough for mobile use.
+   - Visit the link above → click **Download family** → unzip the archive → take `NotoSansJP-Regular.ttf`.
+
+2. **Create the `font/` folder** inside your ERA game's root directory — the same folder that contains `csv/`, `erb/`, etc.
+
+   ```
+   MyERAGame/
+   ├── csv/
+   ├── erb/
+   ├── font/               ← create this folder
+   │   └── NotoSansJP-Regular.ttf   ← place the font here
+   └── emuera.config
+   ```
+
+3. **Launch the game.** Emuera Android scans `font/` at startup, detects which fonts can render Japanese glyphs, and uses them automatically. You should see Japanese text immediately.
+
+> **Other font formats:** `.otf` and `.ttc` files are also supported. You can add multiple fonts; the app will pick the first one that contains the glyphs needed.
 
 ---
 
