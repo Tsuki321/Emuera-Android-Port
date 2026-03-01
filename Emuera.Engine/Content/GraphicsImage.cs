@@ -411,4 +411,5 @@ internal sealed class GraphicsImage : AbstractImage
 			tuple.Item1.GraphicsDraw(g, tuple.Item2);
 		AppContents.tempLoadedGraphicsImages.Add(this);
 	}
+	#endregion
 }

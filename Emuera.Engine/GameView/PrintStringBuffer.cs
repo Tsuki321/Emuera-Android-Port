@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
 using MinorShift.Emuera.Sub;
+using MinorShift.Emuera.Platform;
 using trerror = EvilMask.Emuera.Lang.Error;
 // Note: System.Windows.Forms removed — not available on Android.
 
@@ -556,7 +557,7 @@ internal sealed class PrintStringBuffer
 		int widthLimit = divWidth - css.PointX;
 		#endregion
 		string str = css.Str;
-		Font font = css.Font;
+		EngineFont font = css.Font;
 		int highLength = str.Length;//widthLimitを超える最低の文字index(文字数-1)。
 		int lowLength = 0;//超えない最大の文字index。
 						  //int i = (int)(widthLimit / fontDisplaySize);//およその文字数を推定

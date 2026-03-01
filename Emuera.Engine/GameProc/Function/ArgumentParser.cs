@@ -53,7 +53,7 @@ internal static partial class ArgumentParser
 			line.IsError = true;
 		return true;
 	error:
-		System.Media.SystemSounds.Hand.Play();
+		
 
 		line.IsError = true;
 		line.ErrMes = errmes;

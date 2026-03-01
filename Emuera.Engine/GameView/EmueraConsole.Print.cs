@@ -59,7 +59,7 @@ internal sealed partial class EmueraConsole : IDisposable
 		lineNo = 0;
 		lastDrawnLineNo = -1;
 		verticalScrollBarUpdate();
-		window.Refresh();//OnPaint発行
+		window.RequestRedraw();//OnPaint発行
 	}
 
 

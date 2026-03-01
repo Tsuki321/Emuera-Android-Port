@@ -89,7 +89,7 @@ internal sealed class ErbLoader
 		catch (Exception e)
 		{
 			ParserMediator.FlushWarningList();
-			System.Media.SystemSounds.Hand.Play();
+			
 			output.PrintError(string.Format(trerror.UnexpectedErrorFrom.Text, _Library.Sys.ExeName));
 			output.PrintError(e.GetType().ToString() + ":" + e.Message);
 			return false;
@@ -466,7 +466,7 @@ internal sealed class ErbLoader
 			}
 			catch (Exception exc)
 			{
-				System.Media.SystemSounds.Hand.Play();
+				
 				string errmes = exc.Message;
 				if (!(exc is EmueraException))
 					errmes = exc.GetType().ToString() + ":" + errmes;
@@ -833,7 +833,7 @@ internal sealed class ErbLoader
 		}
 		catch (Exception exc)
 		{
-			System.Media.SystemSounds.Hand.Play();
+			
 			//1756beta2+v6.1 修正の効率化のために何かパース関係でハンドリングできてないエラーが出た場合はスタックトレースを投げるようにした
 			string errmes = (exc is EmueraException) ? exc.Message : exc.GetType().ToString() + ":" + exc.Message;
 			ParserMediator.Warn(string.Format(trerror.FuncAnalysisError.Text, label.LabelName, errmes), label, 2, true, false, !(exc is EmueraException) ? exc.StackTrace : null);

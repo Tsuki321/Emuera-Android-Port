@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 using MinorShift.Emuera.GameData.Expression;
 using MinorShift.Emuera.Sub;
@@ -2361,8 +2362,7 @@ internal sealed partial class FunctionIdentifier
 	}
 	//ここからEnter版
 	#region EE
-	public static Sound[] sound = new Sound[10];
-	public static Sound bgm = new Sound();
+	// Sound playback delegated to GlobalStatic.Sound (IPlatformSound)
 	private sealed class PLAYSOUND_Instruction : AbstractInstruction
 	{
 
@@ -2379,27 +2379,11 @@ internal sealed partial class FunctionIdentifier
 				datFilename = soundArg.ConstStr;
 			else
 				datFilename = soundArg.Str.GetStrValue(exm);
-			int repeat = soundArg.Opt != null ? (int)Math.Max(soundArg.Opt.GetIntValue(exm), 1) : 1;
 			string filepath = System.IO.Path.GetFullPath(".\\sound\\" + datFilename);
 			try
 			{
 				if (System.IO.File.Exists(filepath))
-				{
-					int i;
-					for (i = 0; i < sound.Length; i++)
-					{
-						if (sound[i] == null)
-							sound[i] = new Sound();
-						//未使用もしくは再生完了してる要素を使う
-						if (!sound[i].isPlaying())
-							break;
-					}
-					// if no available sounds were found use sound 0
-					if (i >= sound.Length)
-						i = 0;
-
-					sound[i].play(filepath, repeat);
-				}
+					GlobalStatic.Sound?.PlaySE(filepath);
 			}
 			catch
 			{
@@ -2417,13 +2401,7 @@ internal sealed partial class FunctionIdentifier
 		}
 		public override void DoInstruction(ExpressionMediator exm, InstructionLine func, ProcessState state)
 		{
-			for (int i = 0; i < sound.Length; i++)
-			{
-				if (sound[i] == null)
-					sound[i] = new Sound();
-				if (sound[i].isPlaying())
-					sound[i].stop();
-			}
+			GlobalStatic.Sound?.StopAll();
 		}
 	}
 
@@ -2448,7 +2426,7 @@ internal sealed partial class FunctionIdentifier
 			try
 			{
 				if (System.IO.File.Exists(filepath))
-					bgm.play(filepath, -1); // -1 means repeat indefinitely
+					GlobalStatic.Sound?.PlayBGM(filepath, true);
 			}
 			catch
 			{
@@ -2466,7 +2444,7 @@ internal sealed partial class FunctionIdentifier
 		}
 		public override void DoInstruction(ExpressionMediator exm, InstructionLine func, ProcessState state)
 		{
-			bgm.stop();
+			GlobalStatic.Sound?.StopBGM();
 		}
 	}
 
@@ -2479,14 +2457,7 @@ internal sealed partial class FunctionIdentifier
 		}
 		public override void DoInstruction(ExpressionMediator exm, InstructionLine func, ProcessState state)
 		{
-			ExpressionArgument intExpArg = (ExpressionArgument)func.Argument;
-			Int32 vol = (Int32)intExpArg.Term.GetIntValue(exm);
-			for (int i = 0; i < sound.Length; i++)
-			{
-				if (sound[i] == null)
-					sound[i] = new Sound();
-				sound[i].setVolume(vol);
-			}
+			// SE volume is not supported via IPlatformSound; no-op
 		}
 	}
 	public sealed class SETBGMVOLUME_Instruction : AbstractInstruction
@@ -2500,7 +2471,7 @@ internal sealed partial class FunctionIdentifier
 		{
 			ExpressionArgument intExpArg = (ExpressionArgument)func.Argument;
 			Int32 vol = (Int32)intExpArg.Term.GetIntValue(exm);
-			bgm.setVolume(vol);
+			GlobalStatic.Sound?.SetBGMVolume(vol);
 		}
 	}
 

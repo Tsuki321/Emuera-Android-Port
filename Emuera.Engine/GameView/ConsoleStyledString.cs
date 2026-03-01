@@ -37,6 +37,10 @@ internal sealed class ConsoleStyledString : AConsoleColoredPart
 	}
 	public EngineFont Font { get; private set; }
 	public StringStyle StringStyle { get; private set; }
+	/// <summary>The foreground color to use when rendering this string.</summary>
+	public System.Drawing.Color DisplayColor => Color;
+	/// <summary>The highlight/button color to use when the button is selected.</summary>
+	public System.Drawing.Color DisplayButtonColor => ButtonColor;
 	public override bool CanDivide
 	{
 		get { return true; }
@@ -96,5 +100,6 @@ internal sealed class ConsoleStyledString : AConsoleColoredPart
 
 		}
 	#endregion
+	}
 }
 

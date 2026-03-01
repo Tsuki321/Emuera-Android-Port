@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using MinorShift.Emuera.Platform;
 using MinorShift.Emuera.Sub;
 using FontStyle = MinorShift.Emuera.Platform.EngineFontStyle;

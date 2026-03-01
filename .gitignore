@@ -11,3 +11,6 @@ EmueraPluginExample/obj/*
 
 */Emuera.csproj.user
 
+# Build output for all projects
+**/bin/
+**/obj/

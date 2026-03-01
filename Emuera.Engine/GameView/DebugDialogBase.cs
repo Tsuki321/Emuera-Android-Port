@@ -11,7 +11,7 @@ public class DebugDialog
     public virtual bool Created => false;
 
     /// <summary>Associate this dialog with the engine console and script process.</summary>
-    public virtual void SetParent(EmueraConsole console, GameProc.Process process) { }
+    internal virtual void SetParent(EmueraConsole console, GameProc.Process process) { }
 
     /// <summary>Re-apply the current UI language translations to all visible labels.</summary>
     public virtual void TranslateUI() { }

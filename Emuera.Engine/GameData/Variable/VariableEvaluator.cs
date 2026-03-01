@@ -1780,7 +1780,7 @@ internal sealed class VariableEvaluator : IDisposable
 		}
 		catch
 		{
-			GlobalStatic.Dialogs?.ShowInfoAsync(trerror.FailedCreateDataFolder.Text).GetAwaiter().GetResult();
+			GlobalStatic.Dialogs?.ShowInfoAsync(trerror.FailedCreateDataFolder.Text, "Error").GetAwaiter().GetResult();
 			throw new CodeEE(trerror.FailedCreateDataFolder.Text);
 		}
 	}

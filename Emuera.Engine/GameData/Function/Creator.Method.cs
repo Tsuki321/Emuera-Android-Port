@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 using System.Text.RegularExpressions;
 using MinorShift.Emuera.GameData.Expression;
@@ -4563,9 +4564,9 @@ internal static partial class FunctionMethodCreator
 				case StrFormType.Lower:
 					return (str.ToLower());
 				case StrFormType.Half:
-					return (Strings.StrConv(str, VbStrConv.Narrow, Config.Language));
+					return (str); // VbStrConv.Narrow not available on Android (TODO: implement full-to-half width)
 				case StrFormType.Full:
-					return (Strings.StrConv(str, VbStrConv.Wide, Config.Language));
+					return (str); // VbStrConv.Wide not available on Android (TODO: implement half-to-full width)
 			}
 			return ("");
 		}
@@ -5978,7 +5979,7 @@ internal static partial class FunctionMethodCreator
 			if (arguments.Length > 2)
 				isRelative = arguments[2].GetIntValue(exm) != 0;
 
-			Bitmap bmp = null;
+			SKBitmap bmp = null;
 			try
 			{
 				string filepath = filename;
@@ -6778,7 +6779,7 @@ internal static partial class FunctionMethodCreator
 			Int64 keycode = arguments[0].GetIntValue(exm);
 			if (keycode < 0 || keycode > 255)
 				return 0;
-			short s = WinInput.GetKeyState((int)keycode);
+			short s = 0; // WinInput not available on Android
 			short toggle = keytoggle[keycode];
 			keytoggle[keycode] = (short)((s & 1) + 1);//初期値0、トグル状態に応じて1か2を代入。
 			switch (Name)
@@ -6822,9 +6823,9 @@ internal static partial class FunctionMethodCreator
 			//if (exm.Console.SelectingButton != null)
 			//	return exm.Console.SelectingButton.ToString();
 			bool b = exm.Console.AlwaysRefresh;
-			Point point = exm.Console.Window.MainPicBox.PointToClient(Control.MousePosition);
+			Point point = new Point(0, 0); // Control.MousePosition/MainPicBox not available on Android
 			exm.Console.AlwaysRefresh = true;
-			if (exm.Console.Window.MainPicBox.ClientRectangle.Contains(point))
+			if (new System.Drawing.Rectangle(0, 0, exm.Console.Window.ConsoleWidth, exm.Console.Window.ConsoleHeight).Contains(point))
 				exm.Console.MoveMouse(point);
 			exm.Console.AlwaysRefresh = b;
 			if (exm.Console.PointingSring != null)
@@ -7109,7 +7110,10 @@ internal static partial class FunctionMethodCreator
 			try
 			{
 				Config.CreateSavDir();
-				g.Bitmap.Save(filepath);
+				using (var image = SKImage.FromBitmap(g.Bitmap))
+				using (var data = image.Encode(SKEncodedImageFormat.Png, 100))
+				using (var stream = System.IO.File.OpenWrite(filepath))
+					data.SaveTo(stream);
 			}
 			catch
 			{
