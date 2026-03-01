@@ -7,11 +7,12 @@ public static class Sys
 {
 	static Sys()
 	{
-		ExePath = Assembly.GetEntryAssembly().Location; 
+		string loc = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).Location;
+		ExePath = string.IsNullOrEmpty(loc) ? Path.Combine(AppContext.BaseDirectory, "Emuera") : loc;
 		#region eee_カレントディレクトリー
-		WorkingDir = Directory.GetCurrentDirectory() + "\\";
+		WorkingDir = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar;
 		#endregion
-		ExeDir = Path.GetDirectoryName(ExePath) + "\\";
+		ExeDir = (Path.GetDirectoryName(ExePath) ?? Directory.GetCurrentDirectory()) + Path.DirectorySeparatorChar;
 		ExeName = Path.GetFileName(ExePath);
 	}
 
