@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Soft glowing ring drawn around the icon ImageView -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <gradient
+        android:type="radial"
+        android:gradientRadius="60dp"
+        android:startColor="#996C4AB6"
+        android:endColor="#006C4AB6" />
+    <stroke android:width="2dp" android:color="#FF6B9D" />
+</shape>
