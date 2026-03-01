@@ -10,7 +10,6 @@ using trerror = EvilMask.Emuera.Lang.Error;
 using trsl = EvilMask.Emuera.Lang.SystemLine;
 using System.Linq;
 using MinorShift.Emuera.GameProc;
-using System.Windows.Documents;
 
 namespace MinorShift.Emuera.GameData;
 
@@ -244,7 +243,7 @@ internal sealed class ConstantData
 		}
 		catch
 		{
-			System.Media.SystemSounds.Hand.Play();
+			
 			if (position != null)
 				ParserMediator.Warn(trerror.UnexpectedError.Text, position, 3);
 			else
@@ -1376,7 +1375,7 @@ internal sealed class ConstantData
 			}
 			catch
 			{
-				System.Media.SystemSounds.Hand.Play();
+				
 				if (position != null)
 					ParserMediator.Warn(trerror.UnexpectedError.Text, position, 3);
 				else
@@ -1461,7 +1460,7 @@ internal sealed class ConstantData
 		}
 		catch
 		{
-			System.Media.SystemSounds.Hand.Play();
+			
 			if (position != null)
 				ParserMediator.Warn(trerror.UnexpectedError.Text, position, 3);
 			else
@@ -1750,7 +1749,7 @@ internal sealed class ConstantData
 		}
 		catch
 		{
-			System.Media.SystemSounds.Hand.Play();
+			
 			if (position != null)
 				ParserMediator.Warn(trerror.UnexpectedError.Text, position, 3);
 			else
@@ -1811,7 +1810,7 @@ internal sealed class ConstantData
 		}
 		catch
 		{
-			System.Media.SystemSounds.Hand.Play();
+			
 			if (position != null)
 				ParserMediator.Warn(trerror.UnexpectedError.Text, position, 3);
 			else

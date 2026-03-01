@@ -59,7 +59,7 @@ partial class Rikaichan
 
 		if (!File.Exists(Config.RikaiFilename))
 		{
-			GlobalStatic.Dialogs?.ShowInfoAsync($"{Config.RikaiFilename} not found, rikaichan can't work without that")?.GetAwaiter().GetResult();
+			GlobalStatic.Dialogs?.ShowInfoAsync($"{Config.RikaiFilename} not found, rikaichan can't work without that", "Rikaichan")?.GetAwaiter().GetResult();
 			// You need jmdict in edict format, not edict2 or xml, just edict. For now.
 			enabled = false;
 			return;

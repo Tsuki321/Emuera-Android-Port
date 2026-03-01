@@ -17,6 +17,7 @@ using trmb = EvilMask.Emuera.Lang.MessageBox;
 using trerror = EvilMask.Emuera.Lang.Error;
 using trsl = EvilMask.Emuera.Lang.SystemLine;
 using EvilMask.Emuera;
+using FontStyle = MinorShift.Emuera.Platform.EngineFontStyle;
 // System.Windows.Forms, System.Drawing.Imaging and MinorShift.Emuera.Forms removed — not available on Android.
 
 namespace MinorShift.Emuera.GameView;
@@ -460,6 +461,7 @@ internal sealed partial class EmueraConsole : IDisposable
 
 	public bool notToTitle = false;
 	public bool byError = false;
+	public bool bitmapCacheEnabledForNextLine = false;
 	//public ScriptPosition ErrPos = null;
 
 	#region button関連
@@ -1045,7 +1047,8 @@ internal sealed partial class EmueraConsole : IDisposable
 			mapPoint.Y = clientPoint.Y + cbgButtonMap.Height;
 			if (mapPoint.X >= 0 && mapPoint.Y >= 0 && mapPoint.X < cbgButtonMap.Width && mapPoint.Y < cbgButtonMap.Height)
 			{
-				Color c = cbgButtonMap.Bitmap.GetPixel(mapPoint.X, mapPoint.Y);
+				var skc = cbgButtonMap.Bitmap.GetPixel(mapPoint.X, mapPoint.Y);
+				Color c = Color.FromArgb(skc.Alpha, skc.Red, skc.Green, skc.Blue);
 				if (c.A == 255)
 				{
 					buttonNum = c.ToArgb() & 0xFFFFFF;
@@ -1270,7 +1273,7 @@ internal sealed partial class EmueraConsole : IDisposable
 		}
 		catch (System.ComponentModel.Win32Exception)
 		{
-			System.Media.SystemSounds.Hand.Play();
+			
 			PrintError(trerror.FailedOpenEditor.Text);
 			forceUpdateGeneration();
 		}
@@ -2110,7 +2113,8 @@ internal sealed partial class EmueraConsole : IDisposable
 			mapPoint.Y = mapPoint.Y + cbgButtonMap.Height;
 			if (mapPoint.X >= 0 && mapPoint.Y >= 0 && mapPoint.X < cbgButtonMap.Width && mapPoint.Y < cbgButtonMap.Height)
 			{
-				Color c = cbgButtonMap.Bitmap.GetPixel(mapPoint.X, mapPoint.Y);
+				var skc = cbgButtonMap.Bitmap.GetPixel(mapPoint.X, mapPoint.Y);
+				Color c = Color.FromArgb(skc.Alpha, skc.Red, skc.Green, skc.Blue);
 				if (c.A == 255)
 				{
 					buttonNum = c.ToArgb() & 0xFFFFFF;
@@ -2158,13 +2162,13 @@ internal sealed partial class EmueraConsole : IDisposable
 		int pointY = point.Y;
 		ConsoleDisplayLine curLine;
 
-		int bottomLineNo = window.ScrollBar.Value - 1;
+		int bottomLineNo = window.ScrollPosition - 1;
 		if (displayLineList.Count - 1 < bottomLineNo)
 			bottomLineNo = displayLineList.Count - 1;//1820 この処理不要な気がするけどエラー報告があったので入れとく
-		int topLineNo = bottomLineNo - (window.MainPicBox.Height / Config.LineHeight);
+		int topLineNo = bottomLineNo - (window.ConsoleHeight / Config.LineHeight);
 		if (topLineNo < 0)
 			topLineNo = 0;
-		int relPointY = pointY - window.MainPicBox.Height;
+		int relPointY = pointY - window.ConsoleHeight;
 		//下から上へ探索し発見次第打ち切り
 		#region EM_私家版_描画拡張
 		if (ConsoleEscapedParts.Changed || !ConsoleEscapedParts.TestedInRange(topLineNo, bottomLineNo, lastButtonGeneration))
@@ -2176,7 +2180,7 @@ internal sealed partial class EmueraConsole : IDisposable
 		Array.Sort(edepth);
 		int eidx = 0;
 		bool zeroTested = false;
-		var bottomLineBase = window.MainPicBox.Height - Config.LineHeight;
+		var bottomLineBase = window.ConsoleHeight - Config.LineHeight;
 		while (eidx < edepth.Length)
 		{
 			var depth = edepth[eidx];
@@ -2210,7 +2214,7 @@ internal sealed partial class EmueraConsole : IDisposable
 								if ((part.PointX <= pointX) && (part.PointX + part.Width >= pointX)
 									&& (relPointY >= part.Top) && (relPointY <= part.Bottom))
 								{
-									curLineY = window.MainPicBox.Height - Config.LineHeight * (bottomLineNo - i + 1);
+									curLineY = window.ConsoleHeight - Config.LineHeight * (bottomLineNo - i + 1);
 									if (!firstPointngSelected)
 										pointing = button;
 									if (button.IsButton)
@@ -2622,18 +2626,14 @@ internal class ConsoleBackground
 	public ConsoleBackground(SpriteF spr, float opacity = 1.0f)
 	{
 		bgImage = spr;
-		colorMatrix = new ColorMatrix();
-		SetOpacity(opacity);
+		Opacity = opacity;
 	}
 
 	public void SetOpacity(float opacity)
 	{
-		colorMatrix.Matrix33 = opacity;
-	}
-	public ColorMatrix GetColorMatrix()
-	{
-		return colorMatrix;
+		Opacity = opacity;
 	}
 
-	private ColorMatrix colorMatrix;
+	/// <summary>Opacity value 0.0–1.0 for the background image.</summary>
+	public float Opacity { get; private set; } = 1.0f;
 }

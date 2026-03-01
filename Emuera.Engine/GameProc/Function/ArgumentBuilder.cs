@@ -9,7 +9,6 @@ using MinorShift.Emuera.GameData;
 using MinorShift.Emuera.GameData.Function;
 using MinorShift.Emuera.GameView;
 using trerror = EvilMask.Emuera.Lang.Error;
-using System.Windows.Documents;
 
 namespace MinorShift.Emuera.GameProc.Function;
 

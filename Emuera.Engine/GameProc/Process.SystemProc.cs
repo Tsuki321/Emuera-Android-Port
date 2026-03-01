@@ -167,7 +167,7 @@ internal sealed partial class Process
 			#endregion
 			console.noOutputLog = true;
 			console.PrintSystemLine(trsl.PressEnterOrClick.Text);
-			System.Media.SystemSounds.Asterisk.Play();
+			
 			console.ThrowTitleError(false);
 			return;
 		}
@@ -182,7 +182,7 @@ internal sealed partial class Process
 			#endregion
 			console.noOutputLog = true;
 			console.PrintSystemLine(trsl.PressEnterOrClick.Text);
-			//System.Media.SystemSounds.Asterisk.Play();
+			//
 			console.ThrowTitleError(true);
 			return;
 		}

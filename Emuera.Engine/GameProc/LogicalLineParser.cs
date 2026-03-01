@@ -372,7 +372,7 @@ internal static class LogicalLineParser
 			errMes = e.Message;
 		}
 	err:
-		System.Media.SystemSounds.Hand.Play();
+		
 		if (isFunction)
 		{
 			if (labelName.Length == 0)
@@ -481,7 +481,7 @@ internal static class LogicalLineParser
 		}
 		catch (CodeEE e)
 		{
-			System.Media.SystemSounds.Hand.Play();
+			
 			return new InvalidLine(position, e.Message);
 		}
 	}
