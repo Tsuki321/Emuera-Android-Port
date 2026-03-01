@@ -13,7 +13,8 @@ namespace Emuera.Android;
 /// Activity that runs the ERA game engine. Receives the game root path from MainActivity.
 /// Creates the SkiaSharp surface, registers platform services, and boots the engine on a background thread.
 /// </summary>
-[Activity(Label = "Game", ScreenOrientation = global::Android.Content.PM.ScreenOrientation.Portrait)]
+[Activity(Label = "Game", ScreenOrientation = global::Android.Content.PM.ScreenOrientation.Portrait,
+          Theme = "@style/AppTheme.GameActivity")]
 public class GameActivity : Activity
 {
     private Thread? _engineThread;

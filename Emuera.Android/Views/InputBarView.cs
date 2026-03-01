@@ -1,4 +1,5 @@
 using Android.Content;
+using Android.Graphics;
 using Android.Views;
 using Android.Views.InputMethods;
 using Android.Widget;
@@ -20,24 +21,44 @@ public class InputBarView : LinearLayout
     public InputBarView(Context context) : base(context)
     {
         Orientation = global::Android.Widget.Orientation.Vertical;
+        SetBackgroundColor(Color.ParseColor("#1E0F36"));
+        int pad = DpToPx(context, 6);
+        SetPadding(pad, pad, pad, pad);
 
         // ── Text input row ─────────────────────────────────────────────────
         var textRow = new LinearLayout(context)
         {
             Orientation = global::Android.Widget.Orientation.Horizontal,
         };
+        int hSpacing = DpToPx(context, 6);
+        textRow.SetPadding(0, 0, 0, hSpacing);
 
         _editText = new EditText(context)
         {
-            Hint = "Input…",
+            Hint = "Type input…",
             InputType = global::Android.Text.InputTypes.ClassText,
             ImeOptions = ImeAction.Done,
         };
+        _editText.SetHintTextColor(Color.ParseColor("#998AB5"));
+        _editText.SetTextColor(Color.White);
+        _editText.SetBackgroundResource(Resource.Drawable.bg_input);
+        int fieldPadH = DpToPx(context, 14);
+        int fieldPadV = DpToPx(context, 10);
+        _editText.SetPadding(fieldPadH, fieldPadV, fieldPadH, fieldPadV);
+
         var editParams = new LayoutParams(0, LayoutParams.WrapContent, 1f);
+        editParams.MarginEnd = DpToPx(context, 8);
         textRow.AddView(_editText, editParams);
 
         var submitBtn = new Button(context) { Text = "OK" };
-        textRow.AddView(submitBtn);
+        submitBtn.SetTextColor(Color.White);
+        submitBtn.SetBackgroundResource(Resource.Drawable.bg_submit_btn);
+        submitBtn.SetPadding(DpToPx(context, 20), 0, DpToPx(context, 20), 0);
+        submitBtn.StateListAnimator = null;
+        var submitParams = new LayoutParams(
+            LayoutParams.WrapContent,
+            DpToPx(context, 44));
+        textRow.AddView(submitBtn, submitParams);
 
         AddView(textRow, new LayoutParams(LayoutParams.MatchParent, LayoutParams.WrapContent));
 
@@ -46,12 +67,19 @@ public class InputBarView : LinearLayout
         {
             Orientation = global::Android.Widget.Orientation.Horizontal,
         };
+        _numRow.SetPadding(0, hSpacing / 2, 0, 0);
 
         for (int digit = 0; digit <= 9; digit++)
         {
-            int d = digit; // local copy for clarity in the lambda
+            int d = digit;
             var btn = new Button(context) { Text = d.ToString() };
-            var btnParams = new LayoutParams(0, LayoutParams.WrapContent, 1f);
+            btn.SetTextColor(Color.ParseColor("#CCB8EC"));
+            btn.SetTextSize(global::Android.Util.ComplexUnitType.Sp, 13f);
+            btn.SetBackgroundResource(Resource.Drawable.bg_num_btn);
+            btn.StateListAnimator = null;
+
+            var btnParams = new LayoutParams(0, DpToPx(context, 38), 1f);
+            btnParams.SetMargins(2, 0, 2, 0);
             btn.Click += (_, _) => SubmitInput(d.ToString());
             _numRow.AddView(btn, btnParams);
         }
@@ -90,4 +118,8 @@ public class InputBarView : LinearLayout
     {
         _console?.PressEnterKey(false, value, false);
     }
+
+    private static int DpToPx(Context ctx, float dp) =>
+        (int)(dp * ctx.Resources!.DisplayMetrics!.Density + 0.5f);
 }
+

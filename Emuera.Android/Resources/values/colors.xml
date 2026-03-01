@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary palette -->
+    <color name="primary">#6C4AB6</color>
+    <color name="primary_dark">#4A2E8A</color>
+    <color name="primary_light">#9B72D8</color>
+    <color name="accent">#FF6B9D</color>
+
+    <!-- Backgrounds -->
+    <color name="bg_start">#1A0533</color>
+    <color name="bg_end">#2E0854</color>
+
+    <!-- Surface / card -->
+    <color name="surface">#2D1B4E</color>
+    <color name="surface_variant">#3D2860</color>
+
+    <!-- Text -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#CCB8EC</color>
+    <color name="text_hint">#998AB5</color>
+
+    <!-- Input bar -->
+    <color name="input_bg">#1E0F36</color>
+    <color name="input_border">#6C4AB6</color>
+    <color name="num_btn_bg">#3D2860</color>
+    <color name="num_btn_pressed">#6C4AB6</color>
+    <color name="submit_btn_bg">#FF6B9D</color>
+</resources>

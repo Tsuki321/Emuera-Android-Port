@@ -1,29 +1,161 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="16dp">
+    android:background="@drawable/bg_gradient"
+    android:fillViewport="true">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Emuera"
-        android:textSize="24sp"
-        android:paddingBottom="24dp"/>
-
-    <Button
-        android:id="@+id/btn_pick_game"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Pick Game Folder" />
-
-    <ListView
-        android:id="@+id/list_recent_games"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="16dp" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="48dp"
+        android:paddingBottom="32dp">
 
-</LinearLayout>
+        <!-- ── Icon with glow ring ───────────────────────────────────────── -->
+        <FrameLayout
+            android:id="@+id/icon_container"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_gravity="center_horizontal">
+
+            <ImageView
+                android:id="@+id/icon_ring"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_icon_ring" />
+
+            <ImageView
+                android:id="@+id/app_icon"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_gravity="center"
+                android:src="@mipmap/ic_launcher"
+                android:scaleType="centerCrop"
+                android:background="@drawable/bg_icon_ring" />
+
+        </FrameLayout>
+
+        <!-- ── Title ────────────────────────────────────────────────────── -->
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Emuera"
+            android:textColor="#FFFFFF"
+            android:textSize="36sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.12"
+            android:alpha="0" />
+
+        <TextView
+            android:id="@+id/tv_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="ERA Game Engine for Android"
+            android:textColor="#CCB8EC"
+            android:textSize="14sp"
+            android:alpha="0" />
+
+        <!-- ── Pick folder button ────────────────────────────────────────── -->
+        <Button
+            android:id="@+id/btn_pick_game"
+            android:layout_width="220dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="36dp"
+            android:text="▶  Pick Game Folder"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:background="@drawable/bg_btn_primary"
+            android:stateListAnimator="@null"
+            android:elevation="6dp"
+            android:alpha="0" />
+
+        <!-- ── Info card: which folder / files ──────────────────────────── -->
+        <LinearLayout
+            android:id="@+id/card_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card"
+            android:padding="16dp"
+            android:alpha="0">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📂  Which folder should I pick?"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Select the root folder of your ERA game — the one that contains the files listed below. This is usually a folder on your SD card or internal storage."
+                android:textColor="#CCB8EC"
+                android:textSize="13sp"
+                android:lineSpacingExtra="3dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="📋  Required files &amp; folders"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="• emuera.config  (game configuration)\n• ERB/              (ERA script files)\n• CSV/              (data tables)\n• DAT/              (save data — created automatically)\n• *.erp or *.era   (compiled resources, if present)"
+                android:textColor="#CCB8EC"
+                android:textSize="13sp"
+                android:lineSpacingExtra="3dp"
+                android:fontFamily="monospace" />
+
+        </LinearLayout>
+
+        <!-- ── Recent games section ──────────────────────────────────────── -->
+        <LinearLayout
+            android:id="@+id/section_recent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:orientation="vertical"
+            android:alpha="0">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🕹  Recent Games"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <ListView
+                android:id="@+id/list_recent_games"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:background="@drawable/bg_card"
+                android:divider="#3D2860"
+                android:dividerHeight="1dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>
