@@ -26,5 +26,24 @@ jobs:
       - name: Build Engine
         run: dotnet build Emuera.Engine/Emuera.Engine.csproj --no-restore
 
-      - name: Build Android APK
-        run: dotnet build Emuera.Android/Emuera.Android.csproj -c Release
+      - name: Run unit tests
+        run: dotnet test Emuera.Tests/Emuera.Tests.csproj --logger trx --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/*.trx
+
+      - name: Build Release APK
+        run: |
+          dotnet build Emuera.Android/Emuera.Android.csproj \
+            -c Release \
+            -p:AndroidKeyStore=false
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: emuera-android
+          path: Emuera.Android/bin/Release/net9.0-android/*.apk

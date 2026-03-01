@@ -220,14 +220,26 @@ internal static class Config
 			DrawingParam_ShapePositionShift = Math.Max(2, FontSize / 6);
 		DrawableWidth = WindowX - DrawingParam_ShapePositionShift;
 		#region eee_カレントディレクトリー
-		// ForceSavDir = Program.ExeDir + "sav\\";
-		ForceSavDir = Program.WorkingDir + "sav\\";
-		if (UseSaveFolder)
-			// SavDir = Program.ExeDir + "sav\\";
-			SavDir = Program.WorkingDir + "sav\\";
+		// Use platform-provided SaveDirectory when available (Android internal storage),
+		// otherwise fall back to the game root "sav" sub-directory.
+		string platformSaveDir = GlobalStatic.Paths?.SaveDirectory;
+		if (!string.IsNullOrEmpty(platformSaveDir))
+		{
+			Directory.CreateDirectory(platformSaveDir);
+			ForceSavDir = platformSaveDir + Path.DirectorySeparatorChar;
+			SavDir = platformSaveDir + Path.DirectorySeparatorChar;
+		}
 		else
-			// SavDir = Program.ExeDir;
-			SavDir = Program.WorkingDir;
+		{
+			// ForceSavDir = Program.ExeDir + "sav\\";
+			ForceSavDir = Program.WorkingDir + "sav\\";
+			if (UseSaveFolder)
+				// SavDir = Program.ExeDir + "sav\\";
+				SavDir = Program.WorkingDir + "sav\\";
+			else
+				// SavDir = Program.ExeDir;
+				SavDir = Program.WorkingDir;
+		}
 		#endregion
 		if (UseSaveFolder && !Directory.Exists(SavDir))
 			createSavDirAndMoveFiles();
