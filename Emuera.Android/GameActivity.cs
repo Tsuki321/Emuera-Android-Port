@@ -33,6 +33,10 @@ public class GameActivity : Activity
             return;
         }
 
+        // Register additional encodings (e.g. EUC-JP / code page 20932) which are
+        // not available by default on Android/.NET.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
         // 1. Register platform services in GlobalStatic
         GlobalStatic.Paths    = new AndroidPlatformPaths(this, gameRoot);
         GlobalStatic.Dialogs  = new AndroidPlatformDialogs(this);
