@@ -24,6 +24,8 @@ public class GameActivity : Activity
     {
         base.OnCreate(savedInstanceState);
 
+        CrashLogger.Initialize(this);
+
         string? gameRoot = Intent?.GetStringExtra("GAME_ROOT");
         if (string.IsNullOrEmpty(gameRoot))
         {
@@ -70,7 +72,7 @@ public class GameActivity : Activity
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[Emuera] Engine exception: {ex}");
+                CrashLogger.LogException(ex, "Engine thread");
             }
         });
         _engineThread.IsBackground = true;
