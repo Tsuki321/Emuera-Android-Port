@@ -72,6 +72,7 @@ public class GameActivity : Activity
         {
             try
             {
+                ConfigData.Instance.LoadConfig();
                 _console.Initialize();
             }
             catch (Exception ex)
