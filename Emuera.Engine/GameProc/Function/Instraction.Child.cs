@@ -10,7 +10,7 @@ using MinorShift._Library;
 using MinorShift.Emuera.GameData.Function;
 using MinorShift.Emuera.Platform;
 using System.IO;
-using System.Net;
+using System.Net.Http;
 using FontStyle = MinorShift.Emuera.Platform.EngineFontStyle;
 using MinorShift.Emuera.GameView;
 using trerror = EvilMask.Emuera.Lang.Error;
@@ -2497,7 +2497,7 @@ internal sealed partial class FunctionIdentifier
 			}
 
 			string url = GlobalStatic.GameBaseData.UpdateCheckURL;
-			WebClient wc = new WebClient();
+			using HttpClient wc = new HttpClient();
 			if (url == null || url == "")
 			{
 				exm.VEvaluator.RESULT = 3;
@@ -2505,8 +2505,10 @@ internal sealed partial class FunctionIdentifier
 			}
 			try
 			{
-				Stream st = wc.OpenRead(url);
-				StreamReader sr = new StreamReader(st);
+				// GetAwaiter().GetResult() is used intentionally: DoInstruction is a synchronous
+				// API that cannot be made async without a large architectural change.
+				using Stream st = wc.GetStreamAsync(url).GetAwaiter().GetResult();
+				using StreamReader sr = new StreamReader(st);
 				try
 				{
 					var version = sr.ReadLine();
@@ -2533,31 +2535,23 @@ internal sealed partial class FunctionIdentifier
 								FileName = link,
 							});
 							//System.Diagnostics.Process.Start(link);
-							st.Close();
-							wc.Dispose();
 							return;
 						}
 						else
 						{
 							exm.VEvaluator.RESULT = 1;
-							st.Close();
-							wc.Dispose();
 							return;
 						}
 					}
 					else
 					{
 						exm.VEvaluator.RESULT = 0;
-						st.Close();
-						wc.Dispose();
 						return;
 					}
 				}
 				catch
 				{
 					exm.VEvaluator.RESULT = 3;
-					st.Close();
-					wc.Dispose();
 					return;
 				}
 			}

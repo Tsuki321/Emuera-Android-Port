@@ -686,7 +686,6 @@ internal sealed partial class EmueraConsole : IDisposable
 	#endregion
 
 
-	[SupportedOSPlatform("windows")]
 	private bool outputLog(string fullpath)
 	{
 		StreamWriter writer = null;

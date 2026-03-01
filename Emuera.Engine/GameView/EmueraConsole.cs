@@ -96,7 +96,9 @@ internal sealed partial class EmueraConsole : IDisposable
 	private readonly List<ClientBackGroundImage> cbgList = new List<ClientBackGroundImage>();
 	private GraphicsImage cbgButtonMap = null;
 	private int selectingCBGButtonInt = -1;
+#pragma warning disable CS0414
 	private int lastSelectingCBGButtonInt = -1;
+#pragma warning restore CS0414
 	//ConsoleButtonString selectingButton = null;
 	//ConsoleButtonString lastSelectingButton = null;
 	class ClientBackGroundImage : IComparable<ClientBackGroundImage>
@@ -530,7 +532,9 @@ internal sealed partial class EmueraConsole : IDisposable
 	/// <summary>
 	/// ToolTip表示したフラグ
 	/// </summary>
+#pragma warning disable CS0414
 	bool tooltipUsed = false;
+#pragma warning restore CS0414
 	/// <summary>
 	/// マウスの直下にあるテキスト。ボタンであってもよい。
 	/// ToolTip表示用。世代無視、履歴中も表示
@@ -692,7 +696,9 @@ internal sealed partial class EmueraConsole : IDisposable
 	/// <summary>
 	/// 1824 TINPUT時に直接タイマーをセットせずに最初の再描画が終わってからタイマーをセットする（そうしないとTINPUTと再描画だけでループしてしまうので）
 	/// </summary>
+#pragma warning disable CS0414
 	bool need_settimer = false;
+#pragma warning restore CS0414
 
 	private void presetTimer()
 	{
