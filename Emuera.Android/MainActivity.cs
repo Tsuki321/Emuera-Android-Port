@@ -3,6 +3,7 @@ using Android.Content;
 using Android.OS;
 using Android.Views.Animations;
 using Android.Widget;
+using Emuera.Android.Platform;
 
 namespace Emuera.Android;
 
@@ -19,6 +20,9 @@ public class MainActivity : Activity
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
+
+        CrashLogger.Initialize(this);
+
         SetContentView(Resource.Layout.activity_main);
 
         FindViewById<Button>(Resource.Id.btn_pick_game)!.Click += (_, _) => PickFolder();
