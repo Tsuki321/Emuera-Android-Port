@@ -1,0 +1,30 @@
+name: Android Build
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Install Android workload
+        run: dotnet workload install android
+
+      - name: Restore dependencies
+        run: dotnet restore Emuera.Engine/Emuera.Engine.csproj
+
+      - name: Build Engine
+        run: dotnet build Emuera.Engine/Emuera.Engine.csproj --no-restore
+
+      - name: Build Android APK
+        run: dotnet build Emuera.Android/Emuera.Android.csproj -c Release

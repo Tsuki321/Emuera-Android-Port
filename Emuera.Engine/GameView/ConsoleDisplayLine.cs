@@ -1,0 +1,141 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Drawing;
+using MinorShift._Library;
+// Note: System.Drawing.Rectangle is cross-platform via System.Drawing.Primitives.
+
+namespace MinorShift.Emuera.GameView;
+
+//難読化用属性。enum.ToString()やenum.Parse()を行うなら(Exclude=true)にすること。
+[global::System.Reflection.Obfuscation(Exclude = false)]
+internal enum DisplayLineLastState
+{
+	None = 0,
+	Normal = 1,
+	Selected = 2,
+	BackLog = 3,
+}
+
+//難読化用属性。enum.ToString()やenum.Parse()を行うなら(Exclude=true)にすること。
+[global::System.Reflection.Obfuscation(Exclude = false)]
+internal enum DisplayLineAlignment
+{
+	LEFT = 0,
+	CENTER = 1,
+	RIGHT = 2,
+}
+/// <summary>
+/// 表示行。1つ以上のボタン（ConsoleButtonString）からなる
+/// </summary>
+internal sealed class ConsoleDisplayLine
+{
+
+	//public ConsoleDisplayLine(EmueraConsole parentWindow, ConsoleButtonString[] buttons, bool isLogical, bool temporary)
+	public ConsoleDisplayLine(ConsoleButtonString[] buttons, bool isLogical, bool temporary)
+	{
+		//parent = parentWindow;
+		if (buttons == null)
+		{
+			//これはthis.buttonの間違い？
+			buttons = new ConsoleButtonString[0];
+			return;
+		}
+		this.buttons = buttons;
+		foreach (ConsoleButtonString button in buttons)
+			button.ParentLine = this;
+		IsLogicalLine = isLogical;
+		IsTemporary = temporary;
+	}
+	public int LineNo = -1;
+
+	///論理行の最初となる場合だけtrue。表示の都合で改行された2行目以降はfalse
+	readonly public bool IsLogicalLine = true;
+	readonly public bool IsTemporary = false;
+	//EmueraConsole parent;
+	ConsoleButtonString[] buttons;
+	DisplayLineAlignment align;
+	public ConsoleButtonString[] Buttons { get { return buttons; } }
+	public DisplayLineAlignment Align { get { return align; } }
+	bool aligned = false;
+	//Bitmap Cache
+	public bool bitmapCacheEnabled = false;
+	public void SetAlignment(DisplayLineAlignment align, int customWidth = -1/*, int xOffset = 0*/)
+	{
+		if (aligned)
+			return;
+		this.aligned = true;
+		this.align = align;
+		if (buttons.Length == 0)
+			return;
+		//DisplayLineの幅
+		int width = 0;
+		foreach (ConsoleButtonString button in buttons)
+			width += button.Width;
+		//現在位置
+		int pointX = buttons[0].PointX;
+
+		//目標位置
+		int movetoX = 0;
+		if (align == DisplayLineAlignment.LEFT)
+		{
+			//位置固定に対応
+			if (IsLogicalLine)
+				return;
+			#region EE_div各要素の修正
+			movetoX = 0; // xOffsetをここに入らないで
+						 //movetoX = 0+xOffset;
+			#endregion
+
+		}
+		#region EM_私家版_HTML_divタグ
+		else if (align == DisplayLineAlignment.CENTER)
+			// movetoX = Config.WindowX / 2 - width / 2;
+			#region EE_div各要素の修正
+			movetoX = (customWidth > 0 ? customWidth : Config.DrawableWidth) / 2 - width / 2/* + xOffset*/;
+		#endregion
+		else if (align == DisplayLineAlignment.RIGHT)
+			// movetoX = Config.WindowX - width;
+			#region EE_div各要素の修正
+			movetoX = (customWidth > 0 ? customWidth : Config.DrawableWidth) - width/* + xOffset*/;
+		#endregion
+		#endregion
+		//移動距離
+		int shiftX = movetoX - pointX;
+		if (shiftX != 0)
+			this.ShiftPositionX(shiftX);
+	}
+
+	public void ShiftPositionX(int shiftX)
+	{
+		foreach (ConsoleButtonString button in buttons)
+			button.ShiftPositionX(shiftX);
+	}
+
+	public void ChangeStr(ConsoleButtonString[] newButtons)
+	{
+		buttons = null;
+		foreach (ConsoleButtonString button in newButtons)
+			button.ParentLine = this;
+		buttons = newButtons;
+	}
+
+	public override string ToString()
+	{
+		if (buttons == null)
+			return "";
+		StringBuilder builder = new();
+		foreach (ConsoleButtonString button in buttons)
+			builder.Append(button.ToString());
+		return builder.ToString();
+	}
+	#region EM_私家版_描画拡張
+	public StringBuilder BuildString(StringBuilder builder)
+	{
+		if (buttons != null)
+			foreach (ConsoleButtonString button in buttons)
+				builder.Append(button.ToString());
+		return builder;
+	}
+	#endregion
+}

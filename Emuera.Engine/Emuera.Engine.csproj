@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>MinorShift.Emuera</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Cross-platform rendering / image handling -->
+    <PackageReference Include="SkiaSharp" Version="2.*" />
+  </ItemGroup>
+
+  <!-- Exclude Windows-only _Library files from the Engine project -->
+  <ItemGroup>
+    <Compile Remove="_Library\WinInput.cs" />
+    <Compile Remove="_Library\WinmmTimer.cs" />
+    <Compile Remove="_Library\Sound.WMP.cs" />
+    <Compile Remove="_Library\Sound.NAudio.cs" />
+    <Compile Remove="_Library\NAudio_LoopStream.cs" />
+    <Compile Remove="_Library\WebPWrapper.cs" />
+    <Compile Remove="_Library\GDI.cs" />
+  </ItemGroup>
+</Project>
+

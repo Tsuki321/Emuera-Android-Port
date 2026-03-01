@@ -1,0 +1,61 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33723.286
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Emuera", "Emuera\Emuera.csproj", "{6DF78E83-F428-4CD8-887A-F1B9CA0F0670}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmueraPluginExample", "EmueraPluginExample\EmueraPluginExample.csproj", "{15231603-A955-4AD7-8102-7F9C1B1BA3A3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emuera.Engine", "Emuera.Engine\Emuera.Engine.csproj", "{018A5F03-E6B6-425F-8FF3-B70B806078AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emuera.Android", "Emuera.Android\Emuera.Android.csproj", "{A0CC7B26-18AB-44D4-800C-C62A71763C75}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug-NAudio|Any CPU = Debug-NAudio|Any CPU
+		Release|Any CPU = Release|Any CPU
+		Release-NAudio|Any CPU = Release-NAudio|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6DF78E83-F428-4CD8-887A-F1B9CA0F0670}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6DF78E83-F428-4CD8-887A-F1B9CA0F0670}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6DF78E83-F428-4CD8-887A-F1B9CA0F0670}.Debug-NAudio|Any CPU.ActiveCfg = Debug-NAudio|Any CPU
+		{6DF78E83-F428-4CD8-887A-F1B9CA0F0670}.Debug-NAudio|Any CPU.Build.0 = Debug-NAudio|Any CPU
+		{6DF78E83-F428-4CD8-887A-F1B9CA0F0670}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6DF78E83-F428-4CD8-887A-F1B9CA0F0670}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6DF78E83-F428-4CD8-887A-F1B9CA0F0670}.Release-NAudio|Any CPU.ActiveCfg = Release-NAudio|Any CPU
+		{6DF78E83-F428-4CD8-887A-F1B9CA0F0670}.Release-NAudio|Any CPU.Build.0 = Release-NAudio|Any CPU
+		{15231603-A955-4AD7-8102-7F9C1B1BA3A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15231603-A955-4AD7-8102-7F9C1B1BA3A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15231603-A955-4AD7-8102-7F9C1B1BA3A3}.Debug-NAudio|Any CPU.ActiveCfg = Debug|Any CPU
+		{15231603-A955-4AD7-8102-7F9C1B1BA3A3}.Debug-NAudio|Any CPU.Build.0 = Debug|Any CPU
+		{15231603-A955-4AD7-8102-7F9C1B1BA3A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15231603-A955-4AD7-8102-7F9C1B1BA3A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15231603-A955-4AD7-8102-7F9C1B1BA3A3}.Release-NAudio|Any CPU.ActiveCfg = Release|Any CPU
+		{15231603-A955-4AD7-8102-7F9C1B1BA3A3}.Release-NAudio|Any CPU.Build.0 = Release|Any CPU
+		{018A5F03-E6B6-425F-8FF3-B70B806078AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{018A5F03-E6B6-425F-8FF3-B70B806078AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{018A5F03-E6B6-425F-8FF3-B70B806078AF}.Debug-NAudio|Any CPU.ActiveCfg = Debug|Any CPU
+		{018A5F03-E6B6-425F-8FF3-B70B806078AF}.Debug-NAudio|Any CPU.Build.0 = Debug|Any CPU
+		{018A5F03-E6B6-425F-8FF3-B70B806078AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{018A5F03-E6B6-425F-8FF3-B70B806078AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{018A5F03-E6B6-425F-8FF3-B70B806078AF}.Release-NAudio|Any CPU.ActiveCfg = Debug|Any CPU
+		{018A5F03-E6B6-425F-8FF3-B70B806078AF}.Release-NAudio|Any CPU.Build.0 = Debug|Any CPU
+		{A0CC7B26-18AB-44D4-800C-C62A71763C75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0CC7B26-18AB-44D4-800C-C62A71763C75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0CC7B26-18AB-44D4-800C-C62A71763C75}.Debug-NAudio|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0CC7B26-18AB-44D4-800C-C62A71763C75}.Debug-NAudio|Any CPU.Build.0 = Debug|Any CPU
+		{A0CC7B26-18AB-44D4-800C-C62A71763C75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0CC7B26-18AB-44D4-800C-C62A71763C75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0CC7B26-18AB-44D4-800C-C62A71763C75}.Release-NAudio|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0CC7B26-18AB-44D4-800C-C62A71763C75}.Release-NAudio|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CD7FF2B4-7A65-4100-9B51-FF87DDFA8468}
+	EndGlobalSection
+EndGlobal

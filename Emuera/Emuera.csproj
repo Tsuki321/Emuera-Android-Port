@@ -1,0 +1,94 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <UseWindowsForms>true</UseWindowsForms>
+        <UseWPF>true</UseWPF>
+        <LangVersion>12.0</LangVersion>
+        <Nullable>disable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Configurations>Debug;Release;Debug-NAudio;Release-NAudio</Configurations>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <Product>Emuera</Product>
+        <AssemblyName>Emuera</AssemblyName>
+        <RootNamespace>MinorShift.Emuera</RootNamespace>
+        <ApplicationManifest>emuera.manifest</ApplicationManifest>
+        <Version>1.824.0</Version>
+        <InformationalVersion>1.824+v21+EMv18+EEv47</InformationalVersion>
+        <Copyright>Copyright (C) 2008- MinorShift, 妊）|дﾟ)の中の人</Copyright>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <IncludeAllContentForSelfExtract>false</IncludeAllContentForSelfExtract>
+        <SelfContained>false</SelfContained>
+        <PublishReadyToRun>false</PublishReadyToRun>
+        <PublishSingleFile>true</PublishSingleFile>
+        <PublishTrimmed>false</PublishTrimmed>
+        <SelfContained>false</SelfContained>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug-NAudio' ">
+        <DefineConstants>DEBUG</DefineConstants>
+        <DebugSymbols>true</DebugSymbols>
+        <Optimize>false</Optimize>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release-NAudio' ">
+        <Optimize>true</Optimize>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="$(Configuration.Contains('NAudio'))">
+        <InformationalVersion>$(InformationalVersion) NAudio</InformationalVersion>
+    </PropertyGroup>
+
+    <ItemGroup Condition="$(Configuration.Contains('NAudio'))">
+        <Compile Remove="_Library\Sound.WMP.cs" />
+        <PackageReference Include="NAudio.Core" Version="2.2.1" />
+        <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+        <PackageReference Include="NAudio.Vorbis" Version="1.5.0" />
+    </ItemGroup>
+    
+    <ItemGroup Condition="!($(Configuration.Contains('NAudio')))">
+        <Compile Remove="_Library\Sound.NAudio.cs" />
+        <Compile Remove="_Library\NAudio_LoopStream.cs" />
+        <COMReference Include="WMPLib">
+            <Guid>{6BF52A50-394A-11D3-B153-00C04F79FAA6}</Guid>
+            <VersionMajor>1</VersionMajor>
+            <VersionMinor>0</VersionMinor>
+            <Lcid>0</Lcid>
+            <WrapperTool>tlbimp</WrapperTool>
+            <Isolated>False</Isolated>
+            <EmbedInteropTypes>True</EmbedInteropTypes>
+        </COMReference>
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Compile Remove="artifacts\**" />
+      <EmbeddedResource Remove="artifacts\**" />
+      <None Remove="artifacts\**" />
+      <Page Remove="artifacts\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="Properties\Settings.Designer.cs">
+            <DesignTimeSharedInput>True</DesignTimeSharedInput>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Settings.settings</DependentUpon>
+        </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="Properties\Settings.settings">
+            <Generator>SettingsSingleFileGenerator</Generator>
+            <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+        </None>
+    </ItemGroup>
+    <PropertyGroup>
+      <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    </PropertyGroup>
+
+</Project>

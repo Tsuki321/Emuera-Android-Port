@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0-android</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <ApplicationId>com.yourname.emuera</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Emuera.Engine\Emuera.Engine.csproj" />
+    <PackageReference Include="SkiaSharp.Views.Android" Version="2.*" />
+    <PackageReference Include="SkiaSharp" Version="2.*" />
+  </ItemGroup>
+</Project>
