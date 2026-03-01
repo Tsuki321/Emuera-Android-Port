@@ -1,0 +1,2 @@
+layout/activity_main;layout/activity_main
+mipmap/ic_launcher;mipmap/ic_launcher

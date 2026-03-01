@@ -1,0 +1,4 @@
+Button;obj/Debug/net9.0-android/res/layout/activity_main.xml
+LinearLayout;obj/Debug/net9.0-android/res/layout/activity_main.xml
+ListView;obj/Debug/net9.0-android/res/layout/activity_main.xml
+TextView;obj/Debug/net9.0-android/res/layout/activity_main.xml

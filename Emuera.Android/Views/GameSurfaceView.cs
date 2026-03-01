@@ -1,17 +1,18 @@
 using Android.Content;
+using Android.Graphics;
 using Android.Views;
 using SkiaSharp;
-using SkiaSharp.Views.Android;
 using MinorShift.Emuera.GameView;
 using MinorShift.Emuera.Platform;
 
 namespace Emuera.Android.Views;
 
 /// <summary>
-/// SkiaSharp-backed canvas view that renders the ERA console display lines.
+/// Custom Android View that renders the ERA console display lines using SkiaSharp.
 /// Touch events are translated to button clicks and scroll gestures.
+/// Renders by drawing to an off-screen SKBitmap then blitting to Android Canvas.
 /// </summary>
-public class GameSurfaceView : SKCanvasView
+public class GameSurfaceView : View
 {
     private EmueraConsole? _console;
 
@@ -28,22 +29,52 @@ public class GameSurfaceView : SKCanvasView
     private readonly Dictionary<(string family, float size, bool bold, bool italic), SKTypeface> _typefaceCache = [];
     private readonly SKPaint _textPaint = new() { IsAntialias = true };
 
+    // Off-screen SkiaSharp surface
+    private SKBitmap? _skBitmap;
+    private SKCanvas? _skCanvas;
+    private global::Android.Graphics.Bitmap? _androidBitmap;
+
     public GameSurfaceView(Context context) : base(context)
     {
     }
 
     /// <summary>Called after construction to break the circular dependency with EmueraConsole.</summary>
-    public void SetConsole(EmueraConsole console)
+    internal void SetConsole(EmueraConsole console)
     {
         _console = console;
     }
 
-    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    protected override void OnSizeChanged(int w, int h, int oldw, int oldh)
     {
-        base.OnPaintSurface(e);
-        var canvas = e.Surface.Canvas;
-        canvas.Clear(SKColors.Black);
-        DrawConsole(canvas, e.Info.Width, e.Info.Height);
+        base.OnSizeChanged(w, h, oldw, oldh);
+        // Recreate off-screen bitmap when view size changes
+        _skCanvas?.Dispose();
+        _skBitmap?.Dispose();
+        _androidBitmap?.Recycle();
+        _androidBitmap?.Dispose();
+        if (w > 0 && h > 0)
+        {
+            // BGRA8888 matches Android's ARGB_8888 byte order on little-endian ARM
+            _skBitmap = new SKBitmap(w, h, SKColorType.Bgra8888, SKAlphaType.Premul);
+            _skCanvas = new SKCanvas(_skBitmap);
+            _androidBitmap = global::Android.Graphics.Bitmap.CreateBitmap(w, h, global::Android.Graphics.Bitmap.Config.Argb8888!);
+        }
+    }
+
+    protected override void OnDraw(global::Android.Graphics.Canvas? canvas)
+    {
+        base.OnDraw(canvas);
+        if (canvas == null || _skBitmap == null || _skCanvas == null || _androidBitmap == null) return;
+
+        // Render ERA console into SkiaSharp bitmap
+        _skCanvas.Clear(SKColors.Black);
+        DrawConsole(_skCanvas, Width, Height);
+
+        // Copy SkiaSharp pixels into the Android Bitmap
+        using var byteBuffer = Java.Nio.ByteBuffer.Wrap(_skBitmap.Bytes)!;
+        _androidBitmap.CopyPixelsFromBuffer(byteBuffer);
+
+        canvas.DrawBitmap(_androidBitmap, 0, 0, null);
     }
 
     private void DrawConsole(SKCanvas canvas, int viewWidth, int viewHeight)
@@ -75,21 +106,17 @@ public class GameSurfaceView : SKCanvasView
 
     private void DrawDisplayLine(SKCanvas canvas, ConsoleDisplayLine line, float startX, float lineY, int viewWidth)
     {
-        // Determine alignment offset
         float x = startX;
 
         foreach (var button in line.Buttons)
         {
             float bx = button.PointX >= 0 ? button.PointX : x;
-            float buttonStartX = bx;
 
             foreach (var part in button.StrArray)
             {
                 if (part is ConsoleStyledString css)
                 {
                     DrawStyledString(canvas, css, bx, lineY, button);
-                    var argb = css.DisplayColor.ToArgb();
-                    // Track button hit region
                     if (button.IsButton && css.Width > 0)
                     {
                         var bounds = new SKRect(bx, lineY, bx + css.Width, lineY + MinorShift.Emuera.Config.LineHeight);
@@ -97,13 +124,9 @@ public class GameSurfaceView : SKCanvasView
                     }
                     bx += css.Width;
                 }
-                else if (part is ConsoleImagePart)
-                {
-                    // Image rendering is a future task; skip width
-                    bx += part.Width;
-                }
                 else
                 {
+                    // ConsoleImagePart and others: skip rendering for now (future task)
                     bx += part.Width;
                 }
             }
@@ -121,7 +144,7 @@ public class GameSurfaceView : SKCanvasView
         var typeface = GetTypeface(font);
 
         // Choose color: use button color if this button is currently selected
-        System.Drawing.Color sysColor = (_console.ButtonIsSelected(button) && button.IsButton)
+        System.Drawing.Color sysColor = (_console!.ButtonIsSelected(button) && button.IsButton)
             ? css.DisplayButtonColor
             : css.DisplayColor;
 
@@ -134,17 +157,10 @@ public class GameSurfaceView : SKCanvasView
         float baseline = y + font.SizeInPixels;
         canvas.DrawText(css.Str, x, baseline, _textPaint);
 
-        // Underline / strikeout
         if (font.IsUnderline)
-        {
-            float underlineY = baseline + 2;
-            canvas.DrawLine(x, underlineY, x + css.Width, underlineY, _textPaint);
-        }
+            canvas.DrawLine(x, baseline + 2, x + css.Width, baseline + 2, _textPaint);
         if (font.IsStrikeout)
-        {
-            float strikeY = y + font.SizeInPixels / 2f;
-            canvas.DrawLine(x, strikeY, x + css.Width, strikeY, _textPaint);
-        }
+            canvas.DrawLine(x, y + font.SizeInPixels / 2f, x + css.Width, y + font.SizeInPixels / 2f, _textPaint);
     }
 
     private SKTypeface GetTypeface(EngineFont font)
@@ -198,12 +214,10 @@ public class GameSurfaceView : SKCanvasView
     private void HandleTap(float x, float y)
     {
         if (_console == null) return;
-        // Hit-test against button regions captured during last paint
         foreach (var (bounds, button) in _buttonRects)
         {
             if (bounds.Contains(x, y))
             {
-                // Submit the button's input value to the console
                 _console.PressEnterKey(false, button.Inputs, true);
                 return;
             }
@@ -211,7 +225,7 @@ public class GameSurfaceView : SKCanvasView
     }
 
     /// <summary>Called by AndroidConsoleHost.ScrollToBottom to reset scroll offset.</summary>
-    public void ResetScrollToBottom()
+    public void ScrollToBottom()
     {
         _scrollOffsetY = 0f;
         PostInvalidate();
@@ -222,6 +236,10 @@ public class GameSurfaceView : SKCanvasView
         if (disposing)
         {
             _textPaint.Dispose();
+            _skCanvas?.Dispose();
+            _skBitmap?.Dispose();
+            _androidBitmap?.Recycle();
+            _androidBitmap?.Dispose();
             foreach (var tf in _typefaceCache.Values)
                 tf?.Dispose();
             _typefaceCache.Clear();
@@ -229,3 +247,4 @@ public class GameSurfaceView : SKCanvasView
         base.Dispose(disposing);
     }
 }
+

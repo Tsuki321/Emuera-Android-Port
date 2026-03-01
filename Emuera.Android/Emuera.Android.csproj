@@ -10,7 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Emuera.Engine\Emuera.Engine.csproj" />
-    <PackageReference Include="SkiaSharp.Views.Android" Version="2.*" />
     <PackageReference Include="SkiaSharp" Version="2.*" />
   </ItemGroup>
 </Project>

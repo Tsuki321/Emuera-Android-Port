@@ -11,3 +11,5 @@ EmueraPluginExample/obj/*
 
 */Emuera.csproj.user
 
+bin/
+obj/

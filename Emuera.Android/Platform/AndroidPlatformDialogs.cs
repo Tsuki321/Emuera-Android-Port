@@ -1,4 +1,5 @@
 using Android.App;
+using Android.Content;
 using MinorShift.Emuera.Platform;
 
 namespace Emuera.Android.Platform;

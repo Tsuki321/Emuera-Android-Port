@@ -1,0 +1,13 @@
+/home/runner/work/Emuera-Android-Port/Emuera-Android-Port/Emuera.Engine/obj/Debug/net9.0/Emuera.Engine.csproj.AssemblyReference.cache
+/home/runner/work/Emuera-Android-Port/Emuera-Android-Port/Emuera.Engine/obj/Debug/net9.0/Emuera.Engine.GeneratedMSBuildEditorConfig.editorconfig
+/home/runner/work/Emuera-Android-Port/Emuera-Android-Port/Emuera.Engine/obj/Debug/net9.0/Emuera.Engine.AssemblyInfoInputs.cache
+/home/runner/work/Emuera-Android-Port/Emuera-Android-Port/Emuera.Engine/obj/Debug/net9.0/Emuera.Engine.AssemblyInfo.cs
+/home/runner/work/Emuera-Android-Port/Emuera-Android-Port/Emuera.Engine/obj/Debug/net9.0/Emuera.Engine.csproj.CoreCompileInputs.cache
+/home/runner/work/Emuera-Android-Port/Emuera-Android-Port/Emuera.Engine/obj/Debug/net9.0/Emuera.Engine.sourcelink.json
+/home/runner/work/Emuera-Android-Port/Emuera-Android-Port/Emuera.Engine/bin/Debug/net9.0/Emuera.Engine.deps.json
+/home/runner/work/Emuera-Android-Port/Emuera-Android-Port/Emuera.Engine/bin/Debug/net9.0/Emuera.Engine.dll
+/home/runner/work/Emuera-Android-Port/Emuera-Android-Port/Emuera.Engine/bin/Debug/net9.0/Emuera.Engine.pdb
+/home/runner/work/Emuera-Android-Port/Emuera-Android-Port/Emuera.Engine/obj/Debug/net9.0/Emuera.Engine.dll
+/home/runner/work/Emuera-Android-Port/Emuera-Android-Port/Emuera.Engine/obj/Debug/net9.0/refint/Emuera.Engine.dll
+/home/runner/work/Emuera-Android-Port/Emuera-Android-Port/Emuera.Engine/obj/Debug/net9.0/Emuera.Engine.pdb
+/home/runner/work/Emuera-Android-Port/Emuera-Android-Port/Emuera.Engine/obj/Debug/net9.0/ref/Emuera.Engine.dll

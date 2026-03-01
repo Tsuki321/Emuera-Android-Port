@@ -56,7 +56,7 @@ public class AndroidConsoleHost : IConsoleHost
 
     public void ScrollToBottom()
     {
-        _view.ResetScrollToBottom();
+        _view.ScrollToBottom();
     }
 
     public void SetWindowTitle(string title)

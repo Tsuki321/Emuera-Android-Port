@@ -1,0 +1,4 @@
+int id btn_pick_game 0x7f010000
+int id list_recent_games 0x7f010001
+int layout activity_main 0x7f020000
+int mipmap ic_launcher 0x7f030000
