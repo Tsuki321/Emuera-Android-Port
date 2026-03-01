@@ -79,16 +79,51 @@ internal sealed class GraphicsImage : AbstractImage
 		drawImgList = null;
 	}
 
+	/// <summary>Creates an SKPaint configured for text drawing using the currently-set font.</summary>
+	private SKPaint CreateTextPaint(out SKTypeface typeface)
+	{
+		EngineFont font = efont ?? Config.Font;
+		typeface = SKTypeface.FromFamilyName(
+			font.FamilyName,
+			new SKFontStyle(
+				font.IsBold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal,
+				SKFontStyleWidth.Normal,
+				font.IsItalic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright));
+		return new SKPaint
+		{
+			Typeface = typeface,
+			TextSize = font.SizeInPixels,
+			Color = brushPaint?.Color ?? new SKColor(Config.ForeColor.R, Config.ForeColor.G, Config.ForeColor.B, Config.ForeColor.A),
+			IsAntialias = true,
+		};
+	}
+
 	public void GDrawString(string text, int x, int y)
 	{
-		// Phase 3: implement SkiaSharp text drawing with path
-		throw new NotImplementedException("GDrawString (path-based) not yet implemented. Planned for Phase 3.");
+		Load();
+		if (g == null)
+			throw new NullReferenceException();
+		EngineFont font = efont ?? Config.Font;
+		using var paint = CreateTextPaint(out var typeface);
+		using (typeface)
+		// SkiaSharp DrawText y is the baseline; shift down by TextSize to top-align
+		g.DrawText(text, x, y + font.SizeInPixels, paint);
 	}
 
 	public void GDrawString(string text, int x, int y, int width, int height)
 	{
-		// Phase 3: implement SkiaSharp text drawing into rect
-		throw new NotImplementedException("GDrawString (rect-based) not yet implemented. Planned for Phase 3.");
+		Load();
+		if (g == null)
+			throw new NullReferenceException();
+		EngineFont font = efont ?? Config.Font;
+		using var paint = CreateTextPaint(out var typeface);
+		using (typeface)
+		{
+			g.Save();
+			g.ClipRect(new SKRect(x, y, x + width, y + height));
+			g.DrawText(text, x, y + font.SizeInPixels, paint);
+			g.Restore();
+		}
 	}
 
 	public void GDrawRectangle(Rectangle rect)
@@ -206,24 +241,64 @@ internal sealed class GraphicsImage : AbstractImage
 		if (g == null)
 			throw new NullReferenceException();
 		drawImgList = null;
-		// Phase 3: implement mask-based composite via SkiaSharp
-		throw new NotImplementedException("GDrawGWithMask not yet implemented. Planned for Phase 3.");
+
+		// Apply the mask image as an alpha mask: for each pixel in src, multiply its
+		// alpha by the red channel of the corresponding mask pixel, then composite
+		// the result onto this (destination) bitmap at destPoint.
+		SKBitmap src  = srcGra.GetSKBitmap();
+		SKBitmap mask = maskGra.GetSKBitmap();
+
+		int w = src.Width;
+		int h = src.Height;
+		// Guard: mask must cover the entire source area
+		if (mask.Width < w || mask.Height < h)
+			return;
+
+		using var masked = new SKBitmap(w, h, SKColorType.Bgra8888, SKAlphaType.Premul);
+		SKColor[] srcPixels  = src.Pixels;
+		SKColor[] maskPixels = mask.Pixels;
+		SKColor[] dstPixels  = new SKColor[w * h];
+
+		int maskW = mask.Width;
+		for (int row = 0; row < h; row++)
+		{
+			for (int col = 0; col < w; col++)
+			{
+				int srcIdx  = row * w + col;
+				int maskIdx = row * maskW + col;
+				SKColor s = srcPixels[srcIdx];
+				// Use red channel of the mask as the alpha weight
+				float maskAlpha = maskPixels[maskIdx].Red / 255f;
+				dstPixels[srcIdx] = new SKColor(s.Red, s.Green, s.Blue, (byte)(s.Alpha * maskAlpha));
+			}
+		}
+		masked.Pixels = dstPixels;
+
+		using var paint = new SKPaint();
+		g.DrawBitmap(masked, destPoint.X, destPoint.Y, paint);
 	}
 
 	public void GRotate(Int64 a, int x, int y)
 	{
 		if (g == null)
 			throw new NullReferenceException();
-		// Phase 3: implement SKCanvas rotation
-		throw new NotImplementedException("GRotate not yet implemented. Planned for Phase 3.");
+		// a is the rotation angle in degrees (0–360)
+		g.RotateDegrees((float)a, x, y);
 	}
 
 	public void GDrawGWithRotate(GraphicsImage srcGra, Int64 a, int x, int y)
 	{
 		if (g == null || srcGra == null)
 			throw new NullReferenceException();
-		// Phase 3: implement SKCanvas rotation + draw
-		throw new NotImplementedException("GDrawGWithRotate not yet implemented. Planned for Phase 3.");
+		drawImgList = null;
+		SKBitmap src = srcGra.GetSKBitmap();
+		g.Save();
+		// Rotate around the given pivot point, then draw at (0,0) so the bitmap
+		// is composited into the destination with the rotation applied.
+		g.RotateDegrees((float)a, x, y);
+		using var paint = new SKPaint();
+		g.DrawBitmap(src, 0, 0, paint);
+		g.Restore();
 	}
 
 	public void GDrawLine(int fromX, int fromY, int forX, int forY)
