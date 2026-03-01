@@ -1,6 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
-    <Import Project="$(NuGetPackageRoot)skiasharp.nativeassets.android/2.88.9/buildTransitive/net6.0-android30.0/SkiaSharp.NativeAssets.Android.targets" Condition="Exists('$(NuGetPackageRoot)skiasharp.nativeassets.android/2.88.9/buildTransitive/net6.0-android30.0/SkiaSharp.NativeAssets.Android.targets')" />
-  </ImportGroup>
-</Project>
