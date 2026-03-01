@@ -214,5 +214,6 @@ Third-party components:
 | Name | Role |
 |---|---|
 | MinorShift, 妊）|дﾟ)の中の人 | Original Emuera 1.824 engine |
+| evilmask | Emuera.EM — modified Emuera files used as the base for this port |
 | Enter | EmueraEE extensions (sound, WebP, extra commands) |
 | Tsuki321 | Android port |
