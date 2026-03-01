@@ -259,6 +259,8 @@ internal static class Config
 	public static EngineFont GetFont(string theFontname, EngineFontStyle style)
 	{
 		string fn = string.IsNullOrEmpty(theFontname) ? FontName : theFontname;
+		if (string.IsNullOrEmpty(fn))
+			return default; // callers check FamilyName and set Error=true when empty
 		if (!fontDic.TryGetValue(fn, out var fontStyleDic))
 		{
 			fontStyleDic = new Dictionary<EngineFontStyle, EngineFont>();
