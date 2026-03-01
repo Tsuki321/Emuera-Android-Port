@@ -3,12 +3,15 @@ using Android.Content;
 namespace Emuera.Android.Platform;
 
 /// <summary>
-/// Writes unhandled exception details to a persistent log file in the app's internal storage.
-/// Log location: &lt;FilesDir&gt;/logs/emuera_crash.log
+/// Writes unhandled exception details to a persistent log file in both the app's internal
+/// storage and the publicly accessible external app directory.
+/// Internal:  &lt;FilesDir&gt;/logs/emuera_crash.log
+/// External:  Android/data/&lt;package&gt;/files/logs/emuera_crash.log
 /// </summary>
 public static class CrashLogger
 {
-    private static string? _logPath;
+    private static string? _internalLogPath;
+    private static string? _externalLogPath;
     private static readonly object _fileLock = new();
     private static bool _initialized = false;
 
@@ -26,9 +29,20 @@ public static class CrashLogger
                 return;
             _initialized = true;
 
-            string logDir = Path.Combine(context.FilesDir!.AbsolutePath, "logs");
-            Directory.CreateDirectory(logDir);
-            _logPath = Path.Combine(logDir, "emuera_crash.log");
+            // Internal storage (always available, requires adb to read)
+            string internalLogDir = Path.Combine(context.FilesDir!.AbsolutePath, "logs");
+            Directory.CreateDirectory(internalLogDir);
+            _internalLogPath = Path.Combine(internalLogDir, "emuera_crash.log");
+
+            // External app-specific storage: Android/data/<package>/files/logs/
+            // No runtime permission needed (app-private external dir, Android 4.4+).
+            var externalDir = context.GetExternalFilesDir(null);
+            if (externalDir != null)
+            {
+                string externalLogDir = Path.Combine(externalDir.AbsolutePath, "logs");
+                Directory.CreateDirectory(externalLogDir);
+                _externalLogPath = Path.Combine(externalLogDir, "emuera_crash.log");
+            }
         }
 
         // Register global handlers after releasing the lock so they can call LogException freely.
@@ -43,7 +57,7 @@ public static class CrashLogger
     }
 
     /// <summary>
-    /// Appends the exception details (with a UTC timestamp) to the crash log file.
+    /// Appends the exception details (with a UTC timestamp) to both crash log files.
     /// Also writes to the debug output for convenience during development.
     /// </summary>
     public static void LogException(Exception ex, string? context = null)
@@ -51,19 +65,24 @@ public static class CrashLogger
         string message = BuildEntry(ex, context);
         System.Diagnostics.Debug.WriteLine(message);
 
-        if (_logPath is null)
-            return;
-
         lock (_fileLock)
         {
-            try
-            {
-                File.AppendAllText(_logPath, message);
-            }
-            catch
-            {
-                // If we cannot write the log file there is nothing safe left to do.
-            }
+            WriteToFile(_internalLogPath, message);
+            WriteToFile(_externalLogPath, message);
+        }
+    }
+
+    private static void WriteToFile(string? path, string message)
+    {
+        if (path is null)
+            return;
+        try
+        {
+            File.AppendAllText(path, message);
+        }
+        catch
+        {
+            // If we cannot write the log file there is nothing safe left to do.
         }
     }
 
