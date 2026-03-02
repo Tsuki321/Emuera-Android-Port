@@ -403,7 +403,8 @@ internal sealed class ErbLoader
 					if (nextLine is InvalidLine)
 					{
 						noError = false;
-						ParserMediator.Warn(nextLine.ErrMes, position, 2);
+						if (Config.FunctionNotFoundWarning != DisplayWarningFlag.IGNORE)
+							ParserMediator.Warn(nextLine.ErrMes, position, 2);
 					}
 				}
 				else
@@ -424,7 +425,8 @@ internal sealed class ErbLoader
 					if (nextLine is InvalidLine)
 					{
 						noError = false;
-						ParserMediator.Warn(nextLine.ErrMes, position, 2);
+						if (Config.FunctionNotFoundWarning != DisplayWarningFlag.IGNORE)
+							ParserMediator.Warn(nextLine.ErrMes, position, 2);
 					}
 				}
 				if (lastLabelLine == null)
