@@ -46,7 +46,6 @@ public class GameSurfaceView : View
 
     // Cached pixel buffer to avoid per-frame byte[] allocation when blitting to Android.
     private byte[]? _pixelBuffer;
-    private Java.Nio.ByteBuffer? _pixelByteBuffer;
 
     public GameSurfaceView(Context context) : base(context)
     {
@@ -68,8 +67,6 @@ public class GameSurfaceView : View
         _skBitmap?.Dispose();
         _androidBitmap?.Recycle();
         _androidBitmap?.Dispose();
-        _pixelByteBuffer?.Dispose();
-        _pixelByteBuffer = null;
         _pixelBuffer = null;
         if (w > 0 && h > 0)
         {
@@ -79,7 +76,6 @@ public class GameSurfaceView : View
             _androidBitmap = global::Android.Graphics.Bitmap.CreateBitmap(w, h, global::Android.Graphics.Bitmap.Config.Argb8888!);
             // Pre-allocate pixel buffer so OnDraw doesn't allocate per frame.
             _pixelBuffer = new byte[w * h * 4];
-            _pixelByteBuffer = Java.Nio.ByteBuffer.Wrap(_pixelBuffer);
         }
     }
 
@@ -92,13 +88,16 @@ public class GameSurfaceView : View
         _skCanvas.Clear(SKColors.Black);
         DrawConsole(_skCanvas, Width, Height);
 
-        // Copy SkiaSharp pixels into the Android Bitmap using a cached buffer to avoid
-        // allocating a new byte[] on every frame (reduces GC pressure).
-        if (_pixelBuffer != null && _pixelByteBuffer != null)
+        // Copy SkiaSharp pixels into the Android Bitmap.
+        // IMPORTANT: Java.Nio.ByteBuffer.Wrap(byte[]) copies the C# array into a separate
+        // Java-managed array at construction time, so the ByteBuffer must be created fresh
+        // each frame from the updated _pixelBuffer — a pre-cached wrapper would always
+        // contain the initial zeros, causing the screen to remain black on every frame.
+        if (_pixelBuffer != null)
         {
             Marshal.Copy(_skBitmap.GetPixels(), _pixelBuffer, 0, _pixelBuffer.Length);
-            _pixelByteBuffer.Rewind();
-            _androidBitmap.CopyPixelsFromBuffer(_pixelByteBuffer);
+            using var byteBuffer = Java.Nio.ByteBuffer.Wrap(_pixelBuffer)!;
+            _androidBitmap.CopyPixelsFromBuffer(byteBuffer);
         }
         else
         {
@@ -482,7 +481,6 @@ public class GameSurfaceView : View
             _skBitmap?.Dispose();
             _androidBitmap?.Recycle();
             _androidBitmap?.Dispose();
-            _pixelByteBuffer?.Dispose();
             _cjkFallback?.Dispose();
             foreach (var tf in _typefaceCache.Values)
                 tf?.Dispose();
