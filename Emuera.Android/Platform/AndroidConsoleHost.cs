@@ -51,7 +51,7 @@ public class AndroidConsoleHost : IConsoleHost
 
     public void RequestRedraw()
     {
-        _view.PostInvalidate();
+        _view.MarkDirty();
     }
 
     public void BeginWaitInput()

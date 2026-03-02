@@ -1,11 +1,14 @@
 using Android.Content;
 using Android.Graphics;
+using Android.OS;
 using Android.Views;
 using Android.Views.InputMethods;
+using Android.Widget;
 using SkiaSharp;
 using MinorShift.Emuera;
 using MinorShift.Emuera.GameView;
 using MinorShift.Emuera.Platform;
+using System.Drawing;
 using System.Runtime.InteropServices;
 
 namespace Emuera.Android.Views;
@@ -14,6 +17,7 @@ namespace Emuera.Android.Views;
 /// Custom Android View that renders the ERA console display lines using SkiaSharp.
 /// Touch events are translated to button clicks and scroll gestures.
 /// Renders by drawing to an off-screen SKBitmap then blitting to Android Canvas.
+/// Supports kinetic (fling) scrolling and right-click mode simulation.
 /// </summary>
 public class GameSurfaceView : View
 {
@@ -24,6 +28,17 @@ public class GameSurfaceView : View
     private float _totalContentHeight = 0f;
     private float _lastTouchY = 0f;
     private bool _isScrolling = false;
+
+    // Kinetic (fling) scrolling
+    private readonly OverScroller _overScroller;
+    private VelocityTracker? _velocityTracker;
+    private readonly Handler _flingHandler;
+    private readonly Java.Lang.Runnable _flingRunnable;
+    private float _flingScrollBase = 0f;   // _scrollOffsetY when fling started
+
+    // Scroll throttle: limit PostInvalidate rate during continuous scroll to ~60 fps
+    private long _lastScrollInvalidateMs = 0L;
+    private const long ScrollInvalidateIntervalMs = 16L;
 
     // Button hit regions (rebuilt each paint pass)
     private readonly List<(SKRect bounds, ConsoleButtonString button)> _buttonRects = [];
@@ -47,10 +62,49 @@ public class GameSurfaceView : View
     // Cached pixel buffer to avoid per-frame byte[] allocation when blitting to Android.
     private byte[]? _pixelBuffer;
 
+    // Dirty flag: set to true whenever the SkiaSharp bitmap needs to be redrawn.
+    // When false, OnDraw skips the expensive DrawConsole + Marshal.Copy pass and
+    // re-blits the already-rendered pixel buffer, saving CPU on static frames.
+    private bool _skBitmapDirty = true;
+
+    // Right-click mode: when true, the next tap fires a right-click instead of left-click.
+    private bool _rightClickMode = false;
+
+    // Mouse button constants matching System.Windows.Forms.MouseButtons values expected by the engine.
+    private const int MouseButtonLeft  = 0x100000; // MouseButtons.Left
+    private const int MouseButtonRight = 0x200000; // MouseButtons.Right
+
     public GameSurfaceView(Context context) : base(context)
     {
         _gestureDetector = new GestureDetector(context, new LongPressListener(this));
         LongClickable = true;
+
+        _overScroller = new OverScroller(context);
+        _flingHandler = new Handler(Looper.MainLooper!);
+        _flingRunnable = new Java.Lang.Runnable(TickFling);
+    }
+
+    /// <summary>
+    /// Returns <c>true</c> when right-click mode is active.
+    /// The next tap will fire a right-click; mode resets automatically after the tap.
+    /// </summary>
+    public bool RightClickMode => _rightClickMode;
+
+    /// <summary>Toggles right-click mode and returns the new state.</summary>
+    public bool ToggleRightClickMode()
+    {
+        _rightClickMode = !_rightClickMode;
+        return _rightClickMode;
+    }
+
+    /// <summary>
+    /// Marks the SkiaSharp bitmap as needing a full redraw and schedules a view invalidation.
+    /// Call this whenever the engine content has changed (new text lines, selection change, etc.).
+    /// </summary>
+    public void MarkDirty()
+    {
+        _skBitmapDirty = true;
+        PostInvalidate();
     }
 
     /// <summary>Called after construction to break the circular dependency with EmueraConsole.</summary>
@@ -76,6 +130,8 @@ public class GameSurfaceView : View
             _androidBitmap = global::Android.Graphics.Bitmap.CreateBitmap(w, h, global::Android.Graphics.Bitmap.Config.Argb8888!);
             // Pre-allocate pixel buffer so OnDraw doesn't allocate per frame.
             _pixelBuffer = new byte[w * h * 4];
+            // New bitmap always needs a full render.
+            _skBitmapDirty = true;
         }
     }
 
@@ -84,9 +140,18 @@ public class GameSurfaceView : View
         base.OnDraw(canvas!);
         if (canvas == null || _skBitmap == null || _skCanvas == null || _androidBitmap == null) return;
 
-        // Render ERA console into SkiaSharp bitmap
-        _skCanvas.Clear(SKColors.Black);
-        DrawConsole(_skCanvas, Width, Height);
+        // Only re-render the SkiaSharp bitmap when content or scroll position changed.
+        // Skipping DrawConsole + Marshal.Copy on clean frames saves significant CPU time,
+        // especially in input-wait state where the screen is static.
+        if (_skBitmapDirty)
+        {
+            _skBitmapDirty = false;
+            _skCanvas.Clear(SKColors.Black);
+            DrawConsole(_skCanvas, Width, Height);
+
+            if (_pixelBuffer != null)
+                Marshal.Copy(_skBitmap.GetPixels(), _pixelBuffer, 0, _pixelBuffer.Length);
+        }
 
         // Copy SkiaSharp pixels into the Android Bitmap.
         // IMPORTANT: Java.Nio.ByteBuffer.Wrap(byte[]) copies the C# array into a separate
@@ -95,7 +160,6 @@ public class GameSurfaceView : View
         // contain the initial zeros, causing the screen to remain black on every frame.
         if (_pixelBuffer != null)
         {
-            Marshal.Copy(_skBitmap.GetPixels(), _pixelBuffer, 0, _pixelBuffer.Length);
             using var byteBuffer = Java.Nio.ByteBuffer.Wrap(_pixelBuffer)!;
             _androidBitmap.CopyPixelsFromBuffer(byteBuffer);
         }
@@ -370,35 +434,101 @@ public class GameSurfaceView : View
         // Let the gesture detector handle long-press (copy to clipboard).
         _gestureDetector.OnTouchEvent(e);
 
+        // Track velocity for kinetic fling on ACTION_UP.
+        if (_velocityTracker == null)
+            _velocityTracker = VelocityTracker.Obtain();
+        _velocityTracker.AddMovement(e);
+
         float x = e.GetX();
         float y = e.GetY();
 
         switch (e.Action)
         {
             case MotionEventActions.Down:
+                // Stop any in-progress fling so the user can grab the content.
+                _overScroller.ForceFinished(true);
+                _flingHandler.RemoveCallbacks(_flingRunnable);
+                _velocityTracker.Clear();
+                _velocityTracker.AddMovement(e);
                 _lastTouchY = y;
                 _isScrolling = false;
                 return true;
 
             case MotionEventActions.Move:
                 float dy = y - _lastTouchY;
-                if (Math.Abs(dy) > 8)
+                if (_isScrolling || Math.Abs(dy) > 8)
                 {
                     _isScrolling = true;
                     _scrollOffsetY = Math.Clamp(_scrollOffsetY - dy,
                         0f, Math.Max(0f, _totalContentHeight - Height));
                     _lastTouchY = y;
-                    PostInvalidate();
+
+                    // Throttle PostInvalidate to avoid flooding the render queue.
+                    long now = Environment.TickCount64;
+                    if (now - _lastScrollInvalidateMs >= ScrollInvalidateIntervalMs)
+                    {
+                        _lastScrollInvalidateMs = now;
+                        _skBitmapDirty = true;
+                        PostInvalidate();
+                    }
                 }
                 return true;
 
             case MotionEventActions.Up:
-                if (!_isScrolling)
+            case MotionEventActions.Cancel:
+                if (!_isScrolling && e.Action == MotionEventActions.Up)
+                {
                     HandleTap(x, y);
+                }
+                else if (_isScrolling)
+                {
+                    // Compute fling velocity and start kinetic scroll.
+                    _velocityTracker?.ComputeCurrentVelocity(1000);
+                    float vy = _velocityTracker?.GetYVelocity(0) ?? 0f;
+                    if (Math.Abs(vy) > 50)
+                    {
+                        float maxScroll = Math.Max(0f, _totalContentHeight - Height);
+                        _flingScrollBase = _scrollOffsetY;
+                        _overScroller.ForceFinished(true);
+                        // Fling: note OverScroller uses positive Y = downward; our scroll
+                        // offset increases as the user scrolls up, so negate vy.
+                        _overScroller.Fling(
+                            startX: 0, startY: (int)_scrollOffsetY,
+                            velocityX: 0, velocityY: -(int)vy,
+                            minX: 0, maxX: 0,
+                            minY: 0, maxY: (int)maxScroll);
+                        _flingHandler.Post(_flingRunnable);
+                    }
+                }
+                _velocityTracker?.Recycle();
+                _velocityTracker = null;
                 return true;
         }
 
         return base.OnTouchEvent(e);
+    }
+
+    /// <summary>
+    /// Called each frame during a fling animation to advance the scroll position.
+    /// Reschedules itself until the fling decelerates to a stop.
+    /// </summary>
+    private void TickFling()
+    {
+        if (!_overScroller.ComputeScrollOffset()) return;
+
+        float newScroll = Math.Clamp(
+            _overScroller.CurrY,
+            0f, Math.Max(0f, _totalContentHeight - Height));
+
+        if (Math.Abs(newScroll - _scrollOffsetY) > 0.5f)
+        {
+            _scrollOffsetY = newScroll;
+            _skBitmapDirty = true;
+            PostInvalidate();
+        }
+
+        if (!_overScroller.IsFinished)
+            _flingHandler.Post(_flingRunnable);
     }
 
     /// <summary>
@@ -455,6 +585,20 @@ public class GameSurfaceView : View
     private void HandleTap(float x, float y)
     {
         if (_console == null) return;
+
+        bool isRightClick = _rightClickMode;
+        // Auto-reset right-click mode so each tap requires an explicit re-toggle.
+        _rightClickMode = false;
+
+        if (isRightClick)
+        {
+            // Send a right-click mouse event. The engine handles this for INPUTMOUSEKEY
+            // (WAITPRIM) states. Games that support MOUSEB/right-click will respond.
+            _console.MouseDown(new System.Drawing.Point((int)x, (int)y), MouseButtonRight);
+            return;
+        }
+
+        // Left-click: check text button hit regions first.
         foreach (var (bounds, button) in _buttonRects)
         {
             if (bounds.Contains(x, y))
@@ -463,12 +607,18 @@ public class GameSurfaceView : View
                 return;
             }
         }
+
+        // No text button hit: send a raw left-click for INPUTMOUSEKEY (WAITPRIM) scenarios.
+        _console.MouseDown(new System.Drawing.Point((int)x, (int)y), MouseButtonLeft);
     }
 
     /// <summary>Called by AndroidConsoleHost.ScrollToBottom to reset scroll offset.</summary>
     public void ScrollToBottom()
     {
+        _overScroller.ForceFinished(true);
+        _flingHandler.RemoveCallbacks(_flingRunnable);
         _scrollOffsetY = 0f;
+        _skBitmapDirty = true;
         PostInvalidate();
     }
 
@@ -476,6 +626,10 @@ public class GameSurfaceView : View
     {
         if (disposing)
         {
+            _flingHandler.RemoveCallbacks(_flingRunnable);
+            _velocityTracker?.Recycle();
+            _velocityTracker = null;
+            _overScroller.Dispose();
             _textPaint.Dispose();
             _skCanvas?.Dispose();
             _skBitmap?.Dispose();

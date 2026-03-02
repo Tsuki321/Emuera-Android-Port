@@ -68,6 +68,14 @@ public class GameActivity : Activity
         var inputBar = new InputBarView(this);
         // Wire the keyboard-show action so BeginWaitInput() opens the soft keyboard.
         host.ShowKeyboardAction = () => inputBar.RequestFocusForInput();
+        // Wire right-click toggle: pressing "R" toggles mode on the surface view
+        // and updates the button's visual to reflect the new state.
+        inputBar.ToggleRightClickModeFunc = () =>
+        {
+            bool active = surfaceView.ToggleRightClickMode();
+            inputBar.UpdateRightClickButtonVisual(active);
+            return active;
+        };
         var inputParams = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MatchParent,
             ViewGroup.LayoutParams.WrapContent);
