@@ -34,6 +34,10 @@ public class GameActivity : Activity
             return;
         }
 
+        // Register the game root with CrashLogger so that all subsequent exceptions
+        // (including unhandled ones) are also logged to the game folder for easy access.
+        CrashLogger.SetGameRootPath(gameRoot);
+
         // Register additional encodings (e.g. EUC-JP / code page 20932) which are
         // not available by default on Android/.NET.
         System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
@@ -84,11 +88,30 @@ public class GameActivity : Activity
             catch (Exception ex)
             {
                 CrashLogger.LogException(ex, "Engine thread");
+                RunOnUiThread(() => ShowEngineCrashDialog(ex, gameRoot));
             }
         });
         _engineThread.IsBackground = true;
         _engineThread.Name = "EmueraEngine";
         _engineThread.Start();
+    }
+
+    /// <summary>
+    /// Displays an error dialog showing the engine crash details so the user
+    /// can see what went wrong even when no text was printed to the console.
+    /// </summary>
+    private void ShowEngineCrashDialog(Exception ex, string gameRoot)
+    {
+        if (IsFinishing || IsDestroyed) return;
+        string logHint = !string.IsNullOrEmpty(gameRoot)
+            ? $"\n\nA crash log has been saved to:\n{gameRoot}/emuera_crash.log"
+            : "\n\nA crash log has been saved to app storage.";
+        new AlertDialog.Builder(this)!
+            .SetTitle("Engine Error")!
+            .SetMessage($"The game engine encountered an error:\n\n{ex.GetType().Name}: {ex.Message}{logHint}")!
+            .SetPositiveButton("OK", (_, _) => Finish())!
+            .SetCancelable(false)!
+            .Show();
     }
 
     protected override void OnDestroy()

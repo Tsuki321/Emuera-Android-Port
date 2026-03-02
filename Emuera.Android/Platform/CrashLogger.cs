@@ -3,15 +3,18 @@ using Android.Content;
 namespace Emuera.Android.Platform;
 
 /// <summary>
-/// Writes unhandled exception details to a persistent log file in both the app's internal
-/// storage and the publicly accessible external app directory.
-/// Internal:  &lt;FilesDir&gt;/logs/emuera_crash.log
-/// External:  Android/data/&lt;package&gt;/files/logs/emuera_crash.log
+/// Writes unhandled exception details to a persistent log file in the app's internal
+/// storage, the publicly accessible external app directory, and optionally the game
+/// root folder so users can easily locate the log alongside their game files.
+/// Internal:   &lt;FilesDir&gt;/logs/emuera_crash.log
+/// External:   Android/data/&lt;package&gt;/files/logs/emuera_crash.log
+/// Game root:  &lt;gameRoot&gt;/emuera_crash.log  (set via <see cref="SetGameRootPath"/>)
 /// </summary>
 public static class CrashLogger
 {
     private static string? _internalLogPath;
     private static string? _externalLogPath;
+    private static string? _gameRootLogPath;
     private static readonly object _fileLock = new();
     private static bool _initialized = false;
 
@@ -54,10 +57,34 @@ public static class CrashLogger
             LogException(e.Exception, "AndroidEnvironment.UnhandledExceptionRaiser");
             e.Handled = false;  // let the default handler terminate the process
         };
+
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            LogException(e.Exception, "TaskScheduler.UnobservedTaskException");
+            e.SetObserved();  // prevent the process from being terminated
+        };
     }
 
     /// <summary>
-    /// Appends the exception details (with a UTC timestamp) to both crash log files.
+    /// Sets the game root directory so that crash logs are also written there,
+    /// making them easy for users to find alongside their game files.
+    /// Call this once the game root path is known (e.g. in GameActivity after
+    /// the game root is received from the intent).
+    /// </summary>
+    public static void SetGameRootPath(string gameRootDirectory)
+    {
+        if (string.IsNullOrEmpty(gameRootDirectory))
+            return;
+        lock (_fileLock)
+        {
+            // Write directly to the game root folder so users can find the log easily.
+            _gameRootLogPath = Path.Combine(gameRootDirectory, "emuera_crash.log");
+        }
+    }
+
+    /// <summary>
+    /// Appends the exception details (with a UTC timestamp) to all crash log files
+    /// (internal storage, external app storage, and game root folder if set).
     /// Also writes to the debug output for convenience during development.
     /// </summary>
     public static void LogException(Exception ex, string? context = null)
@@ -69,6 +96,7 @@ public static class CrashLogger
         {
             WriteToFile(_internalLogPath, message);
             WriteToFile(_externalLogPath, message);
+            WriteToFile(_gameRootLogPath, message);
         }
     }
 
