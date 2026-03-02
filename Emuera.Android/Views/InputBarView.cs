@@ -9,14 +9,22 @@ namespace Emuera.Android.Views;
 
 /// <summary>
 /// Bottom input bar for the ERA game console.
-/// Contains an EditText for typed input, an OK submit button,
-/// and quick number buttons (0–9) for ERA INPUT commands.
+/// Contains an EditText for typed input, an OK submit button, a right-click
+/// mode toggle button, and quick number buttons (0–9) for ERA INPUT commands.
 /// </summary>
 public class InputBarView : LinearLayout
 {
     private readonly EditText _editText;
     private readonly LinearLayout _numRow;
+    private readonly Button _rightClickBtn;
     private EmueraConsole? _console;
+
+    /// <summary>
+    /// Optional delegate invoked when the right-click toggle button is pressed.
+    /// Should toggle right-click mode on the <see cref="GameSurfaceView"/> and
+    /// return the new active state so the button can update its visual.
+    /// </summary>
+    public Func<bool>? ToggleRightClickModeFunc { get; set; }
 
     public InputBarView(Context context) : base(context)
     {
@@ -60,6 +68,18 @@ public class InputBarView : LinearLayout
             DpToPx(context, 44));
         textRow.AddView(submitBtn, submitParams);
 
+        // ── Right-click mode toggle button ─────────────────────────────────
+        _rightClickBtn = new Button(context) { Text = "R" };
+        _rightClickBtn.SetTextColor(Color.ParseColor("#CCB8EC"));
+        _rightClickBtn.SetBackgroundResource(Resource.Drawable.bg_num_btn);
+        _rightClickBtn.StateListAnimator = null;
+        _rightClickBtn.SetTypeface(null, global::Android.Graphics.TypefaceStyle.Bold);
+        var rClickParams = new LayoutParams(
+            DpToPx(context, 44),
+            DpToPx(context, 44));
+        rClickParams.MarginStart = DpToPx(context, 6);
+        textRow.AddView(_rightClickBtn, rClickParams);
+
         AddView(textRow, new LayoutParams(LayoutParams.MatchParent, LayoutParams.WrapContent));
 
         // ── Number buttons row (0–9) ───────────────────────────────────────
@@ -97,6 +117,24 @@ public class InputBarView : LinearLayout
                 args.Handled = true;
             }
         };
+
+        // ── Right-click toggle ─────────────────────────────────────────────
+        _rightClickBtn.Click += (_, _) =>
+        {
+            bool active = ToggleRightClickModeFunc?.Invoke() ?? false;
+            UpdateRightClickButtonVisual(active);
+        };
+    }
+
+    /// <summary>
+    /// Updates the right-click toggle button's visual to reflect the current mode.
+    /// Active (right-click mode on) is highlighted in orange; inactive is default.
+    /// </summary>
+    public void UpdateRightClickButtonVisual(bool active)
+    {
+        _rightClickBtn.SetTextColor(active
+            ? Color.ParseColor("#FF8C00")   // orange when right-click mode is on
+            : Color.ParseColor("#CCB8EC")); // default purple-ish
     }
 
     /// <summary>Attach the engine console so that submit calls reach the engine.</summary>
