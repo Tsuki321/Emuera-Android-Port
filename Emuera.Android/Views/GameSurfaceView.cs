@@ -437,6 +437,7 @@ public class GameSurfaceView : View
         // Track velocity for kinetic fling on ACTION_UP.
         if (_velocityTracker == null)
             _velocityTracker = VelocityTracker.Obtain();
+        if (_velocityTracker == null) return base.OnTouchEvent(e);
         _velocityTracker.AddMovement(e);
 
         float x = e.GetX();
@@ -464,7 +465,7 @@ public class GameSurfaceView : View
                     _lastTouchY = y;
 
                     // Throttle PostInvalidate to avoid flooding the render queue.
-                    long now = Environment.TickCount64;
+                    long now = System.Environment.TickCount64;
                     if (now - _lastScrollInvalidateMs >= ScrollInvalidateIntervalMs)
                     {
                         _lastScrollInvalidateMs = now;
