@@ -36,9 +36,9 @@ static class AppContents
 	//}
 	static public GraphicsImage GetGraphics(int i)
 	{
-		if (gList.ContainsKey(i))
-			return gList[i];
-		GraphicsImage g = new(i);
+		if (gList.TryGetValue(i, out var g))
+			return g;
+		g = new GraphicsImage(i);
 		gList[i] = g;
 		return g;
 	}
@@ -48,9 +48,8 @@ static class AppContents
 		if (name == null)
 			return null;
 		name = name.ToUpper();
-		if (!imageDictionary.ContainsKey(name))
-			return null;
-		return imageDictionary[name];
+		imageDictionary.TryGetValue(name, out var sprite);
+		return sprite;
 	}
 
 	static public void SpriteDispose(string name)
@@ -58,10 +57,11 @@ static class AppContents
 		if (name == null)
 			return;
 		name = name.ToUpper();
-		if (!imageDictionary.ContainsKey(name))
-			return;
-		imageDictionary[name].Dispose();
-		imageDictionary.Remove(name);
+		if (imageDictionary.TryGetValue(name, out var sprite))
+		{
+			sprite.Dispose();
+			imageDictionary.Remove(name);
+		}
 	}
 
 	static public long SpriteDisposeAll(bool delCsvImage)
@@ -70,12 +70,20 @@ static class AppContents
 		int csprites = resourceImageDictionary.Count;
 		if (delCsvImage)
 		{
+			foreach (var sprite in imageDictionary.Values)
+				sprite.Dispose();
 			imageDictionary.Clear();
 			resourceImageDictionary.Clear();
 			return sprites;
 		}
 		else
 		{
+			// Dispose only dynamically-created sprites (those not from CSV resources).
+			foreach (var kvp in imageDictionary)
+			{
+				if (!resourceImageDictionary.ContainsKey(kvp.Key))
+					kvp.Value.Dispose();
+			}
 			imageDictionary = new Dictionary<string, ASprite>(resourceImageDictionary);
 			return sprites - csprites;
 		}
@@ -107,6 +115,16 @@ static class AppContents
 		{
 			//resourcesフォルダ内の全てのcsvファイルを探索する
 			string[] csvFiles = Directory.GetFiles(Program.ContentDir, "*.csv", SearchOption.AllDirectories);
+			// Reload cleanup must happen once before processing any files, not once per file.
+			if (reload)
+			{
+				foreach (string key in resourceImageDictionary.Keys)
+					imageDictionary.Remove(key);
+				resourceImageDictionary.Clear();
+				foreach (var img in resourceDic.Values)
+					img.Dispose();
+				resourceDic.Clear();
+			}
 			foreach (var filepath in csvFiles)
 			{
 				//".csv"のみを拾うように
@@ -118,17 +136,6 @@ static class AppContents
 				string filename = Path.GetFileName(filepath);
 				string[] lines = File.ReadAllLines(filepath, EncodingHandler.DetectEncoding(filepath));
 				int lineNo = 0;
-				if (reload)
-				{
-					foreach (string key in resourceImageDictionary.Keys)
-					{
-						imageDictionary.Remove(key);
-					}
-					resourceImageDictionary.Clear();
-					foreach (var img in resourceDic.Values)
-						img.Dispose();
-					resourceDic.Clear();
-				}
 				foreach (var line in lines)
 				{
 					lineNo++;
@@ -145,13 +152,10 @@ static class AppContents
 					{
 						//アニメスプライト宣言ならcurrentAnime上書きしてフレーム追加モードにする。そうでないならnull
 						currentAnime = item as SpriteAnime;
-						if (reload && resourceImageDictionary.ContainsKey(item.Name))
-							resourceImageDictionary.Remove(item.Name);
-						if (!resourceImageDictionary.ContainsKey(item.Name))
-						{
-							resourceImageDictionary.Add(item.Name, item);
-						}
-						else
+						// TryAdd correctly handles duplicates: the cleanup above ensures resourceImageDictionary
+						// is empty at the start of the loop (both on first load and reload), so the first
+						// occurrence of each name succeeds and subsequent duplicates are warned.
+						if (!resourceImageDictionary.TryAdd(item.Name, item))
 						{
 							ParserMediator.Warn(string.Format(trerror.SpriteNameAlreadyUsed.Text, item.Name), sp, 0);
 							item.Dispose();
@@ -252,7 +256,7 @@ static class AppContents
 
 
 		//親画像のロードConstImage
-		if (!resourceDic.ContainsKey(parentName))
+		if (!resourceDic.TryGetValue(parentName, out AContentFile parentContent))
 		{
 			string filepath = parentName;
 			if (!File.Exists(filepath))
@@ -285,8 +289,9 @@ static class AppContents
 			}
 			resourceDic.Add(parentName, img);
 			img.Dispose();
+			parentContent = img;
 		}
-		if (!(resourceDic[parentName] is ConstImage parentImage) || !parentImage.IsCreated)
+		if (!(parentContent is ConstImage parentImage) || !parentImage.IsCreated)
 		{
 			ParserMediator.Warn(string.Format(trerror.SpriteCreateFromFailedResource.Text, arg2), sp, 1);
 			return null;

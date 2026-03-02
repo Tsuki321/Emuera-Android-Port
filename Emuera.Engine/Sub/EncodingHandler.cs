@@ -14,14 +14,17 @@ public static class EncodingHandler
 	{
 		try
 		{
+			// 'using var' ensures sr is disposed on every code path.
 			using var sr = new StreamReader(filePath, UTF8Encoding);
 			sr.Peek();
 			if (!UTF8Encoding.Equals(sr.CurrentEncoding))
 			{
 				return sr.CurrentEncoding;
 			}
-			sr.ReadToEnd();
-			sr.Dispose();
+			// Read a bounded sample to detect invalid UTF-8 bytes without reading the entire file.
+			// This avoids double-reading large script files while still catching Shift-JIS content.
+			char[] sample = new char[4096];
+			sr.Read(sample, 0, sample.Length);
 			return UTF8Encoding;
 		}
 		catch
@@ -35,6 +38,7 @@ public static class EncodingHandler
 		var pos = stream.Position;
 		try
 		{
+			// leaveOpen:true keeps the underlying stream open after the StreamReader is disposed.
 			using var sr = new StreamReader(stream, UTF8Encoding, true, -1, true);
 			sr.Peek();
 			if (!UTF8Encoding.Equals(sr.CurrentEncoding))
@@ -42,8 +46,9 @@ public static class EncodingHandler
 				stream.Seek(pos, SeekOrigin.Begin);
 				return sr.CurrentEncoding;
 			}
-			sr.ReadToEnd();
-			sr.Dispose();
+			// Read a bounded sample to detect invalid UTF-8 bytes without reading the entire stream.
+			char[] sample = new char[4096];
+			sr.Read(sample, 0, sample.Length);
 			stream.Seek(pos, SeekOrigin.Begin);
 			return UTF8Encoding;
 		}

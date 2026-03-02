@@ -6,6 +6,7 @@ using SkiaSharp;
 using MinorShift.Emuera;
 using MinorShift.Emuera.GameView;
 using MinorShift.Emuera.Platform;
+using System.Runtime.InteropServices;
 
 namespace Emuera.Android.Views;
 
@@ -43,6 +44,10 @@ public class GameSurfaceView : View
     private SKCanvas? _skCanvas;
     private global::Android.Graphics.Bitmap? _androidBitmap;
 
+    // Cached pixel buffer to avoid per-frame byte[] allocation when blitting to Android.
+    private byte[]? _pixelBuffer;
+    private Java.Nio.ByteBuffer? _pixelByteBuffer;
+
     public GameSurfaceView(Context context) : base(context)
     {
         _gestureDetector = new GestureDetector(context, new LongPressListener(this));
@@ -63,12 +68,18 @@ public class GameSurfaceView : View
         _skBitmap?.Dispose();
         _androidBitmap?.Recycle();
         _androidBitmap?.Dispose();
+        _pixelByteBuffer?.Dispose();
+        _pixelByteBuffer = null;
+        _pixelBuffer = null;
         if (w > 0 && h > 0)
         {
             // BGRA8888 matches Android's ARGB_8888 byte order on little-endian ARM
             _skBitmap = new SKBitmap(w, h, SKColorType.Bgra8888, SKAlphaType.Premul);
             _skCanvas = new SKCanvas(_skBitmap);
             _androidBitmap = global::Android.Graphics.Bitmap.CreateBitmap(w, h, global::Android.Graphics.Bitmap.Config.Argb8888!);
+            // Pre-allocate pixel buffer so OnDraw doesn't allocate per frame.
+            _pixelBuffer = new byte[w * h * 4];
+            _pixelByteBuffer = Java.Nio.ByteBuffer.Wrap(_pixelBuffer);
         }
     }
 
@@ -81,9 +92,31 @@ public class GameSurfaceView : View
         _skCanvas.Clear(SKColors.Black);
         DrawConsole(_skCanvas, Width, Height);
 
-        // Copy SkiaSharp pixels into the Android Bitmap
-        using var byteBuffer = Java.Nio.ByteBuffer.Wrap(_skBitmap.Bytes)!;
-        _androidBitmap.CopyPixelsFromBuffer(byteBuffer);
+        // Copy SkiaSharp pixels into the Android Bitmap using a cached buffer to avoid
+        // allocating a new byte[] on every frame (reduces GC pressure).
+        if (_pixelBuffer != null && _pixelByteBuffer != null)
+        {
+            var gcHandle = GCHandle.Alloc(_pixelBuffer, GCHandleType.Pinned);
+            try
+            {
+                _skBitmap.ReadPixels(
+                    new SKImageInfo(_skBitmap.Width, _skBitmap.Height, SKColorType.Bgra8888),
+                    gcHandle.AddrOfPinnedObject(),
+                    _skBitmap.RowBytes);
+            }
+            finally
+            {
+                gcHandle.Free();
+            }
+            _pixelByteBuffer.Rewind();
+            _androidBitmap.CopyPixelsFromBuffer(_pixelByteBuffer);
+        }
+        else
+        {
+            // Fallback (should not normally be reached after OnSizeChanged).
+            using var byteBuffer = Java.Nio.ByteBuffer.Wrap(_skBitmap.Bytes)!;
+            _androidBitmap.CopyPixelsFromBuffer(byteBuffer);
+        }
 
         canvas.DrawBitmap(_androidBitmap, 0, 0, null);
     }
@@ -460,6 +493,7 @@ public class GameSurfaceView : View
             _skBitmap?.Dispose();
             _androidBitmap?.Recycle();
             _androidBitmap?.Dispose();
+            _pixelByteBuffer?.Dispose();
             _cjkFallback?.Dispose();
             foreach (var tf in _typefaceCache.Values)
                 tf?.Dispose();
