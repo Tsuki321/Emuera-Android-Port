@@ -2816,6 +2816,54 @@ internal static partial class FunctionMethodCreator
 	}
 
 	/// <summary>
+	/// HSV_TO_RGB(h, s, v) → packed RGB integer.
+	/// h: hue in degrees [0, 360), s: saturation [0, 100], v: value/brightness [0, 100].
+	/// </summary>
+	private sealed class HsvToRgbMethod : FunctionMethod
+	{
+		public HsvToRgbMethod()
+		{
+			ReturnType = typeof(Int64);
+			argumentTypeArray = new Type[] { typeof(long), typeof(long), typeof(long) };
+			CanRestructure = true;
+		}
+		public override long GetIntValue(ExpressionMediator exm, IOperandTerm[] arguments)
+		{
+			double h = arguments[0].GetIntValue(exm);
+			double s = arguments[1].GetIntValue(exm) / 100.0;
+			double v = arguments[2].GetIntValue(exm) / 100.0;
+			double r, g, b;
+			if (s == 0.0)
+			{
+				r = g = b = v;
+			}
+			else
+			{
+				h = ((h % 360.0) + 360.0) % 360.0;
+				double sector = h / 60.0;
+				int i = (int)Math.Floor(sector);
+				double f = sector - i;
+				double p = v * (1.0 - s);
+				double q = v * (1.0 - s * f);
+				double t = v * (1.0 - s * (1.0 - f));
+				switch (i)
+				{
+					case 0: r = v; g = t; b = p; break;
+					case 1: r = q; g = v; b = p; break;
+					case 2: r = p; g = v; b = t; break;
+					case 3: r = p; g = q; b = v; break;
+					case 4: r = t; g = p; b = v; break;
+					default: r = v; g = p; b = q; break;
+				}
+			}
+			long ri = Math.Clamp((long)Math.Round(r * 255.0), 0, 255);
+			long gi = Math.Clamp((long)Math.Round(g * 255.0), 0, 255);
+			long bi = Math.Clamp((long)Math.Round(b * 255.0), 0, 255);
+			return (ri << 16) | (gi << 8) | bi;
+		}
+	}
+
+	/// <summary>
 	/// 1810 作ったけど保留
 	/// </summary>
 	// 使われてない

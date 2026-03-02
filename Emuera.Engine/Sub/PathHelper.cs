@@ -17,6 +17,52 @@ internal static class PathHelper
 		RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD);
 
 	/// <summary>
+	/// On case-sensitive file systems, resolves each component of
+	/// <paramref name="path"/> case-insensitively so that a game whose
+	/// directories are stored as "ERB/" or "Csv/" is found even though
+	/// the engine requests "erb/" or "csv/".
+	/// Returns the original path unchanged when the platform is case-insensitive
+	/// or when no case-insensitive match exists.
+	/// </summary>
+	public static string ResolveDirectoryCaseInsensitive(string path)
+	{
+		if (string.IsNullOrEmpty(path) || !_isCaseSensitive)
+			return path;
+		if (Directory.Exists(path))
+			return path;
+
+		// Normalise separators and strip a trailing slash so GetFileName works.
+		string normalised = path.Replace('\\', '/').TrimEnd('/');
+		string parent = Path.GetDirectoryName(normalised);
+		string segment = Path.GetFileName(normalised);
+
+		if (string.IsNullOrEmpty(segment))
+			return path; // root or drive letter — can't resolve further
+
+		// Recursively resolve the parent first.
+		string resolvedParent = string.IsNullOrEmpty(parent)
+			? parent
+			: ResolveDirectoryCaseInsensitive(parent);
+
+		if (string.IsNullOrEmpty(resolvedParent) || !Directory.Exists(resolvedParent))
+			return path;
+
+		string match = Directory.GetDirectories(resolvedParent)
+			.FirstOrDefault(d => string.Equals(
+				Path.GetFileName(d), segment, StringComparison.OrdinalIgnoreCase));
+
+		// Preserve a trailing separator if the original path had one.
+		char sep = path[^1] is '/' or '\\' ? path[^1] : '\0';
+		if (match != null)
+			return sep != '\0' ? match + sep : match;
+
+		// No match found — return with resolved parent so at least the root is correct.
+		return sep != '\0'
+			? Path.Combine(resolvedParent, segment) + sep
+			: Path.Combine(resolvedParent, segment);
+	}
+
+	/// <summary>
 	/// Returns the real file path on disk, using a case-insensitive lookup when
 	/// the file is not found at <paramref name="path"/> and the filesystem is
 	/// case-sensitive (Linux / Android).
@@ -33,10 +79,15 @@ internal static class PathHelper
 
 		string dir = Path.GetDirectoryName(path);
 		string name = Path.GetFileName(path);
-		if (string.IsNullOrEmpty(dir) || string.IsNullOrEmpty(name) || !Directory.Exists(dir))
+		if (string.IsNullOrEmpty(name))
 			return path;
 
-		string match = Directory.GetFiles(dir)
+		// Resolve the directory itself case-insensitively before looking for the file.
+		string resolvedDir = string.IsNullOrEmpty(dir) ? dir : ResolveDirectoryCaseInsensitive(dir);
+		if (string.IsNullOrEmpty(resolvedDir) || !Directory.Exists(resolvedDir))
+			return path;
+
+		string match = Directory.GetFiles(resolvedDir)
 			.FirstOrDefault(f => string.Equals(
 				Path.GetFileName(f), name, StringComparison.OrdinalIgnoreCase));
 		return match ?? path;
@@ -54,9 +105,14 @@ internal static class PathHelper
 		if (!_isCaseSensitive)
 			return Directory.GetFiles(path, searchPattern, option);
 
+		// Resolve the directory itself case-insensitively before listing its contents.
+		string resolvedPath = ResolveDirectoryCaseInsensitive(path);
+		if (!Directory.Exists(resolvedPath))
+			return [];
+
 		// On a case-sensitive OS, enumerate all files and filter manually.
 		string patternLower = searchPattern.ToLowerInvariant();
-		return Directory.GetFiles(path, "*", option)
+		return Directory.GetFiles(resolvedPath, "*", option)
 			.Where(f => MatchesGlob(Path.GetFileName(f).ToLowerInvariant(), patternLower))
 			.ToArray();
 	}

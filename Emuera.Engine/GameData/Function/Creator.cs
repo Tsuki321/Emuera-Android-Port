@@ -56,6 +56,7 @@ internal static partial class FunctionMethodCreator
 			["RGB_TO_H"] = new RgbToHMethod(),
 			["RGB_TO_S"] = new RgbToSMethod(),
 			["RGB_TO_V"] = new RgbToVMethod(),
+			["HSV_TO_RGB"] = new HsvToRgbMethod(),
 
 			//TODO:1810
 			//methodList["CHKVARDATA"] = new CheckdataStrMethod(EraSaveFileType.Var);
