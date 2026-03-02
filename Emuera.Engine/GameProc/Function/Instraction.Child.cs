@@ -1083,10 +1083,10 @@ internal sealed partial class FunctionIdentifier
 			}
 			if (callfArg.FuncTerm == null)
 			{
-				if (!Program.AnalysisMode)
-					ParserMediator.Warn(string.Format(trerror.NotDefinedFunc.Text, callfArg.ConstStr), func, 2, true, false);
-				else
-					ParserMediator.Warn(callfArg.ConstStr, func, 2, true, false);
+				// Defer the warning to ErbLoader.checkScript via the ref parameter so that
+				// Config.FunctionNotFoundWarning (default: IGNORE) is respected, consistent
+				// with how CALL/JUMP instructions handle missing function names.
+				FunctionoNotFoundName = callfArg.ConstStr;
 				return;
 			}
 		}
