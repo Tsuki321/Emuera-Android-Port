@@ -57,7 +57,8 @@ internal static partial class ArgumentParser
 
 		line.IsError = true;
 		line.ErrMes = errmes;
-		ParserMediator.Warn(errmes, line, 2, true, false);
+		if (Config.FunctionNotFoundWarning != DisplayWarningFlag.IGNORE)
+			ParserMediator.Warn(errmes, line, 2, true, false);
 		return false;
 	}
 }
