@@ -53,6 +53,9 @@ internal static partial class FunctionMethodCreator
 			["CURRENTREDRAW"] = new CurrentRedrawMethod(),
 			["COLOR_FROMNAME"] = new ColorFromNameMethod(),
 			["COLOR_FROMRGB"] = new ColorFromRGBMethod(),
+			["RGB_TO_H"] = new RgbToHMethod(),
+			["RGB_TO_S"] = new RgbToSMethod(),
+			["RGB_TO_V"] = new RgbToVMethod(),
 
 			//TODO:1810
 			//methodList["CHKVARDATA"] = new CheckdataStrMethod(EraSaveFileType.Var);
