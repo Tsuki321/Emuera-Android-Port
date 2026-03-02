@@ -2749,6 +2749,72 @@ internal static partial class FunctionMethodCreator
 			return (r << 16) + (g << 8) + b;
 		}
 	}
+
+	private sealed class RgbToHMethod : FunctionMethod
+	{
+		public RgbToHMethod()
+		{
+			ReturnType = typeof(Int64);
+			argumentTypeArray = new Type[] { typeof(long) };
+			CanRestructure = true;
+		}
+		public override long GetIntValue(ExpressionMediator exm, IOperandTerm[] arguments)
+		{
+			var (r, g, b) = ExtractRgbChannels(arguments[0].GetIntValue(exm));
+			double cmax = Math.Max(r, Math.Max(g, b));
+			double cmin = Math.Min(r, Math.Min(g, b));
+			double delta = cmax - cmin;
+			if (delta == 0.0)
+				return 0;
+			double h;
+			if (cmax == r)
+				h = 60.0 * (((g - b) / delta) % 6.0);
+			else if (cmax == g)
+				h = 60.0 * ((b - r) / delta + 2.0);
+			else
+				h = 60.0 * ((r - g) / delta + 4.0);
+			if (h < 0.0)
+				h += 360.0;
+			return (long)Math.Round(h);
+		}
+	}
+
+	private sealed class RgbToSMethod : FunctionMethod
+	{
+		public RgbToSMethod()
+		{
+			ReturnType = typeof(Int64);
+			argumentTypeArray = new Type[] { typeof(long) };
+			CanRestructure = true;
+		}
+		public override long GetIntValue(ExpressionMediator exm, IOperandTerm[] arguments)
+		{
+			var (r, g, b) = ExtractRgbChannels(arguments[0].GetIntValue(exm));
+			double cmax = Math.Max(r, Math.Max(g, b));
+			double cmin = Math.Min(r, Math.Min(g, b));
+			double delta = cmax - cmin;
+			if (cmax == 0.0)
+				return 0;
+			return (long)Math.Round(delta / cmax * 100.0);
+		}
+	}
+
+	private sealed class RgbToVMethod : FunctionMethod
+	{
+		public RgbToVMethod()
+		{
+			ReturnType = typeof(Int64);
+			argumentTypeArray = new Type[] { typeof(long) };
+			CanRestructure = true;
+		}
+		public override long GetIntValue(ExpressionMediator exm, IOperandTerm[] arguments)
+		{
+			var (r, g, b) = ExtractRgbChannels(arguments[0].GetIntValue(exm));
+			double cmax = Math.Max(r, Math.Max(g, b));
+			return (long)Math.Round(cmax * 100.0);
+		}
+	}
+
 	/// <summary>
 	/// 1810 作ったけど保留
 	/// </summary>
@@ -5181,6 +5247,16 @@ internal static partial class FunctionMethodCreator
 			// throw new CodeEE(string.Format(Properties.Resources.RuntimeErrMesMethodColorARGB0, Name, c64));
 			throw new CodeEE(string.Format(Lang.Error.InvalidColorARGB.Text, Name, c64));
 		return Color.FromArgb((int)(c64 >> 24) & 0xFF, (int)(c64 >> 16) & 0xFF, (int)(c64 >> 8) & 0xFF, (int)c64 & 0xFF);
+	}
+
+	/// <summary>
+	/// Extracts normalised R, G, B channels (each in [0, 1]) from a packed 0xRRGGBB integer.
+	/// </summary>
+	private static (double r, double g, double b) ExtractRgbChannels(long rgb)
+	{
+		return (((rgb >> 16) & 0xFF) / 255.0,
+		        ((rgb >> 8)  & 0xFF) / 255.0,
+		        (rgb         & 0xFF) / 255.0);
 	}
 
 	/// <summary>
