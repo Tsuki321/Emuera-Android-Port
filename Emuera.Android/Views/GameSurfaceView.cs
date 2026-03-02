@@ -85,7 +85,7 @@ public class GameSurfaceView : View
 
     protected override void OnDraw(global::Android.Graphics.Canvas? canvas)
     {
-        base.OnDraw(canvas);
+        base.OnDraw(canvas!);
         if (canvas == null || _skBitmap == null || _skCanvas == null || _androidBitmap == null) return;
 
         // Render ERA console into SkiaSharp bitmap
@@ -96,18 +96,7 @@ public class GameSurfaceView : View
         // allocating a new byte[] on every frame (reduces GC pressure).
         if (_pixelBuffer != null && _pixelByteBuffer != null)
         {
-            var gcHandle = GCHandle.Alloc(_pixelBuffer, GCHandleType.Pinned);
-            try
-            {
-                _skBitmap.ReadPixels(
-                    new SKImageInfo(_skBitmap.Width, _skBitmap.Height, SKColorType.Bgra8888),
-                    gcHandle.AddrOfPinnedObject(),
-                    _skBitmap.RowBytes);
-            }
-            finally
-            {
-                gcHandle.Free();
-            }
+            Marshal.Copy(_skBitmap.GetPixels(), _pixelBuffer, 0, _pixelBuffer.Length);
             _pixelByteBuffer.Rewind();
             _androidBitmap.CopyPixelsFromBuffer(_pixelByteBuffer);
         }

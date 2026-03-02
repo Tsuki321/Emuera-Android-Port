@@ -308,7 +308,7 @@ public class MainActivity : Activity
 
         public override global::Android.Views.View GetView(
             int position, global::Android.Views.View? convertView,
-            global::Android.Views.ViewGroup parent)
+            global::Android.Views.ViewGroup? parent)
         {
             var inf  = global::Android.Views.LayoutInflater.From(_ctx)!;
             var view = inf.Inflate(Resource.Layout.list_item_game, parent, false)!;
