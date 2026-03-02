@@ -237,7 +237,15 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 			string pluginsDir = Path.Combine(Program.WorkingDir, "Plugins");
 			if (!Directory.Exists(pluginsDir))
 			{
-				Directory.CreateDirectory(pluginsDir);
+				try
+				{
+					Directory.CreateDirectory(pluginsDir);
+				}
+				catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+				{
+					// Cannot create Plugins directory (e.g. restricted storage on Android); skip plugin loading
+					return;
+				}
 			}
 			string[] plugins = Directory.GetFiles(pluginsDir, "*.dll");
 			bool pluginsAware = File.Exists(Path.Combine(Program.WorkingDir, "pluginsAware.txt"));

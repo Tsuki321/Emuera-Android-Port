@@ -114,7 +114,7 @@ static class AppContents
 					continue;
 				//アニメスプライト宣言。nullでないとき、フレーム追加モード
 				SpriteAnime currentAnime = null;
-				string directory = Path.GetDirectoryName(filepath).ToUpper() + "\\";
+				string directory = Path.GetDirectoryName(filepath) + Path.DirectorySeparatorChar;
 				string filename = Path.GetFileName(filepath);
 				string[] lines = File.ReadAllLines(filepath, EncodingHandler.DetectEncoding(filepath));
 				int lineNo = 0;
@@ -216,11 +216,11 @@ static class AppContents
 		if (tokens.Length < 2)
 			return null;
 		string name = tokens[0].Trim().ToUpper();//
-		string arg2 = tokens[1].ToUpper();//画像ファイル名
+		string arg2 = tokens[1].Trim();//画像ファイル名
 		if (name.Length == 0 || arg2.Length == 0)
 			return null;
 		//アニメーションスプライト宣言
-		if (arg2 == "ANIME")
+		if (string.Equals(arg2, "ANIME", StringComparison.OrdinalIgnoreCase))
 		{
 			if (tokens.Length < 4)
 			{
