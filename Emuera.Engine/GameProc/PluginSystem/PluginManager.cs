@@ -234,12 +234,13 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 		/// </summary>
 		public void LoadPlugins()
 		{
-			if (!Directory.Exists("Plugins"))
+			string pluginsDir = Path.Combine(Program.WorkingDir, "Plugins");
+			if (!Directory.Exists(pluginsDir))
 			{
-				Directory.CreateDirectory("Plugins");
+				Directory.CreateDirectory(pluginsDir);
 			}
-			string[] plugins = Directory.GetFiles("Plugins", "*.dll");
-			bool pluginsAware = File.Exists("pluginsAware.txt");
+			string[] plugins = Directory.GetFiles(pluginsDir, "*.dll");
+			bool pluginsAware = File.Exists(Path.Combine(Program.WorkingDir, "pluginsAware.txt"));
 			ClearMethods();
 			foreach (var pluginPath in plugins)
 			{
