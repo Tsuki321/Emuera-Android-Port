@@ -16,4 +16,11 @@ public class AndroidPlatformPaths(Context context, string gameRootDirectory) : I
 
     public string ConfigFilePath { get; } =
         Path.Combine(context.FilesDir!.AbsolutePath, "emuera.config");
+
+    /// <summary>
+    /// Redirect engine log files to internal app storage so they can always be written,
+    /// even when the game root is on scoped external storage (which is read-only for logs).
+    /// </summary>
+    public string LogDirectory { get; } =
+        Path.Combine(context.FilesDir!.AbsolutePath, "logs");
 }
