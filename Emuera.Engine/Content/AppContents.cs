@@ -114,7 +114,7 @@ static class AppContents
 		try
 		{
 			//resourcesフォルダ内の全てのcsvファイルを探索する
-			string[] csvFiles = Directory.GetFiles(Program.ContentDir, "*.csv", SearchOption.AllDirectories);
+			string[] csvFiles = PathHelper.GetFilesIgnoreCase(Program.ContentDir, "*.csv", SearchOption.AllDirectories);
 			// Reload cleanup must happen once before processing any files, not once per file.
 			if (reload)
 			{

@@ -220,6 +220,7 @@ internal sealed class ConstantData
 
 	private void loadVariableSizeData(string csvPath, bool disp)
 	{
+		csvPath = PathHelper.FindFileCaseInsensitive(csvPath);
 		if (!File.Exists(csvPath))
 			return;
 		EraStreamReader eReader = new(false);
@@ -1289,7 +1290,7 @@ internal sealed class ConstantData
 		SaveMaps.Clear();
 		StaticMaps.Clear();
 		StaticXmls.Clear();
-		foreach (var path in Directory.GetFiles(csvPath, "VarExt*.csv", SearchOption.AllDirectories))
+		foreach (var path in PathHelper.GetFilesIgnoreCase(csvPath, "VarExt*.csv", SearchOption.AllDirectories))
 		{
 			EraStreamReader eReader = new EraStreamReader(false);
 			if (!eReader.Open(path))
@@ -1685,6 +1686,7 @@ internal sealed class ConstantData
 	private void loadDataTo(string csvPath, int targetIndex, Int64[] targetI, bool disp)
 	{
 
+		csvPath = PathHelper.FindFileCaseInsensitive(csvPath);
 		if (!File.Exists(csvPath))
 			return;
 		string[] target = names[targetIndex];

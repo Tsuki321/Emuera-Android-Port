@@ -86,6 +86,7 @@ internal sealed class GameBase
 	/// <returns>読み込み続行するなら真、エラー終了なら偽</returns>
 	public bool LoadGameBaseCsv(string basePath)
 	{
+		basePath = Sub.PathHelper.FindFileCaseInsensitive(basePath);
 		if (!File.Exists(basePath))
 		{
 			return true;
