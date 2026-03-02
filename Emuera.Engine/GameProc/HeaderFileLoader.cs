@@ -370,7 +370,7 @@ internal sealed class HeaderFileLoader
 	private void PrepareERDFileNames()
 	{
 		if (erdFileNames == null) erdFileNames = new Dictionary<string, List<string>>();
-		foreach (var path in Directory.GetFiles(Program.ErbDir, "*.erd", SearchOption.AllDirectories))
+		foreach (var path in PathHelper.GetFilesIgnoreCase(Program.ErbDir, "*.erd", SearchOption.AllDirectories))
 		{
 			var key = Path.GetFileNameWithoutExtension(path).ToUpper();
 			if (!erdFileNames.ContainsKey(key))
@@ -378,7 +378,7 @@ internal sealed class HeaderFileLoader
 			else
 				erdFileNames[key].Add(path);
 		}
-		foreach (var path in Directory.GetFiles(Program.CsvDir, "*.csv", SearchOption.TopDirectoryOnly))
+		foreach (var path in PathHelper.GetFilesIgnoreCase(Program.CsvDir, "*.csv", SearchOption.TopDirectoryOnly))
 		{
 			var key = Path.GetFileNameWithoutExtension(path).ToUpper();
 			if (!erdFileNames.ContainsKey(key))

@@ -451,7 +451,7 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 		{
 			console.PrintError(string.Format(trerror.FuncEndUnexpectedError.Text, Sys.ExeName));
 			console.PrintError(exc.GetType().ToString() + ":" + exc.Message);
-			string[] stack = exc.StackTrace.Split('\n');
+			string[] stack = (exc.StackTrace ?? string.Empty).Split('\n');
 			for (int i = 0; i < stack.Length; i++)
 			{
 				console.PrintError(stack[i]);
@@ -519,7 +519,7 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 		{
 			console.PrintError(string.Format(trerror.HasUnexpectedError.Text, posString, Sys.ExeName));
 			console.PrintError(exc.GetType().ToString() + ":" + exc.Message);
-			string[] stack = exc.StackTrace.Split('\n');
+			string[] stack = (exc.StackTrace ?? string.Empty).Split('\n');
 			for (int i = 0; i < stack.Length; i++)
 			{
 				console.PrintError(stack[i]);
