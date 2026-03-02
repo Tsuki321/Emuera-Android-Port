@@ -16,4 +16,7 @@ public class AndroidPlatformPaths(Context context, string gameRootDirectory) : I
 
     public string ConfigFilePath { get; } =
         Path.Combine(context.FilesDir!.AbsolutePath, "emuera.config");
+
+    public string LogDirectory { get; } =
+        Path.Combine(context.FilesDir!.AbsolutePath, "logs");
 }

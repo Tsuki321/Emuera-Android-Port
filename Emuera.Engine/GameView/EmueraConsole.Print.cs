@@ -691,6 +691,9 @@ internal sealed partial class EmueraConsole : IDisposable
 		StreamWriter writer = null;
 		try
 		{
+			string dir = Path.GetDirectoryName(fullpath);
+			if (!string.IsNullOrEmpty(dir))
+				Directory.CreateDirectory(dir);
 			writer = new StreamWriter(fullpath, false, Config.Encode);
 			foreach (ConsoleDisplayLine line in displayLineList)
 			{
@@ -708,6 +711,23 @@ internal sealed partial class EmueraConsole : IDisposable
 				writer.Close();
 		}
 		return true;
+	}
+
+	/// <summary>
+	/// Returns the effective log file path: if the platform provides a writable log directory,
+	/// paths under the game root are redirected there so they can be written on platforms with
+	/// restricted external-storage access (e.g. Android scoped storage).
+	/// </summary>
+	private string ResolveLogPath(string filename)
+	{
+		string platformLogDir = GlobalStatic.Paths?.LogDirectory;
+		if (!string.IsNullOrEmpty(platformLogDir) &&
+			filename.StartsWith(Program.WorkingDir, StringComparison.CurrentCultureIgnoreCase))
+		{
+			string relative = filename.Substring(Program.WorkingDir.Length);
+			return Path.Combine(platformLogDir, relative);
+		}
+		return filename;
 	}
 
 	#region EE_OUTPUTLOG
@@ -729,11 +749,16 @@ internal sealed partial class EmueraConsole : IDisposable
 			return false;
 		}
 
+		filename = ResolveLogPath(filename);
+
 		if (outputLog(filename))
 		{
 			if (window?.IsAvailable ?? false)
 			{
-				PrintSystemLine(string.Format(trsl.LogFileHasBeenCreated.Text, filename.Replace(Program.WorkingDir, "")));
+				PrintSystemLine(string.Format(trsl.LogFileHasBeenCreated.Text,
+					filename.StartsWith(Program.WorkingDir, StringComparison.CurrentCultureIgnoreCase)
+						? filename.Replace(Program.WorkingDir, "")
+						: Path.GetFileName(filename)));
 				RefreshStrings(true);
 			}
 			return true;
@@ -753,11 +778,16 @@ internal sealed partial class EmueraConsole : IDisposable
 			return false;
 		}
 
+		filename = ResolveLogPath(filename);
+
 		if (outputLog(filename))
 		{
 			if (window?.IsAvailable ?? false)
 			{
-				PrintSystemLine(string.Format(trsl.LogFileHasBeenCreated.Text, filename.Replace(Program.WorkingDir, "")));
+				PrintSystemLine(string.Format(trsl.LogFileHasBeenCreated.Text,
+					filename.StartsWith(Program.WorkingDir, StringComparison.CurrentCultureIgnoreCase)
+						? filename.Replace(Program.WorkingDir, "")
+						: Path.GetFileName(filename)));
 				RefreshStrings(true);
 			}
 			return true;

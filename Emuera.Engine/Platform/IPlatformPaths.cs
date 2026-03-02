@@ -14,4 +14,12 @@ public interface IPlatformPaths
 
     /// <summary>Full path to the emuera.config file.</summary>
     string ConfigFilePath { get; }
+
+    /// <summary>
+    /// Directory for engine-generated log files.
+    /// When non-empty, log output is redirected here instead of the game root directory.
+    /// Useful on platforms where the game root directory is not writable (e.g. Android scoped storage).
+    /// Returns null or empty string to use the game root directory (default behavior).
+    /// </summary>
+    string LogDirectory => null;
 }
