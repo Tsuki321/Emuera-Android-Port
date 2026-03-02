@@ -48,12 +48,14 @@ public class GameActivity : Activity
         GlobalStatic.Sound    = new AndroidPlatformSound();
         GlobalStatic.Lifecycle = new AndroidLifecycle(this);
 
-        // 2. Create the engine console host and surface view
-        //    Surface view is created first; console is wired after construction.
+        // 2. Create the engine console host and surface view.
+        //    Surface view is created here; EmueraConsole is created on the engine thread
+        //    AFTER LoadConfig() so that Config.ForeColor/BackColor are set before the
+        //    console's field initializers (defaultStyle, bgColor) execute.  Without this
+        //    ordering those fields get Color.Empty (A=0, transparent) and all text is
+        //    invisible on screen even though the text data is present and copyable.
         var surfaceView = new GameSurfaceView(this);
         var host = new AndroidConsoleHost(surfaceView);
-        _console = new EmueraConsole(host);
-        surfaceView.SetConsole(_console);
 
         // 3. Build layout: console surface + input bar
         var rootLayout = new LinearLayout(this);
@@ -64,7 +66,6 @@ public class GameActivity : Activity
         rootLayout.AddView(surfaceView, surfaceParams);
 
         var inputBar = new InputBarView(this);
-        inputBar.SetConsole(_console);
         // Wire the keyboard-show action so BeginWaitInput() opens the soft keyboard.
         host.ShowKeyboardAction = () => inputBar.RequestFocusForInput();
         var inputParams = new LinearLayout.LayoutParams(
@@ -83,6 +84,11 @@ public class GameActivity : Activity
                 // Discover TTF/OTF/TTC files in the game's font/ directory so the
                 // engine can report them as "installed" and SkiaSharp can load them.
                 LoadCustomFonts();
+                // Create EmueraConsole after LoadConfig() so that Config.ForeColor and
+                // Config.BackColor are set before the console's field initializers run.
+                _console = new EmueraConsole(host);
+                surfaceView.SetConsole(_console);
+                inputBar.SetConsole(_console);
                 _console.Initialize();
             }
             catch (Exception ex)
