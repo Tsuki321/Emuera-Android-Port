@@ -1763,15 +1763,21 @@ internal sealed class ConstantData
 			eReader.Close();
 		}
 
-		var aliasPath = Path.GetDirectoryName(csvPath) + "\\" + Path.GetFileNameWithoutExtension(csvPath) + ".als";
+		var aliasPath = PathHelper.FindFileCaseInsensitive(GetAliasPath(csvPath));
 		if (File.Exists(aliasPath))
 		{
 			loadAliases(aliasPath, targetIndex);
 		}
 	}
 
+	internal static string GetAliasPath(string csvPath)
+	{
+		return Path.ChangeExtension(csvPath, ".als");
+	}
+
 	private void loadAliases(string aliasPath, int targetIndex)
 	{
+		aliasPath = PathHelper.FindFileCaseInsensitive(aliasPath);
 
 		if (!File.Exists(aliasPath))
 			return;

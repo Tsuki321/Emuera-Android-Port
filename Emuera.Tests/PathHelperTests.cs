@@ -63,4 +63,26 @@ public class PathHelperTests
         string result = PathHelper.FindFileCaseInsensitive(missing);
         Assert.Equal(missing, result);
     }
+
+    [Fact]
+    public void FindFileCaseInsensitive_ExistingFileWithDifferentCase_ResolvesRealFile()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "emuera_case_file_test_" + Path.GetRandomFileName());
+        Directory.CreateDirectory(dir);
+        try
+        {
+            string realPath = Path.Combine(dir, "TestAlias.ALS");
+            File.WriteAllText(realPath, "");
+
+            string requestedPath = Path.Combine(dir, "testalias.als");
+            string result = PathHelper.FindFileCaseInsensitive(requestedPath);
+
+            Assert.True(File.Exists(result));
+            Assert.Equal(realPath, result);
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
+    }
 }
