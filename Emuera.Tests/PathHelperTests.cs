@@ -69,6 +69,10 @@ public class PathHelperTests
             string[] results = PathHelper.GetFilesIgnoreCase(dir, "var_*.dat");
             Assert.Single(results);
             Assert.Equal("VAR_Player.DAT", Path.GetFileName(results[0]));
+
+            string[] charaResults = PathHelper.GetFilesIgnoreCase(dir, "chara_*.dat");
+            Assert.Single(charaResults);
+            Assert.Equal("chara_Player.dat", Path.GetFileName(charaResults[0]));
         }
         finally
         {
