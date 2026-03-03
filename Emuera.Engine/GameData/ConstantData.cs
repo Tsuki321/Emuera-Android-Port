@@ -1777,10 +1777,6 @@ internal sealed class ConstantData
 
 	private void loadAliases(string aliasPath, int targetIndex)
 	{
-		aliasPath = PathHelper.FindFileCaseInsensitive(aliasPath);
-
-		if (!File.Exists(aliasPath))
-			return;
 		if (aliases[targetIndex] == null)
 		{
 			aliases[targetIndex] = new Dictionary<string, int>();
