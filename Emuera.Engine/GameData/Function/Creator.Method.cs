@@ -4678,11 +4678,53 @@ internal static partial class FunctionMethodCreator
 				case StrFormType.Lower:
 					return (str.ToLower());
 				case StrFormType.Half:
-					return (str); // VbStrConv.Narrow not available on Android (TODO: implement full-to-half width)
+					return ToHalfWidth(str);
 				case StrFormType.Full:
-					return (str); // VbStrConv.Wide not available on Android (TODO: implement half-to-full width)
+					return ToFullWidth(str);
 			}
 			return ("");
+		}
+
+		/// <summary>
+		/// Converts full-width characters to their half-width equivalents (TOHALF / STRCONV narrow).
+		/// Full-width ASCII block U+FF01..U+FF5E → U+0021..U+007E, ideographic space U+3000 → U+0020.
+		/// Gleaned from uEmuera (XerySherry) VisualBasic.cs StrConv Narrow implementation.
+		/// </summary>
+		private static string ToHalfWidth(string s)
+		{
+			if (string.IsNullOrEmpty(s)) return s;
+			var sb = new System.Text.StringBuilder(s.Length);
+			foreach (char c in s)
+			{
+				if (c >= '\uFF01' && c <= '\uFF5E')
+					sb.Append((char)(c - 0xFEE0));
+				else if (c == '\u3000')
+					sb.Append(' ');
+				else
+					sb.Append(c);
+			}
+			return sb.ToString();
+		}
+
+		/// <summary>
+		/// Converts half-width characters to their full-width equivalents (TOFULL / STRCONV wide).
+		/// U+0021..U+007E → U+FF01..U+FF5E, space U+0020 → ideographic space U+3000.
+		/// Gleaned from uEmuera (XerySherry) VisualBasic.cs StrConv Wide implementation.
+		/// </summary>
+		private static string ToFullWidth(string s)
+		{
+			if (string.IsNullOrEmpty(s)) return s;
+			var sb = new System.Text.StringBuilder(s.Length);
+			foreach (char c in s)
+			{
+				if (c >= '\u0021' && c <= '\u007E')
+					sb.Append((char)(c + 0xFEE0));
+				else if (c == ' ')
+					sb.Append('\u3000');
+				else
+					sb.Append(c);
+			}
+			return sb.ToString();
 		}
 	}
 
