@@ -57,6 +57,30 @@ public class PathHelperTests
     }
 
     [Fact]
+    public void GetFilesIgnoreCase_PrefixWildcard_FindsDatFilesCaseInsensitive()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "emuera_pathhelper_dat_test_" + Path.GetRandomFileName());
+        Directory.CreateDirectory(dir);
+        try
+        {
+            File.WriteAllText(Path.Combine(dir, "VAR_Player.DAT"), "");
+            File.WriteAllText(Path.Combine(dir, "chara_Player.dat"), "");
+
+            string[] results = PathHelper.GetFilesIgnoreCase(dir, "var_*.dat");
+            Assert.Single(results);
+            Assert.Equal("VAR_Player.DAT", Path.GetFileName(results[0]));
+
+            string[] charaResults = PathHelper.GetFilesIgnoreCase(dir, "chara_*.dat");
+            Assert.Single(charaResults);
+            Assert.Equal("chara_Player.dat", Path.GetFileName(charaResults[0]));
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
+    }
+
+    [Fact]
     public void FindFileCaseInsensitive_MissingFile_ReturnsOriginal()
     {
         string missing = Path.Combine(Path.GetTempPath(), "emuera_no_such_file.csv");

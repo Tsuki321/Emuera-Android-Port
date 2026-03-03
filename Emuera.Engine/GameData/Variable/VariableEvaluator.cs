@@ -1793,7 +1793,7 @@ internal sealed class VariableEvaluator : IDisposable
 		string searchPattern = "var_" + pattern + ".dat";
 		if (charadat)
 			searchPattern = "chara_" + pattern + ".dat";
-		string[] pathes = Directory.GetFiles(Program.DatDir, searchPattern, SearchOption.TopDirectoryOnly);
+		string[] pathes = PathHelper.GetFilesIgnoreCase(Program.DatDir, searchPattern, SearchOption.TopDirectoryOnly);
 		foreach (string path in pathes)
 		{
 			if (!Path.GetExtension(path).Equals(".dat", StringComparison.OrdinalIgnoreCase))
