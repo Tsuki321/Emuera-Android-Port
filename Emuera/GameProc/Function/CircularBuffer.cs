@@ -125,7 +125,7 @@ public class CircularBuffer<T> : ICircularBuffer<T>, IEnumerable<T>
 		else
 		{
 			var last = this[Count - 1];
-			for (var i = index; i < Count - 2; ++i)
+			for (var i = Count - 2; i >= index; --i)
 				this[i + 1] = this[i];
 			this[index] = item;
 			Enqueue(last);
