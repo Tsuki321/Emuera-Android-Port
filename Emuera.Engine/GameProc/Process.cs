@@ -79,23 +79,25 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 			if (Config.UseKeyMacro && !analysisMode)
 			{
 				//if (File.Exists(Program.ExeDir + "macro.txt"))
-				if (File.Exists(Program.WorkingDir + "macro.txt"))
+				string macroPath = PathHelper.FindFileCaseInsensitive(Program.WorkingDir + "macro.txt");
+				if (File.Exists(macroPath))
 				{
 					if (Config.DisplayReport)
 						console.PrintSystemLine(trsl.LoadingMacro.Text);
 					//KeyMacro.LoadMacroFile(Program.ExeDir + "macro.txt");
-					KeyMacro.LoadMacroFile(Program.WorkingDir + "macro.txt");
+					KeyMacro.LoadMacroFile(macroPath);
 				}
 			}
 			#endregion
 			//_replace.csv読み込み
 			if (Config.UseReplaceFile && !analysisMode)
 			{
-				if (File.Exists(Program.CsvDir + "_Replace.csv"))
+				string replacePath = PathHelper.FindFileCaseInsensitive(Program.CsvDir + "_Replace.csv");
+				if (File.Exists(replacePath))
 				{
 					if (Config.DisplayReport)
 						console.PrintSystemLine(trsl.LoadingReplace.Text);
-					ConfigData.Instance.LoadReplaceFile(Program.CsvDir + "_Replace.csv");
+					ConfigData.Instance.LoadReplaceFile(replacePath);
 					if (ParserMediator.HasWarning)
 					{
 						ParserMediator.FlushWarningList();
@@ -114,11 +116,12 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 			//_rename.csv読み込み
 			if (Config.UseRenameFile)
 			{
-				if (File.Exists(Program.CsvDir + "_Rename.csv"))
+				string renamePath = PathHelper.FindFileCaseInsensitive(Program.CsvDir + "_Rename.csv");
+				if (File.Exists(renamePath))
 				{
 					if (Config.DisplayReport || analysisMode)
 						console.PrintSystemLine(trsl.LoadingRename.Text);
-					ParserMediator.LoadEraExRenameFile(Program.CsvDir + "_Rename.csv");
+					ParserMediator.LoadEraExRenameFile(renamePath);
 				}
 				else
 					console.PrintError(trsl.MissingRename.Text);

@@ -109,12 +109,13 @@ static class AppContents
 
 	static public bool LoadContents(bool reload)
 	{
-		if (!Directory.Exists(Program.ContentDir))
+		string contentDir = PathHelper.ResolveDirectoryCaseInsensitive(Program.ContentDir);
+		if (!Directory.Exists(contentDir))
 			return true;
 		try
 		{
 			//resourcesフォルダ内の全てのcsvファイルを探索する
-			string[] csvFiles = PathHelper.GetFilesIgnoreCase(Program.ContentDir, "*.csv", SearchOption.AllDirectories);
+			string[] csvFiles = PathHelper.GetFilesIgnoreCase(contentDir, "*.csv", SearchOption.AllDirectories);
 			// Reload cleanup must happen once before processing any files, not once per file.
 			if (reload)
 			{
