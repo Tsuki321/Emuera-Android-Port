@@ -8,6 +8,24 @@ namespace Emuera.Tests;
 public class SpriteRenderingTests
 {
     [Fact]
+    public void ImageLoaderResolvesMixedCaseAndWindowsSeparators()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "emuera-image-" + Guid.NewGuid());
+        Directory.CreateDirectory(Path.Combine(directory, "Images"));
+        try
+        {
+            using var bitmap = new SKBitmap(1, 1);
+            bitmap.SetPixel(0, 0, SKColors.Blue);
+            using (var output = File.Create(Path.Combine(directory, "Images", "TEST.PNG")))
+                bitmap.Encode(output, SKEncodedImageFormat.Png, 100);
+            using var decoded = ImgUtils.LoadImage(directory + "/images\\test.png");
+            Assert.NotNull(decoded);
+            Assert.Equal(SKColors.Blue, decoded.GetPixel(0, 0));
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+
+    [Fact]
     public void CroppedSpriteDrawsAtDestinationAndPreservesCanvasTransform()
     {
         using var source = new GraphicsImage(91);

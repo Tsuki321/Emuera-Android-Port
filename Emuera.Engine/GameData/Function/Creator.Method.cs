@@ -1270,6 +1270,7 @@ internal static partial class FunctionMethodCreator
 		public override long GetIntValue(ExpressionMediator exm, List<IOperandTerm> arguments)
 		{
 			var filepath = Utils.GetValidPath(arguments[0].GetStrValue(exm));
+			if (filepath != null) filepath = PathHelper.FindFileCaseInsensitive(Path.Combine(Program.WorkingDir, filepath.Replace('\\', Path.DirectorySeparatorChar)));
 			if (filepath != null && File.Exists(filepath)) return 1;
 			return 0;
 		}
@@ -7140,6 +7141,7 @@ internal static partial class FunctionMethodCreator
 			{
 				filepath = Utils.GetValidPath(arguments[1].GetStrValue(exm));
 				if (filepath == null) return 0;
+				filepath = Path.Combine(Program.WorkingDir, filepath.Replace('\\', Path.DirectorySeparatorChar));
 				string tmp = Path.HasExtension(filepath) ? Path.GetExtension(filepath).ToLower().Substring(1) : "";
 				if (!Config.ValidExtension.Contains(tmp))
 					filepath = Path.ChangeExtension(filepath, "txt");
@@ -7246,6 +7248,7 @@ internal static partial class FunctionMethodCreator
 			{
 				filepath = Utils.GetValidPath(arguments[0].GetStrValue(exm));
 				if (filepath == null) return string.Empty;
+				filepath = PathHelper.FindFileCaseInsensitive(Path.Combine(Program.WorkingDir, filepath.Replace('\\', Path.DirectorySeparatorChar)));
 				string tmp = Path.HasExtension(filepath) ? Path.GetExtension(filepath).ToLower().Substring(1) : "";
 				if (!Config.ValidExtension.Contains(tmp))
 					return "";

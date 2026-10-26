@@ -72,6 +72,7 @@ internal static class PathHelper
 	{
 		if (string.IsNullOrEmpty(path))
 			return path;
+		path = path.Replace('\\', Path.DirectorySeparatorChar);
 		if (File.Exists(path))
 			return path;
 		if (!_isCaseSensitive)

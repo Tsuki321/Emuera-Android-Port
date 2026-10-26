@@ -259,7 +259,7 @@ static class AppContents
 		//親画像のロードConstImage
 		if (!resourceDic.TryGetValue(parentName, out AContentFile parentContent))
 		{
-			string filepath = parentName;
+			string filepath = PathHelper.FindFileCaseInsensitive(parentName);
 			if (!File.Exists(filepath))
 			{
 				ParserMediator.Warn(string.Format(trerror.NotExistImageFile.Text, arg2), sp, 1);

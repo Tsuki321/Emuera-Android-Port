@@ -20,6 +20,7 @@ public class GameActivity : Activity
 {
     private MinorShift.Emuera.Platform.EngineDispatcher? _dispatcher;
     private EmueraConsole? _console;
+    private volatile bool _closing;
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
@@ -98,9 +99,11 @@ public class GameActivity : Activity
                 // Discover TTF/OTF/TTC files in the game's font/ directory so the
                 // engine can report them as "installed" and SkiaSharp can load them.
                 LoadCustomFonts();
+                if (_closing) return;
                 // Create EmueraConsole after LoadConfig() so that Config.ForeColor and
                 // Config.BackColor are set before the console's field initializers run.
                 _console = new EmueraConsole(host) { Dispatcher = _dispatcher };
+                if (_closing) { _console.Dispose(); return; }
                 surfaceView.SetConsole(_console);
                 inputBar.SetConsole(_console);
                 _console.Initialize();
@@ -133,6 +136,7 @@ public class GameActivity : Activity
 
     protected override void OnDestroy()
     {
+        _closing = true;
         _console?.Quit();
         _dispatcher?.Dispose();
         var closingConsole = _console;

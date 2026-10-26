@@ -65,7 +65,7 @@ public class GameSurfaceView : View
     // Dirty flag: set to true whenever the SkiaSharp bitmap needs to be redrawn.
     // When false, OnDraw skips the expensive DrawConsole + Marshal.Copy pass and
     // re-blits the already-rendered pixel buffer, saving CPU on static frames.
-    private bool _skBitmapDirty = true;
+    private volatile bool _skBitmapDirty = true;
 
     // Right-click mode: when true, the next tap fires a right-click instead of left-click.
     private bool _rightClickMode = false;
