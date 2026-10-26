@@ -11,6 +11,7 @@ public interface IConsoleHost
 
     /// <summary>Called when the engine enters input-wait state.</summary>
     void BeginWaitInput();
+    void BeginWaitInput(bool textInput) { if (textInput) BeginWaitInput(); }
 
     /// <summary>Fired by the platform when the user submits input (text or number).</summary>
     event Action<string> InputSubmitted;

@@ -589,11 +589,13 @@ internal sealed partial class EmueraConsole : IDisposable
 		#endregion
 		state = ConsoleState.WaitInput;
 		inputReq = req;
+		window?.BeginWaitInput(req.InputType == InputType.StrValue || req.InputType == InputType.StrButton);
 		if (req.Timelimit > 0)
 		{
 			// update_lastinput() removed — no platform equivalent needed
 			presetTimer();
-			//				setTimer();
+			need_settimer = false;
+			setTimer();
 		}
 		//updateMousePosition();
 		//Point point = window.MainPicBox.PointToClient(Control.MousePosition);
@@ -619,12 +621,6 @@ internal sealed partial class EmueraConsole : IDisposable
 		inputReq = req;
 		state = ConsoleState.WaitInput;
 		emuera.NeedWaitToEventComEnd = false;
-		window?.BeginWaitInput(req.InputType == InputType.StrValue || req.InputType == InputType.StrButton);
-		if (req.Timelimit > 0)
-		{
-			need_settimer = false;
-			setTimer();
-		}
 	}
 
 

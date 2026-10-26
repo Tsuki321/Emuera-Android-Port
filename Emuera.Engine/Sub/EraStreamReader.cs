@@ -30,6 +30,7 @@ internal sealed partial class EraStreamReader : IDisposable
 
 	public bool Open(string path, string name)
 	{
+		path = PathHelper.FindFileCaseInsensitive(path.Replace('\\', Path.DirectorySeparatorChar));
 		//そんなお行儀の悪いことはしていない
 		//if (disposed)
 		//    throw new ExeEE("破棄したオブジェクトを再利用しようとした");

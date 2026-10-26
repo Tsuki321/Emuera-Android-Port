@@ -6,10 +6,10 @@ using System.Text.Json;
 namespace MinorShift.Emuera.JSON;
 static class JSONConfig
 {
-	public static JSONConfigData Data;
+	public static JSONConfigData Data = new();
 
 	const string _configFileName = "setting.json";
-	static string _configFilePath = Program.ExeDir + _configFileName;
+	static string _configFilePath => Path.Combine(Path.GetDirectoryName(GlobalStatic.Paths?.ConfigFilePath) ?? Program.ExeDir, _configFileName);
 
 	public static void Load()
 	{

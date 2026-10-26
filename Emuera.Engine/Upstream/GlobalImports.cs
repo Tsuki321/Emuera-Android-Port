@@ -12,3 +12,4 @@ global using System.Data;
 global using System.Text;
 global using MinorShift.Emuera.GameProc.PluginSystem;
 global using DataTable = System.Data.DataTable;
+global using MixedNum = EvilMask.Emuera.Utils.MixedNum;

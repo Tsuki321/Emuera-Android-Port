@@ -286,6 +286,12 @@ internal static class Config
 	#endregion
 
 	public static EngineFont DefaultFont => Font;
+	public static void SetLanguageSetting(ConfigData instance, string lang)
+	{
+		instance.GetConfigItem(ConfigCode.EmueraLang).SetValue(lang);
+		UpdateLangSetting(instance);
+		instance.SaveConfig();
+	}
 	public static StringComparison SCVariable => StringComparison;
 
 	public static void ClearFont()

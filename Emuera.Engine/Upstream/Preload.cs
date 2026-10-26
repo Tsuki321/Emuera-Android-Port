@@ -13,7 +13,13 @@ static partial class Preload
 
 	public static string[] GetFileLines(string path)
 	{
-		return files[path];
+		path = PathHelper.FindFileCaseInsensitive(path.Replace('\\', Path.DirectorySeparatorChar));
+		lock (files)
+		{
+			if (!files.TryGetValue(path, out var lines))
+				files[path] = lines = readAllLinesDetectEncoding(path);
+			return lines;
+		}
 	}
 
 	// Opens as UTF8BOM if starts with BOM, else use DetectEncoding
@@ -21,7 +27,7 @@ static partial class Preload
 	{
 		try
 		{
-			using var file = File.Open(path, FileMode.Open);
+			using var file = File.OpenRead(path);
 			Span<byte> bom = stackalloc byte[3];
 			_ = file.Read(bom);
 			file.Close();
@@ -51,6 +57,8 @@ static partial class Preload
 
 	public static async Task Load(string path)
 	{
+		path = PathHelper.ResolveDirectoryCaseInsensitive(path.Replace('\\', Path.DirectorySeparatorChar));
+		if (!Directory.Exists(path) && !File.Exists(path)) return;
 		var startTime = DateTime.Now;
 		Debug.WriteLine($"Load: {path} : Start");
 
