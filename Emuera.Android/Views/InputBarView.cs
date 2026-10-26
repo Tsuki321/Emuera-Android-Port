@@ -168,7 +168,7 @@ public class InputBarView : LinearLayout
     /// <summary>Submit an input string directly to the engine console.</summary>
     private void SubmitInput(string value)
     {
-        _console?.PressEnterKey(false, value, false);
+        _console?.Dispatch(() => _console.PressEnterKey(false, value, false));
     }
 
     private static int DpToPx(Context ctx, float dp) =>

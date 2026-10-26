@@ -145,9 +145,19 @@ public class GameSurfaceView : View
         // especially in input-wait state where the screen is static.
         if (_skBitmapDirty)
         {
-            _skBitmapDirty = false;
-            _skCanvas.Clear(SKColors.Black);
-            DrawConsole(_skCanvas, Width, Height);
+            object? sync = _console?.Dispatcher?.SyncRoot;
+            bool entered = sync == null || Monitor.TryEnter(sync);
+            if (entered)
+            {
+                try
+                {
+                    _skBitmapDirty = false;
+                    _skCanvas.Clear(SKColors.Black);
+                    DrawConsole(_skCanvas, Width, Height);
+                }
+                finally { if (sync != null) Monitor.Exit(sync); }
+            }
+            else PostInvalidateDelayed(16);
 
             if (_pixelBuffer != null)
                 Marshal.Copy(_skBitmap.GetPixels(), _pixelBuffer, 0, _pixelBuffer.Length);
@@ -604,13 +614,17 @@ public class GameSurfaceView : View
         {
             if (bounds.Contains(x, y))
             {
-                _console.PressEnterKey(false, button.Inputs, true);
+                _console.Dispatch(() => _console.PressEnterKey(false, button.IsInteger ? button.Input.ToString() : button.Inputs, true));
                 return;
             }
         }
 
         // No text button hit: send a raw left-click for INPUTMOUSEKEY (WAITPRIM) scenarios.
-        _console.MouseDown(new System.Drawing.Point((int)x, (int)y), MouseButtonLeft);
+        _console.Dispatch(() =>
+        {
+            if (_console.IsWaitingEnterKey) _console.PressEnterKey(false, "", true);
+            else _console.MouseDown(new System.Drawing.Point((int)x, (int)y), MouseButtonLeft);
+        });
     }
 
     /// <summary>Called by AndroidConsoleHost.ScrollToBottom to reset scroll offset.</summary>

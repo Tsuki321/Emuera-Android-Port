@@ -18,7 +18,7 @@ namespace Emuera.Android;
           Theme = "@style/AppTheme.GameActivity")]
 public class GameActivity : Activity
 {
-    private Thread? _engineThread;
+    private MinorShift.Emuera.Platform.EngineDispatcher? _dispatcher;
     private EmueraConsole? _console;
 
     protected override void OnCreate(Bundle? savedInstanceState)
@@ -84,7 +84,13 @@ public class GameActivity : Activity
         SetContentView(rootLayout);
 
         // 4. Boot engine on a background thread
-        _engineThread = new Thread(() =>
+        _dispatcher = new MinorShift.Emuera.Platform.EngineDispatcher();
+        _dispatcher.UnhandledException += ex =>
+        {
+            CrashLogger.LogException(ex, "Interpreter callback");
+            RunOnUiThread(() => ShowEngineCrashDialog(ex, gameRoot));
+        };
+        _dispatcher.Post(() =>
         {
             try
             {
@@ -94,7 +100,7 @@ public class GameActivity : Activity
                 LoadCustomFonts();
                 // Create EmueraConsole after LoadConfig() so that Config.ForeColor and
                 // Config.BackColor are set before the console's field initializers run.
-                _console = new EmueraConsole(host);
+                _console = new EmueraConsole(host) { Dispatcher = _dispatcher };
                 surfaceView.SetConsole(_console);
                 inputBar.SetConsole(_console);
                 _console.Initialize();
@@ -105,9 +111,6 @@ public class GameActivity : Activity
                 RunOnUiThread(() => ShowEngineCrashDialog(ex, gameRoot));
             }
         });
-        _engineThread.IsBackground = true;
-        _engineThread.Name = "EmueraEngine";
-        _engineThread.Start();
     }
 
     /// <summary>
@@ -131,7 +134,7 @@ public class GameActivity : Activity
     protected override void OnDestroy()
     {
         _console?.Quit();
-        GlobalStatic.Reset();
+        _dispatcher?.Dispose();
         base.OnDestroy();
     }
 

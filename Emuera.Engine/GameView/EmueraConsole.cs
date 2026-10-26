@@ -84,13 +84,13 @@ internal sealed partial class EmueraConsole : IDisposable
 		printBuffer = new PrintStringBuffer(this);
 
 		timer = new System.Timers.Timer(10);
-		timer.AutoReset = false;
-		timer.Elapsed += (s, e) => tickTimer(s, e);
+		timer.AutoReset = true;
+		timer.Elapsed += (s, e) => Dispatch(() => tickTimer(s, e));
 		CBG_Clear();//文字列描画用ダミー追加
 
 		redrawTimer = new System.Timers.Timer(10);
-		redrawTimer.AutoReset = false;//TODO:1824アニメ用再描画タイマー有効化関数の追加
-		redrawTimer.Elapsed += (s, e) => tickRedrawTimer(s, e);
+		redrawTimer.AutoReset = true;
+		redrawTimer.Elapsed += (s, e) => Dispatch(() => tickRedrawTimer(s, e));
 	}
 	#region 1823 cbg関連
 	private readonly List<ClientBackGroundImage> cbgList = new List<ClientBackGroundImage>();
@@ -425,7 +425,7 @@ internal sealed partial class EmueraConsole : IDisposable
 	}
 
 
-	public void Quit() { state = ConsoleState.Quit; }
+	public void Quit() { state = ConsoleState.Quit; timer.Stop(); redrawTimer.Stop(); }
 	#region EE_FORCE_QUIT系
 	public void ForceQuit()
 	{
@@ -619,6 +619,12 @@ internal sealed partial class EmueraConsole : IDisposable
 		inputReq = req;
 		state = ConsoleState.WaitInput;
 		emuera.NeedWaitToEventComEnd = false;
+		window?.BeginWaitInput(req.InputType == InputType.StrValue || req.InputType == InputType.StrButton);
+		if (req.Timelimit > 0)
+		{
+			need_settimer = false;
+			setTimer();
+		}
 	}
 
 

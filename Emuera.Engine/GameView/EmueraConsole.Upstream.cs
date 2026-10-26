@@ -2,6 +2,12 @@ namespace MinorShift.Emuera.GameView;
 
 internal sealed partial class EmueraConsole
 {
+    public MinorShift.Emuera.Platform.EngineDispatcher Dispatcher { get; set; }
+    public void Dispatch(Action action)
+    {
+        if (Dispatcher != null) Dispatcher.Post(action);
+        else action();
+    }
     public IReadOnlyList<ConsoleDisplayLine> HtmlIslandLines => htmlIslandLines;
     private readonly List<ConsoleDisplayLine> htmlIslandLines = new();
 
