@@ -1547,7 +1547,7 @@ internal sealed partial class EmueraConsole : IDisposable
 	}
 
 	#region EM_私家版_描画拡張
-	Dictionary<int, List<AConsoleDisplayPart>> escapedParts;
+	Dictionary<int, List<AConsoleDisplayPart>> escapedParts = new();
 	#endregion
 	#region EE_BINPUT
 	public Dictionary<int, List<AConsoleDisplayPart>> EscapedParts { get { return escapedParts; } }
