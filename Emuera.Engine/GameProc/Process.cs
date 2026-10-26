@@ -403,7 +403,7 @@ internal sealed partial class Process(EmueraConsole view)
 		string caption = string.Format(trmb.InfiniteLoop.Text);
 		string text = string.Format(
 			trmb.TooLongLoop.Text,
-			currentLine.Position.Filename, currentLine.Position.LineNo, state.lineCount, time);
+			currentLine.Position.Filename, currentLine.Position.LineNo, state.lineCount, elapsedTime);
 		bool wantsExit = GlobalStatic.Dialogs?.ShowYesNoAsync(text, caption).GetAwaiter().GetResult() ?? false;
 		if (wantsExit)
 		{
@@ -492,17 +492,17 @@ internal sealed partial class Process(EmueraConsole view)
 		console.ThrowError(playSound);
 		if (exc is CodeEE)
 		{
-			console.PrintError(string.Format(trerror.FuncEndError.Text, AssemblyData.EmueraVersionText));
+			console.PrintError(string.Format(trerror.FuncEndError.Text, MinorShift._Library.Sys.EmueraVersionText));
 			console.PrintError(exc.Message);
 		}
 		else if (exc is ExeEE)
 		{
-			console.PrintError(string.Format(trerror.FuncEndEmueraError.Text, AssemblyData.EmueraVersionText));
+			console.PrintError(string.Format(trerror.FuncEndEmueraError.Text, MinorShift._Library.Sys.EmueraVersionText));
 			console.PrintError(exc.Message);
 		}
 		else
 		{
-			console.PrintError(string.Format(trerror.FuncEndUnexpectedError.Text, AssemblyData.EmueraVersionText));
+			console.PrintError(string.Format(trerror.FuncEndUnexpectedError.Text, MinorShift._Library.Sys.EmueraVersionText));
 			console.PrintError(exc.GetType().ToString() + ":" + exc.Message);
 			string[] stack = (exc.StackTrace ?? string.Empty).Split('\n');
 			for (int i = 0; i < stack.Length; i++)
@@ -541,7 +541,7 @@ internal sealed partial class Process(EmueraConsole view)
 				}
 				else
 				{
-					console.PrintErrorButton(string.Format(trerror.HasError.Text, posString, AssemblyData.EmueraVersionText), position);
+					console.PrintErrorButton(string.Format(trerror.HasError.Text, posString, MinorShift._Library.Sys.EmueraVersionText), position);
 					printRawLine(position);
 					console.PrintError(string.Format(trerror.ErrorMessage.Text, exc.Message));
 				}
@@ -559,18 +559,18 @@ internal sealed partial class Process(EmueraConsole view)
 			}
 			else
 			{
-				console.PrintError(string.Format(trerror.HasError.Text, posString, AssemblyData.EmueraVersionText));
+				console.PrintError(string.Format(trerror.HasError.Text, posString, MinorShift._Library.Sys.EmueraVersionText));
 				console.PrintError(exc.Message);
 			}
 		}
 		else if (exc is ExeEE)
 		{
-			console.PrintError(string.Format(trerror.HasEmueraError.Text, posString, AssemblyData.EmueraVersionText));
+			console.PrintError(string.Format(trerror.HasEmueraError.Text, posString, MinorShift._Library.Sys.EmueraVersionText));
 			console.PrintError(exc.Message);
 		}
 		else
 		{
-			console.PrintError(string.Format(trerror.HasUnexpectedError.Text, posString, AssemblyData.EmueraVersionText));
+			console.PrintError(string.Format(trerror.HasUnexpectedError.Text, posString, MinorShift._Library.Sys.EmueraVersionText));
 			console.PrintError(exc.GetType().ToString() + ":" + exc.Message);
 			string[] stack = (exc.StackTrace ?? string.Empty).Split('\n');
 			for (int i = 0; i < stack.Length; i++)

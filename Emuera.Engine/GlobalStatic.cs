@@ -59,6 +59,8 @@ internal static class GlobalStatic
 	//1756 Processから移動。Program.AnalysisMode用
 	public static Dictionary<string, Int64> tempDic = [];
 	#region EE_FORCE_QUIT_AND_RESTART
+	public static bool ExistPlugin;
+	public static CtrlZ ctrlZ = new();
 	public static bool ForceQuitAndRestart = false;//連続実行を防ぐ
 	#endregion
 

@@ -96,8 +96,9 @@ internal sealed class FileEE : EmueraException
 /// <summary>
 /// エラー箇所を表示するための位置データ。整形前のデータなのでエラー表示以外の理由で参照するべきではない。
 /// </summary>
-readonly record struct ScriptPosition
+sealed record ScriptPosition
 {
+	public ScriptPosition Value => this;
 	public ScriptPosition()
 	{
 		LineNo = -1;

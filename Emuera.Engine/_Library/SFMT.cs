@@ -264,7 +264,7 @@ public sealed class MTRandom
 #endif
 
 	private const int N = MEXP / 128 + 1;
-	private const int N32 = N * 4;
+	public const int N32 = N * 4;
 	private const int SL2_x8 = SL2 * 8;
 	private const int SR2_x8 = SR2 * 8;
 	private const int SL2_ix8 = 64 - SL2 * 8;

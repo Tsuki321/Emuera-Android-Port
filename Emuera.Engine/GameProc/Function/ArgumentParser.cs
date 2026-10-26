@@ -47,7 +47,9 @@ internal static partial class ArgumentParser
 		if (arg == null)
 			line.IsError = true;
 		return true;
-	error:
+	}
+	private static bool error(InstructionLine line, string errmes)
+	{
 		
 
 		line.IsError = true;

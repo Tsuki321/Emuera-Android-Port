@@ -2274,7 +2274,7 @@ internal sealed partial class FunctionIdentifier
 					}
 				}
 			loopep:
-				List<AConsoleDisplayNode> ep;
+				List<AConsoleDisplayPart> ep;
 				foreach (var value in exm.Console.EscapedParts)
 				{
 					ep = value.Value;
@@ -2377,7 +2377,7 @@ internal sealed partial class FunctionIdentifier
 					}
 				}
 			loopep:
-				List<AConsoleDisplayNode> ep;
+				List<AConsoleDisplayPart> ep;
 				foreach (var value in exm.Console.EscapedParts)
 				{
 					ep = value.Value;
@@ -2449,7 +2449,7 @@ internal sealed partial class FunctionIdentifier
 			{
 				req.MouseInput = arg.Mouse.GetIntValue(exm) != 0;
 			}
-			exm.Console.Window.ApplyTextBoxChanges();
+			exm.Console.Window.RequestRedraw();
 			int count = 0;
 			if (arg.CanSkip != null && GlobalStatic.Console.MesSkip)
 			{
@@ -2471,7 +2471,7 @@ internal sealed partial class FunctionIdentifier
 					}
 				}
 			loopep:
-				List<AConsoleDisplayNode> ep;
+				List<AConsoleDisplayPart> ep;
 				foreach (var value in exm.Console.EscapedParts)
 				{
 					ep = value.Value;
@@ -2552,7 +2552,7 @@ internal sealed partial class FunctionIdentifier
 			{
 				req.MouseInput = arg.Mouse.GetIntValue(exm) != 0;
 			}
-			exm.Console.Window.ApplyTextBoxChanges();
+			exm.Console.Window.RequestRedraw();
 			int count = 0;
 			if (arg.CanSkip != null && GlobalStatic.Console.MesSkip)
 			{
@@ -2574,7 +2574,7 @@ internal sealed partial class FunctionIdentifier
 					}
 				}
 			loopep:
-				List<AConsoleDisplayNode> ep;
+				List<AConsoleDisplayPart> ep;
 				foreach (var value in exm.Console.EscapedParts)
 				{
 					ep = value.Value;
@@ -2647,7 +2647,7 @@ internal sealed partial class FunctionIdentifier
 						if (isString)
 							column.DefaultValue = v.GetStrValue(exm);
 						else
-							column.DefaultValue = DataTable.ConvertInt(v.GetIntValue(exm), column.DataType);
+							column.DefaultValue = EvilMask.Emuera.Utils.DataTable.ConvertInt(v.GetIntValue(exm), column.DataType);
 						break;
 				}
 				idx++;

@@ -364,11 +364,9 @@ internal static class LogicalLineParser
 		{
 			errMes = e.Message;
 		}
-	err:
-		
-		if (isFunction)
+		return err(position, isFunction, ref labelName, errMes);
+		static LogicalLine err(ScriptPosition position, bool isFunction, ref string labelName, string errMes)
 		{
-			System.Media.SystemSounds.Hand.Play();
 			if (isFunction)
 			{
 				if (labelName.Length == 0)

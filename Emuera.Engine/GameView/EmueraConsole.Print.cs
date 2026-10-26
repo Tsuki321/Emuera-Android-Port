@@ -377,7 +377,7 @@ internal sealed partial class EmueraConsole : IDisposable
 		RefreshStrings(false);
 	}
 
-	internal void PrintErrorButton(string str, ScriptPosition pos)
+	internal void PrintErrorButton(string str, ScriptPosition pos, string stackTrace = null)
 	{
 		if (string.IsNullOrEmpty(str))
 			return;
@@ -412,7 +412,7 @@ internal sealed partial class EmueraConsole : IDisposable
 		RefreshStrings(false);
 	}
 
-	public void Print(string str)
+	public void Print(string str, bool lineEnd = true)
 	{
 		if (string.IsNullOrEmpty(str))
 			return;
@@ -731,7 +731,7 @@ internal sealed partial class EmueraConsole : IDisposable
 	}
 
 	#region EE_OUTPUTLOG
-	public bool OutputLog(string filename)
+	public bool OutputLog(string filename, bool hideInfo = false)
 	{
 		// if (filename == null)
 		if (filename == "" || filename == null)
@@ -753,7 +753,7 @@ internal sealed partial class EmueraConsole : IDisposable
 
 		if (outputLog(filename))
 		{
-			if (window?.IsAvailable ?? false)
+			if (!hideInfo && (window?.IsAvailable ?? false))
 			{
 				PrintSystemLine(string.Format(trsl.LogFileHasBeenCreated.Text,
 					filename.StartsWith(Program.WorkingDir, StringComparison.CurrentCultureIgnoreCase)

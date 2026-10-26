@@ -1,3 +1,4 @@
+using Utils = EvilMask.Emuera.Utils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -12,6 +13,7 @@ using MinorShift.Emuera.GameData.Variable;
 using MinorShift.Emuera.Platform;
 using MinorShift.Emuera.GameView;
 using MinorShift.Emuera.Content;
+using Utils = EvilMask.Emuera.Utils;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -2435,7 +2437,6 @@ internal static partial class FunctionMethodCreator
 				return (isInstalled);
 			}
 			#endregion
-			return (isInstalled);
 		}
 
 	}
@@ -7774,7 +7775,7 @@ internal static partial class FunctionMethodCreator
 		{
 			Int64 argument0 = arguments[0].GetIntValue(exm);
 			Int64 argument1 = arguments[1].GetIntValue(exm);
-			GlobalStatic.Console.Window.hotkeyState.HotkeyStateSet((nint)argument0, (nint)argument1);
+			throw new CodeEE("HOTKEY_STATE requires a desktop keyboard host.");
 			return 0;
 		}
 	}
@@ -7793,7 +7794,7 @@ internal static partial class FunctionMethodCreator
 		public override Int64 GetIntValue(ExpressionMediator exm, List<IOperandTerm> arguments)
 		{
 			Int64 argument0 = arguments[0].GetIntValue(exm);
-			GlobalStatic.Console.Window.hotkeyState.HotkeyStateInit((nint)argument0);
+			throw new CodeEE("HOTKEY_STATE_INIT requires a desktop keyboard host.");
 			return 0;
 		}
 	}

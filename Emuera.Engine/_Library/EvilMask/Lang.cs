@@ -1372,16 +1372,16 @@ internal sealed partial class Lang
 
 	public static void SetLanguage()
 	{
-		if (Config.Config.EmueraLang == DefaultLanguage)
+		if (Config.EmueraLang == DefaultLanguage)
         	return;
 
 		if (CurrentCulture.Name.StartsWith(("ja-")))
 		{
-			Config.Config.SetLanguageSetting(ConfigData.Instance, DefaultLanguage);
+			Config.SetLanguageSetting(ConfigData.Instance, DefaultLanguage);
 			return;
 		}
 
-		if (langList.TryGetValue(Config.Config.EmueraLang, out string lang))
+		if (langList.TryGetValue(Config.EmueraLang, out string lang))
 		{
 			loadLangXML(LoadXmlFile(lang));
 			return;
@@ -1391,12 +1391,12 @@ internal sealed partial class Lang
 		{
 			if (CurrentCulture.Name.StartsWith(culture.Key))
 			{
-				Config.Config.SetLanguageSetting(ConfigData.Instance, culture.Value);
+				Config.SetLanguageSetting(ConfigData.Instance, culture.Value);
 				loadLangXML(LoadXmlFile(langList[culture.Value]));
 				return;
 			}
 		}
-		Config.Config.SetLanguageSetting(ConfigData.Instance, DefaultLanguage);
+		Config.SetLanguageSetting(ConfigData.Instance, DefaultLanguage);
 	}
 	static void loadLangXML(XmlDocument xml)
 	{
@@ -1416,13 +1416,13 @@ internal sealed partial class Lang
 	
 	public static void ReloadLang()
 	{
-		if (Config.Config.EmueraLang == DefaultLanguage)
+		if (Config.EmueraLang == DefaultLanguage)
 		{
 			foreach (var item in trItems) item.Value.Clear();
 			return;
 		}
 
-		if (!langList.TryGetValue(Config.Config.EmueraLang, out string path))
+		if (!langList.TryGetValue(Config.EmueraLang, out string path))
 			return;
 
 		XmlDocument xml;

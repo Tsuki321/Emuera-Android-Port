@@ -9,3 +9,6 @@ global using MinorShift.Emuera.Sub;
 global using MinorShift._Library;
 global using System.Runtime.CompilerServices;
 global using System.Data;
+global using System.Text;
+global using MinorShift.Emuera.GameProc.PluginSystem;
+global using static EvilMask.Emuera.Utils;

@@ -220,7 +220,7 @@ internal static class Config
 		}
 		if (TextDrawingMode == TextDrawingMode.WINAPI)
 		{
-			MessageBox.Show(trmb.DoNotSupportWINAPI.Text);
+			GlobalStatic.Dialogs?.ShowInfoAsync(trmb.DoNotSupportWINAPI.Text, "Emuera").GetAwaiter().GetResult();
 			TextDrawingMode = TextDrawingMode.TEXTRENDERER;
 		}
 
@@ -286,6 +286,7 @@ internal static class Config
 	#endregion
 
 	public static EngineFont DefaultFont => Font;
+	public static StringComparison SCVariable => StringComparison;
 
 	public static void ClearFont()
 	{

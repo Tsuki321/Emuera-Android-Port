@@ -34,6 +34,8 @@ internal static class Program
     public static string FontDir
         => WorkingDir + "font/";
 
+    public static string SoundDir => WorkingDir + "sound/";
+
     public static string MusicDir
         => WorkingDir + "bgm/";
 
