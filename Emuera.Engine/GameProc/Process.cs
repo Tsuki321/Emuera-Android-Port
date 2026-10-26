@@ -197,9 +197,7 @@ internal sealed partial class Process(EmueraConsole view)
 			GlobalStatic.LabelDictionary = labelDic;
 			HeaderFileLoader hLoader = new(console, idDic, this);
 
-			await Preload.Load(Program.ErbDir);
-		await Preload.Load(Program.CsvDir);
-		LexicalAnalyzer.UseMacro = false;
+			LexicalAnalyzer.UseMacro = false;
 
 			PluginManager.GetInstance().SetParent(this, state, exm);
 			PluginManager.GetInstance().LoadPlugins();

@@ -27,6 +27,7 @@ internal sealed class ConfigData
 	static ConfigData() { }
 	private static ConfigData instance = new();
 	public static ConfigData Instance { get { return instance; } }
+	internal static void ResetForGame() { instance = new(); }
 
 	private ConfigData() { setDefault(); }
 	#region EM_私家版_Emuera多言語化改造

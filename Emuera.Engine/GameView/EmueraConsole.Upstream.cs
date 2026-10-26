@@ -5,6 +5,7 @@ internal sealed partial class EmueraConsole
     public MinorShift.Emuera.Platform.EngineDispatcher Dispatcher { get; set; }
     public void Dispatch(Action action)
     {
+        if (quitRequested) return;
         if (Dispatcher != null) Dispatcher.Post(action);
         else action();
     }

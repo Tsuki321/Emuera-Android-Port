@@ -25,8 +25,7 @@ public static class EncodingHandler
 			{
 				return sr.CurrentEncoding;
 			}
-			// Read a bounded sample to detect invalid UTF-8 bytes without reading the entire file.
-			// This avoids double-reading large script files while still catching Shift-JIS content.
+			// Validate with bounded memory: Shift-JIS may follow a long ASCII header.
 			char[] sample = new char[4096];
 			while (sr.Read(sample, 0, sample.Length) != 0) { }
 			return UTF8Encoding;
@@ -50,7 +49,7 @@ public static class EncodingHandler
 				stream.Seek(pos, SeekOrigin.Begin);
 				return sr.CurrentEncoding;
 			}
-			// Read a bounded sample to detect invalid UTF-8 bytes without reading the entire stream.
+			// Validate the entire stream with bounded memory.
 			char[] sample = new char[4096];
 			while (sr.Read(sample, 0, sample.Length) != 0) { }
 			stream.Seek(pos, SeekOrigin.Begin);

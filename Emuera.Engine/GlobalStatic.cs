@@ -69,6 +69,13 @@ internal static class GlobalStatic
 #endif
 	public static void Reset()
 	{
+		Console?.Dispose();
+		Sound?.Dispose();
+		MinorShift.Emuera.Content.AppContents.UnloadContents();
+		MinorShift.Emuera.Sub.Preload.Clear();
+		ConfigData.ResetForGame();
+		ctrlZ = new();
+		ExistPlugin = false;
 		Process = null;
 		ConstantData = null;
 		GameBaseData = null;

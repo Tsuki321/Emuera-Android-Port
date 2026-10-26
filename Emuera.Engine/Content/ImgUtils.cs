@@ -12,6 +12,7 @@ static class ImgUtils
 	/// </summary>
 	public static SKBitmap LoadImage(string filepath)
 	{
+		filepath = MinorShift.Emuera.Sub.PathHelper.FindFileCaseInsensitive(filepath.Replace('\\', Path.DirectorySeparatorChar));
 		if (!File.Exists(filepath))
 			return null;
 		try

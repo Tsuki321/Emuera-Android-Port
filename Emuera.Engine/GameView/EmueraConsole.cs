@@ -85,12 +85,20 @@ internal sealed partial class EmueraConsole : IDisposable
 
 		timer = new System.Timers.Timer(10);
 		timer.AutoReset = true;
-		timer.Elapsed += (s, e) => Dispatch(() => tickTimer(s, e));
+		timer.Elapsed += (s, e) =>
+		{
+			if (Interlocked.Exchange(ref timerTickPending, 1) != 0) return;
+			Dispatch(() => { try { tickTimer(s, e); } finally { Volatile.Write(ref timerTickPending, 0); } });
+		};
 		CBG_Clear();//文字列描画用ダミー追加
 
 		redrawTimer = new System.Timers.Timer(10);
 		redrawTimer.AutoReset = true;
-		redrawTimer.Elapsed += (s, e) => Dispatch(() => tickRedrawTimer(s, e));
+		redrawTimer.Elapsed += (s, e) =>
+		{
+			if (Interlocked.Exchange(ref redrawTickPending, 1) != 0) return;
+			Dispatch(() => { try { tickRedrawTimer(s, e); } finally { Volatile.Write(ref redrawTickPending, 0); } });
+		};
 	}
 	#region 1823 cbg関連
 	private readonly List<ClientBackGroundImage> cbgList = new List<ClientBackGroundImage>();
@@ -285,6 +293,7 @@ internal sealed partial class EmueraConsole : IDisposable
 	{
 		get
 		{
+			if (quitRequested) return false;
 			if (state == ConsoleState.Initializing)
 				return true;
 			return (state == ConsoleState.Running || runningERBfromMemory);
@@ -425,7 +434,8 @@ internal sealed partial class EmueraConsole : IDisposable
 	}
 
 
-	public void Quit() { state = ConsoleState.Quit; timer.Stop(); redrawTimer.Stop(); }
+	private volatile bool quitRequested;
+	public void Quit() { quitRequested = true; state = ConsoleState.Quit; timer.Stop(); redrawTimer.Stop(); }
 	#region EE_FORCE_QUIT系
 	public void ForceQuit()
 	{
@@ -687,6 +697,8 @@ internal sealed partial class EmueraConsole : IDisposable
 
 
 	System.Timers.Timer timer = null;
+	private int timerTickPending;
+	private int redrawTickPending;
 	Int64 timerID = -1;
 	Int64 timer_startTime;//現在のタイマーを開始した時のミリ秒数（WinmmTimer.TickCount基準）
 	Int64 timer_nextDisplayTime;//TINPUT系で次に残り時間を表示する時のTickCountミリ秒数
@@ -2620,10 +2632,10 @@ internal sealed partial class EmueraConsole : IDisposable
 
 	public void Dispose()
 	{
-		if (timer != null)
-			timer.Dispose();
-		//timer = null;
-		//stringMeasure.Dispose();
+		quitRequested = true;
+		timer?.Dispose();
+		redrawTimer?.Dispose();
+		stringMeasure.Dispose();
 	}
 }
 

@@ -44,6 +44,7 @@ internal sealed partial class EmueraConsole : IDisposable
 	#endregion
 	public void ClearDisplay()
 	{
+		htmlIslandLines.Clear();
 		#region EE_AnchorのCB機能移植
 		CBProc.ClearScreen();
 		#endregion

@@ -5,9 +5,12 @@ namespace MinorShift.Emuera.Platform;
 /// <summary>Serializes interpreter callbacks away from the UI thread.</summary>
 public sealed class EngineDispatcher : IDisposable
 {
+    // The legacy interpreter uses process-wide globals. Session workers must
+    // never run concurrently, including while a previous Activity is closing.
+    public static object SessionSyncRoot { get; } = new();
     private readonly BlockingCollection<Action> queue = new();
     private int disposed;
-    public object SyncRoot { get; } = new();
+    public object SyncRoot => SessionSyncRoot;
     public event Action<Exception> UnhandledException;
     private readonly TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public Task Completion => completion.Task;

@@ -42,12 +42,6 @@ public class GameActivity : Activity
         // not available by default on Android/.NET.
         System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // 1. Register platform services in GlobalStatic
-        GlobalStatic.Paths    = new AndroidPlatformPaths(this, gameRoot);
-        GlobalStatic.Dialogs  = new AndroidPlatformDialogs(this);
-        GlobalStatic.Sound    = new AndroidPlatformSound();
-        GlobalStatic.Lifecycle = new AndroidLifecycle(this);
-
         // 2. Create the engine console host and surface view.
         //    Surface view is created here; EmueraConsole is created on the engine thread
         //    AFTER LoadConfig() so that Config.ForeColor/BackColor are set before the
@@ -94,6 +88,12 @@ public class GameActivity : Activity
         {
             try
             {
+                if (IsFinishing || IsDestroyed) return;
+                GlobalStatic.Reset();
+                GlobalStatic.Paths = new AndroidPlatformPaths(this, gameRoot);
+                GlobalStatic.Dialogs = new AndroidPlatformDialogs(this);
+                GlobalStatic.Sound = new AndroidPlatformSound();
+                GlobalStatic.Lifecycle = new AndroidLifecycle(this);
                 ConfigData.Instance.LoadConfig();
                 // Discover TTF/OTF/TTC files in the game's font/ directory so the
                 // engine can report them as "installed" and SkiaSharp can load them.
@@ -135,6 +135,13 @@ public class GameActivity : Activity
     {
         _console?.Quit();
         _dispatcher?.Dispose();
+        var closingConsole = _console;
+        if (_dispatcher != null)
+            _ = _dispatcher.Completion.ContinueWith(_ =>
+            {
+                lock (MinorShift.Emuera.Platform.EngineDispatcher.SessionSyncRoot)
+                    if (ReferenceEquals(GlobalStatic.Console, closingConsole)) GlobalStatic.Reset();
+            });
         base.OnDestroy();
     }
 
