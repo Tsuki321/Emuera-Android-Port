@@ -692,6 +692,7 @@ internal sealed class ConfigData
 
 	public bool LoadConfig()
 	{
+		JSONConfig.Load();
 		string defaultConfigPath = Program.CsvDir + "_default.config";
 		string fixedConfigPath = Program.CsvDir + "_fixed.config";
 		if (!File.Exists(defaultConfigPath))
@@ -719,6 +720,7 @@ internal sealed class ConfigData
 
 	private bool loadConfig(string confPath, bool fix)
 	{
+		confPath = PathHelper.FindFileCaseInsensitive(confPath);
 		if (!File.Exists(confPath))
 			return false;
 		using var eReader = new EraStreamReader(false);

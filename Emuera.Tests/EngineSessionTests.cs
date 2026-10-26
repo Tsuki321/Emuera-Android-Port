@@ -50,7 +50,7 @@ public class EngineSessionTests
                 console.Initialize();
             });
             Assert.Null(error);
-            Assert.Contains("READY 日本語 中文", Output(console!));
+            Assert.True(Output(console!).Contains("READY 日本語 中文"), Output(console!));
             Assert.Equal(InputType.IntValue, console!.inputReq.InputType);
             await Run(dispatcher, () => console.PressEnterKey(false, "42", false));
             Assert.Contains("ANSWER=42", Output(console));

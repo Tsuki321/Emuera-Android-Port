@@ -610,7 +610,7 @@ public class GameSurfaceView : View
         {
             // Send a right-click mouse event. The engine handles this for INPUTMOUSEKEY
             // (WAITPRIM) states. Games that support MOUSEB/right-click will respond.
-            _console.MouseDown(new System.Drawing.Point((int)x, (int)y), MouseButtonRight);
+            _console.Dispatch(() => _console.MouseDown(new System.Drawing.Point((int)x, (int)y), MouseButtonRight));
             return;
         }
 
