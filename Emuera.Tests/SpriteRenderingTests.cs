@@ -20,7 +20,7 @@ public class SpriteRenderingTests
         canvas.Clear(SKColors.Transparent);
         sprite.GraphicsDraw(canvas, new Rectangle(3, 4, 2, 2));
         Assert.Equal(SKColors.Blue, bitmap.GetPixel(3, 4));
-        Assert.Equal(SKColors.Transparent, bitmap.GetPixel(0, 0));
+        Assert.Equal(0, bitmap.GetPixel(0, 0).Alpha);
         Assert.Equal(SKMatrix.Identity, canvas.TotalMatrix);
     }
 

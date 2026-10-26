@@ -44,6 +44,7 @@ internal sealed class ErbLoader
 	/// <param name="filepath"></param>
 	public async Task<bool> LoadErbDir(string erbDir, bool displayReport, LabelDictionary labelDictionary)
 	{
+		erbDir = PathHelper.ResolveDirectoryCaseInsensitive(erbDir);
 		//1.713 labelDicをnewする位置を変更。
 		//checkScript();の時点でExpressionPerserがProcess.instance.LabelDicを必要とするから。
 		labelDic = labelDictionary;
