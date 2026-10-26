@@ -39,7 +39,7 @@ No code from those projects was imported.
 | Interpreter | `GameProc` executes ERB/ERH, `GameData` supplies variables and built-ins, `Sub` handles parsing and serialization. These consume process-wide `GlobalStatic` state. |
 | Android execution | Startup already used a thread, but subsequent input executed on the Android UI thread. Input and timers now use one dispatcher. Session workers share a gate because globals prohibit concurrent games. Rendering attempts the gate without blocking the UI. |
 | Timed input | Timer startup lived in a removed WinForms paint handler, and timers were one-shot. Timed waits now start when input begins, tick repeatedly, and coalesce queued ticks. Shutdown stops timers. |
-| File compatibility | Case-sensitive Android paths require explicit Windows-style case matching. Fixed upstream enumeration of uppercase ERB directories, preloaded file reads, image lookup, and relative ENUMFILES. Wildcards support `*` and `?`. |
+| File compatibility | Case-sensitive Android paths require explicit Windows-style case matching. Fixed upstream enumeration of uppercase ERB directories, preloaded file reads, image lookup, and game-relative EXISTFILE/ENUMFILES/text files. Wildcards support `*` and `?`. |
 | Encoding | A 4096-character sample misidentified Shift-JIS after a long ASCII header. Detection now validates the whole file with bounded memory, retaining BOM handling and stream position. |
 | Saves | All games formerly shared one internal directory. Saves now use `files/games/<SHA-256 of canonical game path>/sav`. Identically named folders at different paths are isolated. Moving a game changes its storage identity. |
 | Rendering | Android skipped non-text parts and sprite draw methods were empty. Static/animated sprites, inline images, rectangle shapes, background color, and basic HTML islands are now drawn. Animation uses a monotonic clock. |
@@ -53,11 +53,14 @@ The original non-adult fixture under `fixtures/compatibility` is shared by CI an
 Android **Compatibility check** button. It verifies mixed-case CSV/ERB startup, CJK text
 through the interpreter, numeric/string input, WAIT/TWAIT, button input, and return flow.
 The automated session additionally saves a value, changes it, reloads it, and checks the
-stored GameBase version. Pixel tests check static/animated sprite rendering; separate
+stored GameBase version in both text and binary save formats. Pixel tests check static/animated sprite rendering; separate
 tests cover encoding and game storage identities.
 
 This validates actual script execution rather than only compiling the interpreter.
-Device testing was deferred at the user's request. No real-game compatibility matrix
+The suite currently contains 36 passing tests, with a successful Release APK build
+([validation run](https://github.com/Tsuki321/Emuera-Android-Port/actions/runs/40334211674)).
+The APK is `com.yourname.emuera`, version `1.1-preview` (code 2), target API 36, and
+contains ARM64 and x86-64 native libraries. Device testing was deferred at the user's request. No real-game compatibility matrix
 has yet been established, and text appearing in CI output does not prove Android glyph
 layout is correct.
 

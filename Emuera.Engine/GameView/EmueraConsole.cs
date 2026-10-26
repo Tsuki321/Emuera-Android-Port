@@ -2579,7 +2579,7 @@ internal sealed partial class EmueraConsole : IDisposable
 		state = ConsoleState.Initializing;
 		PrintSingleLine(trsl.ReloadingErb.Text, true);
 		force_temporary = true;
-		emuera.ReloadPartialErb(paths);
+		emuera.ReloadPartialErb(paths).GetAwaiter().GetResult();
 		force_temporary = false;
 		PrintSingleLine(trsl.ReloadCompleted.Text, true);
 		RefreshStrings(true);
