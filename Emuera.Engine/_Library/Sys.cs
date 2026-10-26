@@ -5,6 +5,7 @@ namespace MinorShift._Library;
 
 public static class Sys
 {
+	public const string EmueraVersionText = "1.824+v24+EMv18+EEv56 (Android, upstream 7b69ebd)";
 	static Sys()
 	{
 		string loc = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).Location;

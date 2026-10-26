@@ -11,4 +11,4 @@ global using System.Runtime.CompilerServices;
 global using System.Data;
 global using System.Text;
 global using MinorShift.Emuera.GameProc.PluginSystem;
-global using static EvilMask.Emuera.Utils;
+global using DataTable = System.Data.DataTable;

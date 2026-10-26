@@ -1,4 +1,4 @@
-using Utils = EvilMask.Emuera.Utils;
+;
 using System;
 using System.Collections.Generic;
 using System.Drawing;

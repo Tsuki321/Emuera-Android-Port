@@ -377,7 +377,7 @@ internal sealed partial class EmueraConsole : IDisposable
 		RefreshStrings(false);
 	}
 
-	internal void PrintErrorButton(string str, ScriptPosition pos, string stackTrace = null)
+	internal void PrintErrorButton(string str, ScriptPosition pos, int type = 0)
 	{
 		if (string.IsNullOrEmpty(str))
 			return;
