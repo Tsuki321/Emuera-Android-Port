@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
-using MinorShift.Emuera.Runtime.Config;
+using MinorShift.Emuera;
 
 namespace EvilMask.Emuera;
 

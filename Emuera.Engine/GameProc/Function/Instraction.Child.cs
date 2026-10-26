@@ -2685,7 +2685,7 @@ internal sealed partial class FunctionIdentifier
 	//ここからEnter版
 	#region EE
 	// Sound playback delegated to GlobalStatic.Sound (IPlatformSound)
-	private sealed class PLAYSOUND_Instruction : AbstractInstruction
+	private sealed class PLAYSOUND_Instruction : AInstruction
 	{
 
 		public PLAYSOUND_Instruction()

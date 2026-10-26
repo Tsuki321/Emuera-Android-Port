@@ -12,7 +12,7 @@ public class AndroidPlatformPaths(Context context, string gameRootDirectory) : I
     public string GameRootDirectory { get; } = gameRootDirectory;
 
     public string SaveDirectory { get; } =
-        Path.Combine(context.FilesDir!.AbsolutePath, "saves");
+        Path.Combine(context.FilesDir!.AbsolutePath, "games", GameStorage.GetGameId(gameRootDirectory), "sav");
 
     public string ConfigFilePath { get; } =
         Path.Combine(context.FilesDir!.AbsolutePath, "emuera.config");

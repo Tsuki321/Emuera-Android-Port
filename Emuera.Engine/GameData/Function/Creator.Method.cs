@@ -21,7 +21,6 @@ using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 using System.Xml;
 using trerror = EvilMask.Emuera.Lang.Error;
 using System.Data;
@@ -2004,7 +2003,7 @@ internal static partial class FunctionMethodCreator
 			CanRestructure = false;
 		}
 
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	//通常２つ、１つ省略可能で１～２の引数が必要。
 		//	if (arguments.Count < 1)
@@ -2087,7 +2086,7 @@ internal static partial class FunctionMethodCreator
 			charaStr = cStr;
 			CanRestructure = true;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 1)
 		//		return name + "関数には少なくとも1つの引数が必要です";
@@ -2125,7 +2124,7 @@ internal static partial class FunctionMethodCreator
 				];
 			CanRestructure = true;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 2)
 		//		return name + "関数には少なくとも2つの引数が必要です";
@@ -2180,7 +2179,7 @@ internal static partial class FunctionMethodCreator
 			charaInt = cInt;
 			CanRestructure = true;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 2)
 		//		return name + "関数には少なくとも2つの引数が必要です";
@@ -2226,7 +2225,7 @@ internal static partial class FunctionMethodCreator
 		}
 
 		readonly bool isLast;
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	//通常3つ、1つ省略可能で2～3の引数が必要。
 		//	if (arguments.Count < 2)
@@ -2303,7 +2302,7 @@ internal static partial class FunctionMethodCreator
 				];
 			CanRestructure = true;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 1)
 		//		return name + "関数には少なくとも1つの引数が必要です";
@@ -2346,7 +2345,7 @@ internal static partial class FunctionMethodCreator
 			//1808beta009 参照型変数の追加によりちょっと面倒になった
 			HasUniqueRestructure = true;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 1)
 		//		return name + "関数には少なくとも1つの引数が必要です";
@@ -2509,7 +2508,7 @@ internal static partial class FunctionMethodCreator
 
 		readonly EraSaveFileType type;
 
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count > 1)
 		//		return name + "関数の引数が多すぎます";
@@ -2778,7 +2777,7 @@ internal static partial class FunctionMethodCreator
 			argumentTypeArray = new Type[] { typeof(long) };
 			CanRestructure = true;
 		}
-		public override long GetIntValue(ExpressionMediator exm, IOperandTerm[] arguments)
+		public override long GetIntValue(ExpressionMediator exm, List<IOperandTerm> arguments)
 		{
 			var (r, g, b) = ExtractRgbChannels(arguments[0].GetIntValue(exm));
 			double cmax = Math.Max(r, Math.Max(g, b));
@@ -2807,7 +2806,7 @@ internal static partial class FunctionMethodCreator
 			argumentTypeArray = new Type[] { typeof(long) };
 			CanRestructure = true;
 		}
-		public override long GetIntValue(ExpressionMediator exm, IOperandTerm[] arguments)
+		public override long GetIntValue(ExpressionMediator exm, List<IOperandTerm> arguments)
 		{
 			var (r, g, b) = ExtractRgbChannels(arguments[0].GetIntValue(exm));
 			double cmax = Math.Max(r, Math.Max(g, b));
@@ -2827,7 +2826,7 @@ internal static partial class FunctionMethodCreator
 			argumentTypeArray = new Type[] { typeof(long) };
 			CanRestructure = true;
 		}
-		public override long GetIntValue(ExpressionMediator exm, IOperandTerm[] arguments)
+		public override long GetIntValue(ExpressionMediator exm, List<IOperandTerm> arguments)
 		{
 			var (r, g, b) = ExtractRgbChannels(arguments[0].GetIntValue(exm));
 			double cmax = Math.Max(r, Math.Max(g, b));
@@ -2848,7 +2847,7 @@ internal static partial class FunctionMethodCreator
 			argumentTypeArray = new Type[] { typeof(long), typeof(long), typeof(long) };
 			CanRestructure = true;
 		}
-		public override long GetIntValue(ExpressionMediator exm, IOperandTerm[] arguments)
+		public override long GetIntValue(ExpressionMediator exm, List<IOperandTerm> arguments)
 		{
 			double h = arguments[0].GetIntValue(exm);
 			double s = arguments[1].GetIntValue(exm) / 100.0;
@@ -2896,7 +2895,7 @@ internal static partial class FunctionMethodCreator
 	//		argumentTypeArray = null;
 	//		CanRestructure = false;
 	//	}
-	//	public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+	//	public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 	//	{
 	//		if (arguments.Count < 1)
 	//			return name + "関数には少なくとも1つの引数が必要です";
@@ -2908,7 +2907,7 @@ internal static partial class FunctionMethodCreator
 	//			return name + "関数の1番目の引数が関数参照ではありません";
 	//		return null;
 	//	}
-	//	public override string GetStrValue(ExpressionMediator exm, IOperandTerm[] arguments)
+	//	public override string GetStrValue(ExpressionMediator exm, List<IOperandTerm> arguments)
 	//	{
 	//		return ((UserDefinedRefMethodNoArgTerm)arguments[0]).GetRefName();
 	//	}
@@ -2927,7 +2926,7 @@ internal static partial class FunctionMethodCreator
 				];
 			CanRestructure = true;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	//通常2つ、1つ省略可能で1～2の引数が必要。
 		//	if (arguments.Count < 1)
@@ -3084,7 +3083,7 @@ internal static partial class FunctionMethodCreator
 			CanRestructure = false;
 		}
 
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	//通常2つ、1つ省略可能で1～2の引数が必要。
 		//	if (arguments.Count < 1)
@@ -3154,7 +3153,7 @@ internal static partial class FunctionMethodCreator
 			isMax = max;
 			CanRestructure = true;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 1)
 		//		return name + "関数には少なくとも1つの引数が必要です";
@@ -3404,7 +3403,7 @@ internal static partial class FunctionMethodCreator
 			isCharaRange = isChara;
 			CanRestructure = false;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 1)
 		//		return name + "関数には少なくとも1つの引数が必要です";
@@ -3480,7 +3479,7 @@ internal static partial class FunctionMethodCreator
 			CanRestructure = false;
 			HasUniqueRestructure = true;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 2)
 		//		return name + "関数には少なくとも2つの引数が必要です";
@@ -3572,7 +3571,7 @@ internal static partial class FunctionMethodCreator
 				];
 			CanRestructure = false;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 2)
 		//		return name + "関数には少なくとも2つの引数が必要です";
@@ -3624,7 +3623,7 @@ internal static partial class FunctionMethodCreator
 				];
 			CanRestructure = false;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 2)
 		//		return name + "関数には少なくとも2つの引数が必要です";
@@ -3679,7 +3678,7 @@ internal static partial class FunctionMethodCreator
 				];
 			CanRestructure = false;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 2)
 		//		return name + "関数には少なくとも2つの引数が必要です";
@@ -3767,7 +3766,7 @@ internal static partial class FunctionMethodCreator
 			funcName = (isMax ? "MAX" : "MIN") + (isCharaRange ? "C" : "") + "ARRAY";
 			CanRestructure = false;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 1)
 		//		return name + "関数には少なくとも1つの引数が必要です";
@@ -3821,7 +3820,7 @@ internal static partial class FunctionMethodCreator
 			argumentTypeArray = [typeof(long), typeof(long)];
 			CanRestructure = true;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	string ret = base.CheckArgumentType(name, arguments);
 		//	if (ret != null)
@@ -3858,7 +3857,7 @@ internal static partial class FunctionMethodCreator
 			CanRestructure = true;
 			HasUniqueRestructure = true;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count != 2)
 		//		return name + "関数には2つの引数が必要です";
@@ -3908,7 +3907,7 @@ internal static partial class FunctionMethodCreator
 			CanRestructure = true;
 		}
 		/*
-		public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		{
 			string errStr = base.CheckArgumentType(name, arguments);
 			if (errStr != null)
@@ -3949,7 +3948,7 @@ internal static partial class FunctionMethodCreator
 			argumentTypeArray = [typeof(long), typeof(long)];
 			CanRestructure = false;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	string errStr = base.CheckArgumentType(name, arguments);
 		//	if (errStr != null)
@@ -3975,7 +3974,7 @@ internal static partial class FunctionMethodCreator
 			argumentTypeArray = [typeof(long), typeof(long)];
 			CanRestructure = false;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	string errStr = base.CheckArgumentType(name, arguments);
 		//	if (errStr != null)
@@ -4010,7 +4009,7 @@ internal static partial class FunctionMethodCreator
 
 		readonly bool isLast;
 		readonly string funcName;
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 2)
 		//		return name + "関数には少なくとも2つの引数が必要です";
@@ -4129,7 +4128,7 @@ internal static partial class FunctionMethodCreator
 			CanRestructure = false;
 		}
 		private readonly bool isCharaRange;
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 2)
 		//		return name + "関数には少なくとも2つの引数が必要です";
@@ -4201,7 +4200,7 @@ internal static partial class FunctionMethodCreator
 			CanRestructure = false;
 			HasUniqueRestructure = true;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 2)
 		//		return string.Format("{0}関数:少なくとも{1}の引数が必要です", name, 2);
@@ -4391,7 +4390,7 @@ internal static partial class FunctionMethodCreator
 			CanRestructure = true;
 		}
 
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	//通常３つ、２つ省略可能で１～３の引数が必要。
 		//	if (arguments.Count < 1)
@@ -4436,7 +4435,7 @@ internal static partial class FunctionMethodCreator
 			CanRestructure = true;
 		}
 
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	//通常３つ、２つ省略可能で１～３の引数が必要。
 		//	if (arguments.Count < 1)
@@ -4497,7 +4496,7 @@ internal static partial class FunctionMethodCreator
 		}
 
 		readonly bool unicode;
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	//通常３つ、１つ省略可能で２～３の引数が必要。
 		//	if (arguments.Count < 2)
@@ -4582,7 +4581,7 @@ internal static partial class FunctionMethodCreator
 			CanRestructure = true;
 		}
 
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	//通常2つ、1つ省略可能で1～2の引数が必要。
 		//	if (arguments.Count < 1)
@@ -4780,7 +4779,7 @@ internal static partial class FunctionMethodCreator
 		{
 			return arguments.Count < 4 || arguments[3].GetIntValue(exm) != 1;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	//通常2つ、1つ省略可能で1～2の引数が必要。
 		//	if (arguments.Count < 3)
@@ -4983,7 +4982,7 @@ internal static partial class FunctionMethodCreator
 				];
 			CanRestructure = true;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	//通常2つ、1つ省略可能で1～2の引数が必要。
 		//	if (arguments.Count < 1)
@@ -5119,7 +5118,7 @@ internal static partial class FunctionMethodCreator
 			HasUniqueRestructure = true;
 			CanRestructure = true;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 1)
 		//		return name + "関数には少なくとも1つの引数が必要です";
@@ -5246,7 +5245,7 @@ internal static partial class FunctionMethodCreator
 			CanRestructure = false;
 		}
 
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	//通常１つ。省略可能。
 		//	if (arguments.Count > 1)
@@ -5631,7 +5630,7 @@ internal static partial class FunctionMethodCreator
 				];
 			CanRestructure = false;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count > 2)
 		//		return null;
@@ -5750,7 +5749,7 @@ internal static partial class FunctionMethodCreator
 			CanRestructure = false;
 		}
 
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 2)
 		//		return string.Format(Properties.Resources.SyntaxErrMesMethodDefaultArgumentNum1, name, 2);
@@ -5819,7 +5818,7 @@ internal static partial class FunctionMethodCreator
 				];
 			CanRestructure = false;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count > 2)
 		//		return null;
@@ -5873,7 +5872,7 @@ internal static partial class FunctionMethodCreator
 	//		argumentTypeArray = new Type[] { typeof(Int64), typeof(Int64), typeof(Int64), typeof(Int64) };
 	//		CanRestructure = false;
 	//	}
-	//	public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+	//	public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 	//	{
 	//		if (arguments.Count < 2)
 	//			return string.Format(Properties.Resources.SyntaxErrMesMethodDefaultArgumentNum1, name, 2);
@@ -5883,7 +5882,7 @@ internal static partial class FunctionMethodCreator
 	//			return string.Format(Properties.Resources.SyntaxErrMesMethodDefaultArgumentNum0, name);
 	//		return null;
 	//	}
-	//	public override Int64 GetIntValue(ExpressionMediator exm, IOperandTerm[] arguments)
+	//	public override Int64 GetIntValue(ExpressionMediator exm, List<IOperandTerm> arguments)
 	//	{
 	//		if (Config.TextDrawingMode == TextDrawingMode.WINAPI)
 	//			throw new CodeEE(string.Format(Properties.Resources.RuntimeErrMesMethodGDIPLUSOnly, Name));
@@ -5916,7 +5915,7 @@ internal static partial class FunctionMethodCreator
 				];
 			CanRestructure = false;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 3)
 		//		return string.Format(Properties.Resources.SyntaxErrMesMethodDefaultArgumentNum1, name, 3);
@@ -5964,7 +5963,7 @@ internal static partial class FunctionMethodCreator
 			 argumentTypeArray = [typeof(Int64)];
 			CanRestructure = false;
 		}
-		public override Int64 GetIntValue(ExpressionMediator exm, IOperandTerm[] arguments)
+		public override Int64 GetIntValue(ExpressionMediator exm, List<IOperandTerm> arguments)
 		{
 			Color c = 
 			GraphicsImage g = ReadGraphics(Name, exm, arguments, 0);
@@ -6241,7 +6240,7 @@ internal static partial class FunctionMethodCreator
 				];
 			CanRestructure = false;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 
 		//	if (arguments.Count < 2)
@@ -6353,7 +6352,7 @@ internal static partial class FunctionMethodCreator
 			argumentTypeArray = null;
 			CanRestructure = false;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 
 		//	if (arguments.Count != 2 && arguments.Count != 6)
@@ -6432,7 +6431,7 @@ internal static partial class FunctionMethodCreator
 			HasUniqueRestructure = true;
 		}
 
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 10)
 		//		return string.Format(Properties.Resources.SyntaxErrMesMethodDefaultArgumentNum1, name, 10);
@@ -6551,7 +6550,7 @@ internal static partial class FunctionMethodCreator
 			HasUniqueRestructure = true;
 		}
 
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 		//	if (arguments.Count < 2)
 		//		return string.Format(Properties.Resources.SyntaxErrMesMethodDefaultArgumentNum1, name, 2);
@@ -6901,7 +6900,7 @@ internal static partial class FunctionMethodCreator
 				];
 			CanRestructure = false;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 
 		//	if (arguments.Count < 6)
@@ -7076,7 +7075,7 @@ internal static partial class FunctionMethodCreator
 				];
 			CanRestructure = false;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 
 		//	if (arguments.Count < 2)
@@ -7185,7 +7184,7 @@ internal static partial class FunctionMethodCreator
 				];
 			CanRestructure = false;
 		}
-		//public override string CheckArgumentType(string name, IOperandTerm[] arguments)
+		//public override string CheckArgumentType(string name, List<IOperandTerm> arguments)
 		//{
 
 		//	if (arguments.Count < 1)

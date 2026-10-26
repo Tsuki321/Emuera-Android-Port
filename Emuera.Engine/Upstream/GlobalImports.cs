@@ -7,3 +7,5 @@ global using MinorShift.Emuera.GameProc.Function;
 global using MinorShift.Emuera.GameView;
 global using MinorShift.Emuera.Sub;
 global using MinorShift._Library;
+global using System.Runtime.CompilerServices;
+global using System.Data;
