@@ -1,11 +1,12 @@
-﻿using MinorShift.Emuera.GameProc.PluginSystem;
+﻿using MinorShift.Emuera.Runtime.Utils.PluginSystem;
 using System.Windows;
+using System.Windows.Forms;
 
 //Plugin must be a part of Emuera solution to be able to reference it
 namespace EmueraPluginExample
 {
-    //class MUST be named PluginManifest
-    public class PluginManifest : PluginManifestAbstract
+	//class MUST be named PluginManifest
+	public class PluginManifest : PluginManifestAbstract
     {
         public PluginManifest() { 
             //Add all Methods

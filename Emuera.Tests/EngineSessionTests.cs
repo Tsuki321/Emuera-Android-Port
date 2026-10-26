@@ -70,7 +70,7 @@ public class EngineSessionTests
                 Assert.Equal(InputType.StrValue, console.inputReq.InputType);
                 console.PressEnterKey(false, "日本語 input", false);
                 Assert.Contains("TEXT=日本語 input", Output(console));
-                Assert.Equal(InputType.StrButton, console.inputReq.InputType);
+                Assert.True(console.inputReq.InputType == InputType.StrButton, Output(console));
                 long request = console.inputReq.ID;
                 console.PressEnterKey(false, "0", false);
                 Assert.Equal(request, console.inputReq.ID);

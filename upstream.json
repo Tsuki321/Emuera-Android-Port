@@ -1,0 +1,13 @@
+{
+  "repository": "https://gitlab.com/EvilMask/emuera.em.git",
+  "branch": "master",
+  "revision": "7b69ebd27378c03c32b6477b74901bfc3d33223c",
+  "revision_date": "2026-08-13",
+  "version": "1.824+v24+EMv18+EEv56",
+  "checked_on": "2026-10-26",
+  "previous_base": "80b07e29f21889254c5de31eca23beebd4702b6d",
+  "previous_version": "1.824+v21+EMv18+EEv47",
+  "android_base": "c7389d5d7cad88d6024616200417e6e93428911d",
+  "reference_directories": ["Emuera", "EmueraPluginExample", "Readme"],
+  "engine_integration": "Runtime three-way merge with Android platform adapters; desktop UI changes are not all ported. See docs/upstream-and-android-review.md."
+}
