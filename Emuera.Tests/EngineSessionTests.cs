@@ -18,21 +18,12 @@ public class EngineSessionTests
         string root = Path.Combine(Path.GetTempPath(), "emuera-session-" + Guid.NewGuid());
         Directory.CreateDirectory(Path.Combine(root, "CSV"));
         Directory.CreateDirectory(Path.Combine(root, "ERB"));
-        File.WriteAllText(Path.Combine(root, "CSV", "GAMEBASE.CSV"), "タイトル,Compatibility fixture\nコード,20261026\nバージョン,1000\n", Encoding.UTF8);
-        File.WriteAllText(Path.Combine(root, "ERB", "MAIN.ERB"), """
-            @SYSTEM_TITLE
-            PRINTL READY 日本語 中文
-            INPUT
-            PRINTFORML ANSWER={RESULT}
-            FLAG:0 = RESULT
-            WAIT
-            PRINTL WAIT_DONE
-            TWAIT 100, 1
-            PRINTL TIMER_DONE
-            INPUTS
-            PRINTFORML TEXT=%RESULTS%
-            WAIT
-            """, Encoding.UTF8);
+        foreach (string file in Directory.GetFiles(Path.Combine(AppContext.BaseDirectory, "Fixtures"), "*", SearchOption.AllDirectories))
+        {
+            string destination = Path.Combine(root, Path.GetRelativePath(Path.Combine(AppContext.BaseDirectory, "Fixtures"), file));
+            Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+            File.Copy(file, destination);
+        }
         var host = new TestHost();
         using var dispatcher = new EngineDispatcher();
         Exception? error = null;
@@ -57,7 +48,12 @@ public class EngineSessionTests
             await Run(dispatcher, () =>
             {
                 Assert.True(GlobalStatic.VEvaluator.SaveTo(0, "fixture"));
+                var flag = GlobalStatic.VariableData.GetSystemVariableToken("FLAG");
+                flag.SetValue(999L, [0L]);
                 Assert.True(GlobalStatic.VEvaluator.LoadFrom(0));
+                Assert.Equal(42, flag.GetIntValue(GlobalStatic.EMediator, [0L]));
+                var data = GlobalStatic.VEvaluator.CheckData(0, MinorShift.Emuera.Sub.EraSaveFileType.Normal);
+                Assert.Equal(1000, data.Version);
             });
             Assert.NotEmpty(Directory.GetFiles(GlobalStatic.Paths.SaveDirectory));
             await Run(dispatcher, () => console.PressEnterKey(false, "", false));
@@ -74,6 +70,12 @@ public class EngineSessionTests
                 Assert.Equal(InputType.StrValue, console.inputReq.InputType);
                 console.PressEnterKey(false, "日本語 input", false);
                 Assert.Contains("TEXT=日本語 input", Output(console));
+                Assert.Equal(InputType.StrButton, console.inputReq.InputType);
+                long request = console.inputReq.ID;
+                console.PressEnterKey(false, "0", false);
+                Assert.Equal(request, console.inputReq.ID);
+                console.PressEnterKey(false, "OK", true);
+                Assert.Contains("BUTTON=OK", Output(console));
             });
             Assert.Null(error);
         }

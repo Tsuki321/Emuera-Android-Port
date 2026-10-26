@@ -12,4 +12,8 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
     <ProjectReference Include="..\Emuera.Engine\Emuera.Engine.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\fixtures\compatibility\CSV\**\*" Link="Fixtures\CSV\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\fixtures\compatibility\ERB\**\*" Link="Fixtures\ERB\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

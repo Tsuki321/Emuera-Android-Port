@@ -30,6 +30,7 @@ public class MainActivity : Activity
         SetContentView(Resource.Layout.activity_main);
 
         FindViewById<Button>(Resource.Id.btn_pick_game)!.Click += (_, _) => PickFolder();
+        FindViewById<Button>(Resource.Id.btn_compatibility)!.Click += (_, _) => LaunchCompatibilityCheck();
 
         LoadRecentGames();
         StartEntryAnimations();
@@ -39,6 +40,30 @@ public class MainActivity : Activity
         EnsureReadExternalStoragePermission();
         // Android 11+: all-files access via MANAGE_EXTERNAL_STORAGE
         EnsureManageExternalStoragePermission();
+    }
+
+    private void LaunchCompatibilityCheck()
+    {
+        try
+        {
+            string root = Path.Combine(FilesDir!.AbsolutePath, "compatibility");
+            foreach (string directory in new[] { "CSV", "ERB" })
+            {
+                Directory.CreateDirectory(Path.Combine(root, directory));
+                foreach (string file in Assets!.List("compatibility/" + directory) ?? [])
+                {
+                    using var source = Assets.Open("compatibility/" + directory + "/" + file);
+                    using var destination = File.Create(Path.Combine(root, directory, file));
+                    source.CopyTo(destination);
+                }
+            }
+            LaunchGame(root);
+        }
+        catch (Exception ex)
+        {
+            new AlertDialog.Builder(this)!.SetTitle("Compatibility check")!.SetMessage(ex.Message)!
+                .SetPositiveButton("OK", (global::Android.Content.IDialogInterfaceOnClickListener?)null)!.Show();
+        }
     }
 
     // ── Entry animations ─────────────────────────────────────────────────────
