@@ -4,6 +4,22 @@ An Android port of [Emuera](http://osdn.jp/projects/emuera/) — the ERA-script 
 
 ---
 
+
+## Current port status
+
+The interpreter is based on [Emuera.EM+EE EEv56](https://gitlab.com/EvilMask/emuera.em/-/commit/7b69ebd27378c03c32b6477b74901bfc3d33223c)
+(upstream checked October 26, 2026), with Android platform adaptations. The exact pin is
+in [upstream.json](upstream.json). This remains a compatibility preview, not a claim that
+every Emuera game or desktop extension works.
+
+Use **Compatibility check** on the home screen to run a bundled non-adult fixture.
+CI exercises actual ERB execution, input, timers, button validation, save/load, encoding,
+and sprite rendering. Phone testing is still required for fonts, touch, audio, and lifecycle.
+See the [codebase review and remaining work](docs/upstream-and-android-review.md).
+
+Game saves are isolated in internal storage by game path. The old shared `files/saves`
+directory is preserved but is not automatically assigned to a game; keep it backed up.
+
 ## Table of Contents
 
 - [What is ERA / Emuera?](#what-is-era--emuera)
@@ -55,7 +71,7 @@ The codebase is split into two projects:
 └────────────────────────────────────────────────────┘
             │  project reference
 ┌───────────────────────────────────────────────────┐
-│           Emuera.Android  (net9.0-android)         │
+│           Emuera.Android  (net10.0-android)         │
 │  MainActivity  — game folder picker                │
 │  GameActivity  — boots the engine                  │
 │  GameSurfaceView — SkiaSharp ERA console renderer  │
@@ -67,7 +83,7 @@ The codebase is split into two projects:
 └───────────────────────────────────────────────────┘
 ```
 
-The engine never references any Android or Windows SDK; all platform calls go through the interfaces registered in `GlobalStatic`.
+The compiled engine uses platform interfaces and SkiaSharp. Excluded desktop library files remain as reference material.
 
 ---
 
@@ -83,7 +99,7 @@ Emuera-Android-Port/
 │   ├── Content/            # Image & resource handling
 │   ├── Platform/           # Abstraction interfaces
 │   └── AssemblyInfo.cs     # InternalsVisibleTo for Android & test projects
-├── Emuera.Android/         # Android front-end (net9.0-android)
+├── Emuera.Android/         # Android front-end (net10.0-android)
 │   ├── MainActivity.cs     # Game folder picker activity
 │   ├── GameActivity.cs     # Game engine host activity
 │   ├── Views/
@@ -91,7 +107,7 @@ Emuera-Android-Port/
 │   │   └── InputBarView.cs      # Input bar (text + digit buttons)
 │   └── Platform/           # Android implementations of engine interfaces
 ├── Emuera.Tests/           # xUnit unit tests for the engine
-├── Emuera/                 # Original Windows Emuera source (reference)
+├── Emuera/                 # Pinned upstream Windows Emuera source (reference)
 ├── Readme/                 # Original Emuera documentation & licenses
 ├── docs/                   # Development plans
 ├── LICENSE                 # zlib/libpng license
@@ -112,38 +128,14 @@ Emuera-Android-Port/
 
 ## Building from Source
 
-### 1. Clone the repository
+Builds and tests for this workspace run through **GitHub Actions**. Open the
+[Android Build workflow](https://github.com/Tsuki321/Emuera-Android-Port/actions/workflows/android-build.yml),
+choose **Run workflow**, and select the branch to validate. Pull requests and pushes to
+`main`/`dev` also run CI. The workflow installs .NET 10 and the Android workload, builds the
+engine, runs the test suite, and builds a Release APK.
 
-```bash
-git clone https://github.com/Tsuki321/Emuera-Android-Port.git
-cd Emuera-Android-Port
-```
-
-### 2. Install the Android workload
-
-```bash
-dotnet workload install android
-```
-
-### 3. Build the engine library
-
-```bash
-dotnet build Emuera.Engine/Emuera.Engine.csproj
-```
-
-### 4. Run the unit tests
-
-```bash
-dotnet test Emuera.Tests/Emuera.Tests.csproj
-```
-
-### 5. Build the Android APK
-
-```bash
-dotnet build Emuera.Android/Emuera.Android.csproj -c Release -p:AndroidKeyStore=false
-```
-
-The APK is output to `Emuera.Android/bin/Release/net9.0-android/`.
+Download `emuera-android` for the APK or `test-results` for TRX results. The unsigned and
+development-signed APKs may both be present; install the `*-Signed.apk` file.
 
 ---
 
@@ -152,7 +144,7 @@ The APK is output to `Emuera.Android/bin/Release/net9.0-android/`.
 1. Enable **Developer Options** and **USB Debugging** on your device (or start an emulator).
 2. Install the APK:
    ```bash
-   adb install Emuera.Android/bin/Release/net9.0-android/com.yourname.emuera-Signed.apk
+   adb install Emuera.Android/bin/Release/net10.0-android/com.yourname.emuera-Signed.apk
    ```
 3. Launch **Emuera** on the device.
 4. Tap **Pick Game Folder** and select the folder containing your ERA game's `.ERB` scripts.
@@ -208,20 +200,15 @@ Pull requests are welcome. Please open an issue first to discuss significant cha
 
 ### Code style
 
-- C# 12 / .NET 9
+- C# 14 / .NET 10
 - Nullable reference types enabled (`<Nullable>enable</Nullable>`)
 - Engine code must not reference `Android.*`, `System.Windows.Forms`, or `System.Drawing`
 
-### Running CI locally
+### Validation
 
-```bash
-# Build engine + run tests
-dotnet build Emuera.Engine/Emuera.Engine.csproj
-dotnet test Emuera.Tests/Emuera.Tests.csproj
-
-# Build APK (requires Android workload)
-dotnet build Emuera.Android/Emuera.Android.csproj -c Release -p:AndroidKeyStore=false
-```
+Run the **Android Build** GitHub Actions workflow on the branch under review. Tests are
+in `Emuera.Tests`; the shared executable fixture is in `fixtures/compatibility`.
+Do not treat a successful build alone as real-game compatibility validation.
 
 ---
 

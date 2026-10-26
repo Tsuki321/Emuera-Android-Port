@@ -14,6 +14,10 @@
     <!-- Cross-platform rendering / image handling -->
     <PackageReference Include="SkiaSharp" Version="2.*" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\Emuera\Properties\lang\emuera-eng.xml" Link="Properties\lang\emuera-eng.xml" />
+    <EmbeddedResource Include="..\Emuera\Properties\lang\emuera-zhs.xml" Link="Properties\lang\emuera-zhs.xml" />
+  </ItemGroup>
 
   <!-- Exclude Windows-only _Library files from the Engine project -->
   <ItemGroup>

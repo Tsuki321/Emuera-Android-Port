@@ -12,8 +12,10 @@ namespace Emuera.Tests;
 
 public class EngineSessionTests
 {
-    [Fact]
-    public async Task MixedCaseGameRunsInputAndSavesOnTheWorker()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task MixedCaseGameRunsInputAndSavesOnTheWorker(bool binarySave)
     {
         string root = Path.Combine(Path.GetTempPath(), "emuera-session-" + Guid.NewGuid());
         Directory.CreateDirectory(Path.Combine(root, "CSV"));
@@ -24,6 +26,8 @@ public class EngineSessionTests
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
             File.Copy(file, destination);
         }
+        if (binarySave)
+            File.WriteAllText(Path.Combine(root, "emuera.config"), "SystemSaveInBinary:YES\n", Encoding.UTF8);
         var host = new TestHost();
         using var dispatcher = new EngineDispatcher();
         Exception? error = null;
@@ -37,6 +41,8 @@ public class EngineSessionTests
             await Run(dispatcher, () =>
             {
                 ConfigData.Instance.LoadConfig();
+                ConfigData.Instance.GetConfigItem(ConfigCode.SystemSaveInBinary).SetValue(binarySave);
+                Config.SetConfig(ConfigData.Instance);
                 console = new EmueraConsole(host) { Dispatcher = dispatcher };
                 console.Initialize();
             });

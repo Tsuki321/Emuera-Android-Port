@@ -14,3 +14,4 @@ EmueraPluginExample/obj/*
 # Build output for all projects
 **/bin/
 **/obj/
+/artifacts/
