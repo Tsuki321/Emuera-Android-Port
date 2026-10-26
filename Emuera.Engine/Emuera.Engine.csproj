@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <Version>1.824.0</Version>
+    <InformationalVersion>1.824+v24+EMv18+EEv56-android</InformationalVersion>
     <Nullable>disable</Nullable>
     <NoWarn>CS8981;CA1416</NoWarn>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

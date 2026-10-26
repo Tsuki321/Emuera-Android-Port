@@ -30,9 +30,9 @@ internal static class GlobalStatic
 	public static IConsoleHost      ConsoleHost { get; set; }
 
 	/// <summary>Internal version string (e.g. "1.823.6.1") set by the host at startup.</summary>
-	public static string InternalEmueraVer { get; set; } = "0.0.0.0";
+	public static string InternalEmueraVer { get; set; } = "1.824.0.0";
 	/// <summary>Human-readable version text set by the host at startup.</summary>
-	public static string EmueraVerText { get; set; } = "0.0.0.0";
+	public static string EmueraVerText { get; set; } = MinorShift._Library.Sys.EmueraVersionText;
 
 	// ── Engine objects ─────────────────────────────────────────────────────
 	//Config Replace
@@ -74,6 +74,7 @@ internal static class GlobalStatic
 		MinorShift.Emuera.Content.AppContents.UnloadContents();
 		MinorShift.Emuera.Sub.Preload.Clear();
 		ConfigData.ResetForGame();
+		Config.ClearFont();
 		ctrlZ = new();
 		ExistPlugin = false;
 		Process = null;

@@ -57,7 +57,9 @@ public class MainActivity : Activity
                     source.CopyTo(destination);
                 }
             }
-            LaunchGame(root);
+            var intent = new Intent(this, typeof(GameActivity));
+            intent.PutExtra("GAME_ROOT", root);
+            StartActivity(intent);
         }
         catch (Exception ex)
         {
