@@ -141,6 +141,14 @@ class ConsoleImagePart : AConsoleDisplayPart
 	//		private readonly ImageAttributes ia;
 	//#pragma warning restore CS0649 // フィールド 'ConsoleImagePart.ia' は割り当てられません。常に既定値 null を使用します。
 	public readonly string ResourceName;
+	public void Draw(SkiaSharp.SKCanvas canvas, int x, int y, bool selected)
+	{
+		var sprite = selected && cImageB != null && cImageB.IsCreated ? cImageB : cImage;
+		if (sprite == null || !sprite.IsCreated) return;
+		var destination = destRect;
+		destination.Offset(x, y);
+		sprite.GraphicsDraw(canvas, destination);
+	}
 	public readonly string ButtonResourceName;
 	public override int Top { get { return top; } }
 	public override int Bottom { get { return bottom; } }

@@ -239,7 +239,12 @@ public class GameSurfaceView : View
                 }
                 else
                 {
-                    // ConsoleImagePart and others: skip rendering for now (future task)
+                    if (part is ConsoleImagePart image)
+                    {
+                        image.Draw(canvas, (int)bx, (int)lineY, _console!.ButtonIsSelected(button));
+                        if (button.IsButton && image.Width > 0)
+                            _buttonRects.Add((new SKRect(bx, lineY + image.Top, bx + image.Width, lineY + image.Bottom), button));
+                    }
                     bx += part.Width;
                 }
             }

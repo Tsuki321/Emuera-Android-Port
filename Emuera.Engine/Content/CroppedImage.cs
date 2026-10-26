@@ -101,16 +101,30 @@ internal abstract class ASpriteSingle : ASprite
 
 	public override void GraphicsDraw(SKCanvas canvas, Point offset)
 	{
-		// Phase 3: implement SkiaSharp drawImage to canvas
+		GraphicsDraw(canvas, new Rectangle(offset, DestBaseSize));
 	}
 	public override void GraphicsDraw(SKCanvas canvas, Rectangle destRect)
 	{
-		// Phase 3: implement SkiaSharp drawImage to canvas
+		GraphicsDraw(canvas, destRect, null);
 	}
 
 	public override void GraphicsDraw(SKCanvas canvas, Rectangle destRect, object attr)
 	{
-		// Phase 3: implement SkiaSharp drawImage with color matrix to canvas
+		SKBitmap bitmap = Bitmap;
+		if (bitmap == null || destRect.Width == 0 || destRect.Height == 0) return;
+		canvas.Save();
+		try
+		{
+			canvas.Translate(destRect.X, destRect.Y);
+			canvas.Scale((float)destRect.Width / DestBaseSize.Width, (float)destRect.Height / DestBaseSize.Height);
+			canvas.Translate(DestBasePosition.X, DestBasePosition.Y);
+			var source = new SKRect(Math.Min(SrcRectangle.Left, SrcRectangle.Right), Math.Min(SrcRectangle.Top, SrcRectangle.Bottom),
+				Math.Max(SrcRectangle.Left, SrcRectangle.Right), Math.Max(SrcRectangle.Top, SrcRectangle.Bottom));
+			if (SrcRectangle.Width < 0) { canvas.Translate(DestBaseSize.Width, 0); canvas.Scale(-1, 1); }
+			if (SrcRectangle.Height < 0) { canvas.Translate(0, DestBaseSize.Height); canvas.Scale(1, -1); }
+			canvas.DrawBitmap(bitmap, source, new SKRect(0, 0, DestBaseSize.Width, DestBaseSize.Height), attr as SKPaint);
+		}
+		finally { canvas.Restore(); }
 	}
 
 }
@@ -217,7 +231,7 @@ internal sealed class SpriteAnime : ASprite
 	/// 開始時間調整用の値。ミリ秒でUInt32の範囲まで想定。
 	/// </summary>
 	Int64 StartTime = -1;
-	uint lastFrameTime = 0;
+	long lastFrameTime = 0;
 	int lastFrame = -1;
 	private AnimeFrame GetCurrentFrame()
 	{
@@ -232,15 +246,15 @@ internal sealed class SpriteAnime : ASprite
 		//一度もフレーム取得したことがない場合は現在時間を記録して最初のフレームを返す。
 		if (StartTime < 0)
 		{
-			StartTime = DateTime.Now.Millisecond;
+			StartTime = Environment.TickCount64;
 			lastFrame = 0;
 			return FrameList[0];
 		}
 		//時間経過なしに複数回呼ばれた場合はさっき返したフレームをもう一度返す。
-		if (DateTime.Now.Millisecond == lastFrameTime && lastFrame >= 0)
+		if (Environment.TickCount64 == lastFrameTime && lastFrame >= 0)
 			return FrameList[lastFrame];
 		//StartTimeからの経過時間をtotaltimeで剰余計算
-		var time = (DateTime.Now.Millisecond - StartTime) % totaltime;      //winmmtimerは一周して0になることがあり得るのでその場合の対策。C#の剰余の結果の符号は左辺値の符号に等しい。
+		var time = (Environment.TickCount64 - StartTime) % totaltime;      //winmmtimerは一周して0になることがあり得るのでその場合の対策。C#の剰余の結果の符号は左辺値の符号に等しい。
 		if (time < 0)
 			time += totaltime;
 		foreach (AnimeFrame frame in FrameList)
@@ -290,17 +304,29 @@ internal sealed class SpriteAnime : ASprite
 
 	public override void GraphicsDraw(SKCanvas canvas, Point offset)
 	{
-		// Phase 3: implement SkiaSharp animated sprite draw
+		GraphicsDraw(canvas, new Rectangle(offset, DestBaseSize));
 	}
 
 	public override void GraphicsDraw(SKCanvas canvas, Rectangle destRect)
 	{
-		// Phase 3: implement SkiaSharp animated sprite draw
+		GraphicsDraw(canvas, destRect, null);
 	}
 
 	public override void GraphicsDraw(SKCanvas canvas, Rectangle destRect, object attr)
 	{
-		// Phase 3: implement SkiaSharp animated sprite draw with color matrix
+		var frame = GetCurrentFrame();
+		if (frame?.BaseImage?.Bitmap == null) return;
+		using var sprite = new SpriteG("", frame.BaseImage as GraphicsImage, frame.SrcRectangle);
+		sprite.BaseImage = frame.BaseImage;
+		canvas.Save();
+		try
+		{
+			canvas.Translate(destRect.X, destRect.Y);
+			canvas.Scale((float)destRect.Width / DestBaseSize.Width, (float)destRect.Height / DestBaseSize.Height);
+			sprite.GraphicsDraw(canvas, new Rectangle(frame.Offset.X + DestBasePosition.X, frame.Offset.Y + DestBasePosition.Y,
+				frame.SrcRectangle.Width, frame.SrcRectangle.Height), attr);
+		}
+		finally { canvas.Restore(); }
 	}
 
 }
