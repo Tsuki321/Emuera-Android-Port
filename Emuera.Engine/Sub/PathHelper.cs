@@ -126,15 +126,6 @@ internal static class PathHelper
 	/// </summary>
 	private static bool MatchesGlob(string fileNameLower, string patternLower)
 	{
-		int starIdx = patternLower.IndexOf('*');
-		if (starIdx < 0)
-			return fileNameLower == patternLower;
-
-		ReadOnlySpan<char> prefix = patternLower.AsSpan(0, starIdx);
-		ReadOnlySpan<char> suffix = patternLower.AsSpan(starIdx + 1);
-		ReadOnlySpan<char> name   = fileNameLower.AsSpan();
-		return name.StartsWith(prefix, StringComparison.Ordinal)
-			&& name.EndsWith(suffix, StringComparison.Ordinal)
-			&& name.Length >= prefix.Length + suffix.Length;
+		return System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(patternLower, fileNameLower, ignoreCase: true);
 	}
 }

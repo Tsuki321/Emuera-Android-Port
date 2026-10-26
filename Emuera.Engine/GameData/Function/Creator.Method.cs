@@ -238,7 +238,8 @@ internal static partial class FunctionMethodCreator
 		}
 		public override long GetIntValue(ExpressionMediator exm, List<IOperandTerm> arguments)
 		{
-			var dir = Utils.GetValidPath(arguments[0].GetStrValue(exm));
+			var relativeDir = Utils.GetValidPath(arguments[0].GetStrValue(exm));
+			var dir = relativeDir == null ? null : PathHelper.ResolveDirectoryCaseInsensitive(Path.Combine(Program.ExeDir, relativeDir.Replace('\\', Path.DirectorySeparatorChar)));
 			if (dir == null || !Directory.Exists(dir)) return -1;
 			var pattern = arguments.Count > 1 ? arguments[1].GetStrValue(exm) : "*";
 			var option = arguments.Count > 2
@@ -247,7 +248,7 @@ internal static partial class FunctionMethodCreator
 			string[] files;
 			try
 			{
-				files = Directory.EnumerateFiles(dir, pattern, option).ToArray();
+				files = PathHelper.GetFilesIgnoreCase(dir, pattern, option);
 				for (int i = 0; i < files.Length; i++)
 				{
 					files[i] = Path.GetRelativePath(Program.ExeDir, files[i]);

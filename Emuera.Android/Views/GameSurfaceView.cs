@@ -189,6 +189,9 @@ public class GameSurfaceView : View
 
         if (_console == null) return;
 
+        var background = _console.bgColor;
+        canvas.Clear(new SKColor(background.R, background.G, background.B, background.A));
+
         var lines = _console.DisplayLineList;
         if (lines == null || lines.Count == 0)
             return;
@@ -214,6 +217,12 @@ public class GameSurfaceView : View
             ConsoleDisplayLine line = lines[i];
             DrawDisplayLine(canvas, line, 0, y, viewWidth);
             y -= lineHeight;
+        }
+        float islandY = 0;
+        foreach (var line in _console.HtmlIslandLines)
+        {
+            DrawDisplayLine(canvas, line, 0, islandY, viewWidth);
+            islandY += lineHeight;
         }
     }
 
@@ -245,6 +254,8 @@ public class GameSurfaceView : View
                         if (button.IsButton && image.Width > 0)
                             _buttonRects.Add((new SKRect(bx, lineY + image.Top, bx + image.Width, lineY + image.Bottom), button));
                     }
+                    else if (part is ConsoleRectangleShapePart rectangle)
+                        rectangle.Draw(canvas, bx, lineY, _console!.ButtonIsSelected(button));
                     bx += part.Width;
                 }
             }

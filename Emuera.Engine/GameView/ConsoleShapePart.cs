@@ -122,6 +122,13 @@ abstract class ConsoleShapePart : AConsoleColoredPart
 
 internal sealed class ConsoleRectangleShapePart : ConsoleShapePart
 {
+	public void Draw(SkiaSharp.SKCanvas canvas, float x, float y, bool selected)
+	{
+		if (!visible) return;
+		Color color = selected ? DisplayButtonColor : DisplayColor;
+		using var paint = new SkiaSharp.SKPaint { Color = new SkiaSharp.SKColor(color.R, color.G, color.B, color.A) };
+		canvas.DrawRect(x + rect.X, y + rect.Y, rect.Width, rect.Height, paint);
+	}
 	public ConsoleRectangleShapePart(RectangleF theRect)
 	{
 		Str = "";
