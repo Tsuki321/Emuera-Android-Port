@@ -2839,6 +2839,7 @@ internal static partial class FunctionMethodCreator
 	/// HSV_TO_RGB(h, s, v) → packed RGB integer.
 	/// h: hue in degrees [0, 360), s: saturation [0, 100], v: value/brightness [0, 100].
 	/// </summary>
+	#region Android HSV conversion
 	private sealed class HsvToRgbMethod : FunctionMethod
 	{
 		public HsvToRgbMethod()

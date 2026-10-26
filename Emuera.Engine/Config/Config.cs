@@ -262,6 +262,7 @@ internal static class Config
 	#endregion
 
 
+	#region Android fonts
 	static readonly Dictionary<string, Dictionary<EngineFontStyle, EngineFont>> fontDic = new Dictionary<string, Dictionary<EngineFontStyle, EngineFont>>();
 	public static EngineFont Font { get { return GetFont(null, EngineFontStyle.Regular); } }
 

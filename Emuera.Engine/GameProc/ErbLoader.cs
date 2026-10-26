@@ -150,7 +150,7 @@ internal sealed class ErbLoader
 		labelDic = labelDictionary;
 		labelDic.Initialized = false;
 
-		await Task.Run(() =>
+		foreach (string fpath in paths)
 		{
 			if (fpath.StartsWith(Program.ErbDir, Config.SCIgnoreCase) && !Program.AnalysisMode)
 				fname = fpath[Program.ErbDir.Length..];         
