@@ -1,11 +1,13 @@
-﻿using System;
+using MinorShift.Emuera.JSON;
+using MinorShift.Emuera.GameData.Expression;
+using MinorShift.Emuera.Sub;
+using MinorShift.Emuera.Sub;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using System.Drawing;
-using MinorShift.Emuera.Sub;
-using System.Text.RegularExpressions;
-using MinorShift.Emuera.GameData.Expression;
+using System.IO;
 using trerror = EvilMask.Emuera.Lang.Error;
 
 namespace MinorShift.Emuera;
@@ -23,7 +25,7 @@ internal sealed class ConfigData
 	readonly static string configdebugPath = Program.DebugDir + "debug.config";
 
 	static ConfigData() { }
-	private static ConfigData instance = new(); 
+	private static ConfigData instance = new();
 	public static ConfigData Instance { get { return instance; } }
 
 	private ConfigData() { setDefault(); }
@@ -31,12 +33,12 @@ internal sealed class ConfigData
 	//適当に大き目の配列を作っておく。
 	#region EE_configArrayの拡張
 	// private AConfigItem[] configArray = new AConfigItem[80];
-	private List<AConfigItem> configArray = new List<AConfigItem>();
+	private List<AConfigItem> configArray = [];
 	#endregion
 	//private AConfigItem[] replaceArray = new AConfigItem[50];
 	//private AConfigItem[] debugArray = new AConfigItem[20];
-	private List<AConfigItem> replaceArray = new List<AConfigItem>();
-	private List<AConfigItem> debugArray = new List<AConfigItem>();
+	private List<AConfigItem> replaceArray = [];
+	private List<AConfigItem> debugArray = [];
 	#endregion
 
 	#region EM_私家版_Emuera多言語化改造
@@ -130,8 +132,14 @@ internal sealed class ConfigData
 		#region EE_重複定義の確認
 		configArray.Add(new ConfigItem<bool>(ConfigCode.CheckDuplicateIdentifier, "ERDで定義した識別子とローカル変数の重複を確認する", "Check duplicate ERD identifier and private variablea", false));
 		#endregion
+		#region EE_行連結の改行コード置換
+		configArray.Add(new ConfigItem<string>(ConfigCode.ReplaceContinuationBR, "行連結の改行コードの置換文字列", "String of replacing new line code inside continuation", "\" \""));
+		#endregion
+		#region EE_CALLSHARP注意
+		configArray.Add(new ConfigItem<bool>(ConfigCode.PluginAvailableWarn, "外部プラグインが有効時に警告を表示する", "If available pllugins, Show warning", true));
+		#endregion
 		#region EM_私家版_LoadText＆SaveText機能拡張
-		configArray.Add(new ConfigItem<List<string>>(ConfigCode.ValidExtension, "LOADTEXTとSAVETEXTで使える拡張子", "Valid extensions for LOADTEXT and SAVETEXT", new List<string> { "txt" }));
+		configArray.Add(new ConfigItem<List<string>>(ConfigCode.ValidExtension, "LOADTEXTとSAVETEXTで使える拡張子", "Valid extensions for LOADTEXT and SAVETEXT", ["txt"]));
 		#endregion
 		#region EM_私家版_セーブ圧縮
 		configArray.Add(new ConfigItem<bool>(ConfigCode.ZipSaveData, "セーブデータを圧縮して保存する", "Compress save data", false));
@@ -167,6 +175,8 @@ internal sealed class ConfigData
 		configArray.Add(new ConfigItem<bool>(ConfigCode.RikaiUseSeparateBoxes, "翻訳中の語句を強調表示する", "Rikai- Use Separate Boxes", true));
 		#endregion
 
+		configArray.Add(new ConfigItem<bool>(ConfigCode.Ctrl_Z_Enabled, "Ctrl-Zで元に戻す機能を有効にする", "Enable undo with ctrl-z", false));
+
 		debugArray.Add(new ConfigItem<bool>(ConfigCode.DebugShowWindow, "起動時にデバッグウインドウを表示する", "Show debug window on startup", true));
 		debugArray.Add(new ConfigItem<bool>(ConfigCode.DebugWindowTopMost, "デバッグウインドウを最前面に表示する", "Debug window always on top", true));
 		debugArray.Add(new ConfigItem<int>(ConfigCode.DebugWindowWidth, "デバッグウィンドウ幅", "Debug window width", 400));
@@ -185,12 +195,12 @@ internal sealed class ConfigData
 		replaceArray.Add(new ConfigItem<string>(ConfigCode.TitleMenuString0, "システムメニュー0", "System menu 0", "最初からはじめる"));
 		replaceArray.Add(new ConfigItem<string>(ConfigCode.TitleMenuString1, "システムメニュー1", "System menu 1", "ロードしてはじめる"));
 		replaceArray.Add(new ConfigItem<int>(ConfigCode.ComAbleDefault, "COM_ABLE初期値", "Default COM_ABLE", 1));
-		replaceArray.Add(new ConfigItem<List<Int64>>(ConfigCode.StainDefault, "汚れの初期値", "Default Stain", new List<Int64>(new Int64[] { 0, 0, 2, 1, 8 })));
+		replaceArray.Add(new ConfigItem<List<long>>(ConfigCode.StainDefault, "汚れの初期値", "Default Stain", new List<long>(new long[] { 0, 0, 2, 1, 8 })));
 		replaceArray.Add(new ConfigItem<string>(ConfigCode.TimeupLabel, "時間切れ表示", "Time up message", "時間切れ"));
-		replaceArray.Add(new ConfigItem<List<Int64>>(ConfigCode.ExpLvDef, "EXPLVの初期値", "Default EXPLV", new List<long>(new Int64[] { 0, 1, 4, 20, 50, 200 })));
-		replaceArray.Add(new ConfigItem<List<Int64>>(ConfigCode.PalamLvDef, "PALAMLVの初期値", "Default PALAMLV", new List<long>(new Int64[] { 0, 100, 500, 3000, 10000, 30000, 60000, 100000, 150000, 250000 })));
-		replaceArray.Add(new ConfigItem<Int64>(ConfigCode.pbandDef, "PBANDの初期値", "Default PBAND", 4));
-		replaceArray.Add(new ConfigItem<Int64>(ConfigCode.RelationDef, "RELATIONの初期値", "Default RELATION", 0));
+		replaceArray.Add(new ConfigItem<List<long>>(ConfigCode.ExpLvDef, "EXPLVの初期値", "Default EXPLV", new List<long>(new long[] { 0, 1, 4, 20, 50, 200 })));
+		replaceArray.Add(new ConfigItem<List<long>>(ConfigCode.PalamLvDef, "PALAMLVの初期値", "Default PALAMLV", new List<long>(new long[] { 0, 100, 500, 3000, 10000, 30000, 60000, 100000, 150000, 250000 })));
+		replaceArray.Add(new ConfigItem<long>(ConfigCode.pbandDef, "PBANDの初期値", "Default PBAND", 4));
+		replaceArray.Add(new ConfigItem<long>(ConfigCode.RelationDef, "RELATIONの初期値", "Default RELATION", 0));
 	}
 	#endregion
 
@@ -324,16 +334,16 @@ internal sealed class ConfigData
 		ConfigData config = new();
 		// for (int i = 0; i < configArray.Length; i++)
 		for (int i = 0; i < configArray.Count; i++)
-			if ((this.configArray[i] != null) && (config.configArray[i] != null))
-				this.configArray[i].CopyTo(config.configArray[i]);
+			if ((configArray[i] != null) && (config.configArray[i] != null))
+				configArray[i].CopyTo(config.configArray[i]);
 		//for (int i = 0; i < configArray.Length; i++)
 		for (int i = 0; i < debugArray.Count; i++)
-			if ((this.debugArray[i] != null) && (config.debugArray[i] != null))
-				this.debugArray[i].CopyTo(config.debugArray[i]);
+			if ((debugArray[i] != null) && (config.debugArray[i] != null))
+				debugArray[i].CopyTo(config.debugArray[i]);
 		//for (int i = 0; i < replaceArray.Length; i++)
 		for (int i = 0; i < replaceArray.Count; i++)
-			if ((this.replaceArray[i] != null) && (config.replaceArray[i] != null))
-				this.replaceArray[i].CopyTo(config.replaceArray[i]);
+			if ((replaceArray[i] != null) && (config.replaceArray[i] != null))
+				replaceArray[i].CopyTo(config.replaceArray[i]);
 		return config;
 		#endregion
 	}
@@ -474,9 +484,9 @@ internal sealed class ConfigData
 		#endregion
 	}
 
-	public SingleTerm GetConfigValueInERB(string text, ref string errMes)
+	public static SingleTerm GetConfigValueInERB(string text, ref string errMes)
 	{
-		AConfigItem item = ConfigData.Instance.GetItem(text);
+		AConfigItem item = Instance.GetItem(text);
 		if (item == null)
 		{
 			errMes = string.Format(trerror.InvalidConfigName.Text, text);
@@ -489,9 +499,9 @@ internal sealed class ConfigData
 			case ConfigCode.AutoSave://"オートセーブを行なう"
 			case ConfigCode.MoneyFirst://"単位の位置"
 				if (item.GetValue<bool>())
-					term = new SingleTerm(1);
+					term = new SingleLongTerm(1);
 				else
-					term = new SingleTerm(0);
+					term = new SingleLongTerm(0);
 				break;
 			//<int>
 			case ConfigCode.WindowX:// "ウィンドウ幅"
@@ -502,7 +512,7 @@ internal sealed class ConfigData
 			case ConfigCode.SaveDataNos:// "表示するセーブデータ数"
 			case ConfigCode.MaxShopItem:// "販売アイテム数"
 			case ConfigCode.ComAbleDefault:// "COM_ABLE初期値"
-				term = new SingleTerm(item.GetValue<int>());
+				term = new SingleLongTerm(item.GetValue<int>());
 				break;
 			//<Color>
 			case ConfigCode.ForeColor://"文字色"
@@ -511,14 +521,14 @@ internal sealed class ConfigData
 			case ConfigCode.LogColor://"履歴文字色"
 				{
 					Color color = item.GetValue<Color>();
-					term = new SingleTerm(((color.R * 256) + color.G) * 256 + color.B);
+					term = new SingleLongTerm(((color.R * 256) + color.G) * 256 + color.B);
 				}
 				break;
 
 			//<Int64>
 			case ConfigCode.pbandDef:// "PBANDの初期値"
 			case ConfigCode.RelationDef:// "RELATIONの初期値"
-				term = new SingleTerm(item.GetValue<Int64>());
+				term = new SingleLongTerm(item.GetValue<long>());
 				break;
 
 			//<string>
@@ -529,17 +539,17 @@ internal sealed class ConfigData
 			case ConfigCode.TitleMenuString0:// "システムメニュー0"
 			case ConfigCode.TitleMenuString1:// "システムメニュー1"
 			case ConfigCode.TimeupLabel:// "時間切れ表示"
-				term = new SingleTerm(item.GetValue<string>());
+				term = new SingleStrTerm(item.GetValue<string>());
 				break;
 
 			//<char>
 			case ConfigCode.BarChar1:// "BAR文字1"
 			case ConfigCode.BarChar2:// "BAR文字2"
-				term = new SingleTerm(item.GetValue<char>().ToString());
+				term = new SingleStrTerm(item.GetValue<char>().ToString());
 				break;
 			//<TextDrawingMode>
 			case ConfigCode.TextDrawingMode:// "描画インターフェース"
-				term = new SingleTerm(item.GetValue<TextDrawingMode>().ToString());
+				term = new SingleStrTerm(item.GetValue<TextDrawingMode>().ToString());
 				break;
 			default:
 				{
@@ -548,17 +558,17 @@ internal sealed class ConfigData
 						switch (item.ValueToString())
 						{
 							case "YES":
-								term = new SingleTerm(1);
+								term = new SingleLongTerm(1);
 								break;
 							case "NO":
-								term = new SingleTerm(0);
+								term = new SingleLongTerm(0);
 								break;
 							default:
 								string val = item.ValueToString();
 								if (long.TryParse(val, out long i))
-									term = new SingleTerm(i);
+									term = new SingleLongTerm(i);
 								else
-									term = new SingleTerm(val);
+									term = new SingleStrTerm(val);
 								break;
 						}
 					}
@@ -622,12 +632,12 @@ internal sealed class ConfigData
 				//1806beta001 CompatiDRAWLINEの廃止、CompatiLinefeedAs1739へ移行
 				if (item.Code == ConfigCode.CompatiDRAWLINE)
 					continue;
-				if ((item.Code == ConfigCode.ChangeMasterNameIfDebug) && (item.GetValue<bool>()))
+				if ((item.Code == ConfigCode.ChangeMasterNameIfDebug) && item.GetValue<bool>())
 					continue;
 				if ((item.Code == ConfigCode.LastKey) && (item.GetValue<long>() == 0))
 					continue;
 				#region EM_私家版_LoadText＆SaveText機能拡張
-				if ((item.Code == ConfigCode.ValidExtension))
+				if (item.Code == ConfigCode.ValidExtension)
 				{
 					var ex = (ConfigItem<List<string>>)item;
 					var sb = new System.Text.StringBuilder();
@@ -682,7 +692,6 @@ internal sealed class ConfigData
 
 	public bool LoadConfig()
 	{
-		Config.ClearFont();
 		string defaultConfigPath = Program.CsvDir + "_default.config";
 		string fixedConfigPath = Program.CsvDir + "_fixed.config";
 		if (!File.Exists(defaultConfigPath))
@@ -715,7 +724,7 @@ internal sealed class ConfigData
 		using var eReader = new EraStreamReader(false);
 		if (!eReader.Open(confPath))
 			return false;
-		ScriptPosition pos = null;
+		ScriptPosition? pos = null;
 		try
 		{
 			string line = null;
@@ -725,7 +734,7 @@ internal sealed class ConfigData
 				if ((line.Length == 0) || (line[0] == ';'))
 					continue;
 				pos = new ScriptPosition(eReader.Filename, eReader.LineNo);
-				string[] tokens = line.Split(new char[] { ':' });
+				string[] tokens = line.Split([':']);
 				if (tokens.Length < 2)
 					continue;
 				#region EM_私家版_Emuera多言語化改造
@@ -752,7 +761,7 @@ internal sealed class ConfigData
 						//パスの関係上tokens[2]は使わないといけない
 						if (tokens.Length > 2)
 						{
-							if (tokens[2].StartsWith("\\"))
+							if (tokens[2].StartsWith('\\'))
 								tokens[1] += ":" + tokens[2];
 							if (tokens.Length > 3)
 							{
@@ -774,13 +783,9 @@ internal sealed class ConfigData
 						//解析モード時はここを上書きして十分な長さを確保する
 						tokens[1] = "10000";
 					}
-					if ((item.TryParse(tokens[1])) && (fix))
+					if (item.TryParse(tokens[1]) && fix)
 						item.Fixed = true;
 				}
-#if DEBUG
-				//else
-				//	throw new Exception("コンフィグファイルが変");
-#endif
 			}
 		}
 		catch (EmueraException ee)
@@ -799,23 +804,26 @@ internal sealed class ConfigData
 	// 1.52a改変部分　（単位の差し替えおよび前置、後置のためのコンフィグ処理）
 	public void LoadReplaceFile(string filename)
 	{
-		EraStreamReader eReader = new(false); 
+		using var eReader = new EraStreamReader(false);
 		if (!eReader.Open(filename))
 			return;
-		ScriptPosition pos = null;
+		ScriptPosition? pos = null;
 		try
 		{
 			string line = null;
 			while ((line = eReader.ReadLine()) != null)
 			{
-				if ((line.Length == 0) || (line[0] == ';'))
+				line = line.Trim();
+				if (line.Length == 0)
+					continue;
+				if (line[0] == ';')
 					continue;
 				pos = new ScriptPosition(eReader.Filename, eReader.LineNo);
-				string[] tokens = line.Split(new char[] { ',', ':' });
+				string[] tokens = line.Split(',', ':');
 				if (tokens.Length < 2)
 					continue;
 				string itemName = tokens[0].Trim();
-				tokens[1] = line.Substring(tokens[0].Length + 1);
+				tokens[1] = line[(tokens[0].Length + 1)..];
 				if (string.IsNullOrEmpty(tokens[1].Trim()))
 					continue;
 				AConfigItem item = GetReplaceItem(itemName);
@@ -872,12 +880,12 @@ internal sealed class ConfigData
 
 	public bool LoadDebugConfig()
 	{
+		using var eReader = new EraStreamReader(false);
 		if (!File.Exists(configdebugPath))
 			goto err;
-		EraStreamReader eReader = new(false); 
 		if (!eReader.Open(configdebugPath))
 			goto err;
-		ScriptPosition pos = null;
+		ScriptPosition? pos = null;
 		try
 		{
 			string line = null;
@@ -886,7 +894,7 @@ internal sealed class ConfigData
 				if ((line.Length == 0) || (line[0] == ';'))
 					continue;
 				pos = new ScriptPosition(eReader.Filename, eReader.LineNo);
-				string[] tokens = line.Split(new char[] { ':' });
+				string[] tokens = line.Split([':']);
 				if (tokens.Length < 2)
 					continue;
 				AConfigItem item = GetDebugItem(tokens[0].Trim());

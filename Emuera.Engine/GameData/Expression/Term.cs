@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MinorShift.Emuera.Sub;
-using MinorShift.Emuera.GameProc;
-using MinorShift.Emuera.GameProc.PluginSystem;
+using MinorShift.Emuera.GameData;
+using System;
 
 namespace MinorShift.Emuera.GameData.Expression;
 
 internal sealed class NullTerm : IOperandTerm
 {
-	public NullTerm(Int64 i)
-		: base(typeof(Int64))
+	public NullTerm(long i)
+		: base(typeof(long))
 	{
 	}
 
@@ -23,34 +19,28 @@ internal sealed class NullTerm : IOperandTerm
 /// <summary>
 /// 項。一単語だけ。
 /// </summary>
-internal sealed class SingleTerm : IOperandTerm
+internal class SingleTerm : IOperandTerm
 {
+	protected SingleTerm(Type type)
+		: base(type)
+	{
 
-	public SingleTerm(bool i)
-		: base(typeof(Int64))
-	{
-		if (i)
-			iValue = 1;
-		else
-			iValue = 0;
 	}
-	public SingleTerm(Int64 i)
-		: base(typeof(Int64))
+
+	public override IOperandTerm Restructure(ExpressionMediator exm)
 	{
-		iValue = i;
+		return this;
 	}
-	public SingleTerm(string s)
+}
+
+internal sealed class SingleStrTerm : SingleTerm
+{
+	public SingleStrTerm(string s)
 		: base(typeof(string))
 	{
 		sValue = s;
 	}
-	readonly Int64 iValue;
 	string sValue;
-
-	public override long GetIntValue(ExpressionMediator exm)
-	{
-		return iValue;
-	}
 	public override string GetStrValue(ExpressionMediator exm)
 	{
 		return sValue;
@@ -69,8 +59,32 @@ internal sealed class SingleTerm : IOperandTerm
 			return sValue;
 		}
 	}
+	public override string ToString()
+	{
+		return sValue.ToString();
+	}
+}
 
-	public Int64 Int
+
+internal sealed class SingleLongTerm : SingleTerm
+{
+	public SingleLongTerm(long i)
+		: base(typeof(long))
+	{
+		iValue = i;
+	}
+	readonly long iValue;
+
+	public override long GetIntValue(ExpressionMediator exm)
+	{
+		return iValue;
+	}
+	public override SingleTerm GetValue(ExpressionMediator exm)
+	{
+		return this;
+	}
+
+	public long Int
 	{
 		get
 		{
@@ -82,11 +96,7 @@ internal sealed class SingleTerm : IOperandTerm
 	}
 	public override string ToString()
 	{
-		if (GetOperandType() == typeof(Int64))
-			return iValue.ToString();
-		if (GetOperandType() == typeof(string))
-			return sValue.ToString();
-		return base.ToString();
+		return iValue.ToString();
 	}
 
 	public override IOperandTerm Restructure(ExpressionMediator exm)
@@ -94,6 +104,8 @@ internal sealed class SingleTerm : IOperandTerm
 		return this;
 	}
 }
+
+
 /// <summary>
 /// 項。一単語だけ。
 /// </summary>
@@ -120,17 +132,18 @@ internal sealed class StrFormTerm : IOperandTerm
 	}
 	public override SingleTerm GetValue(ExpressionMediator exm)
 	{
-		return new SingleTerm(sfValue.GetString(exm));
+		return new SingleStrTerm(sfValue.GetString(exm));
 	}
 
 	public override IOperandTerm Restructure(ExpressionMediator exm)
 	{
 		sfValue.Restructure(exm);
 		if (sfValue.IsConst)
-			return new SingleTerm(sfValue.GetString(exm));
-		IOperandTerm term = sfValue.GetIOperandTerm();
+			return new SingleStrTerm(sfValue.GetString(exm));
+		IOperandTerm term = sfValue.GetAExpression();
 		if (term != null)
 			return term;
 		return this;
 	}
 }
+

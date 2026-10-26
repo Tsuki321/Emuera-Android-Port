@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System;
 using System.IO;
 
 namespace MinorShift.Emuera.Sub;
@@ -73,7 +71,7 @@ internal sealed class StringStream
 			return "";
 		else if (pointer == 0)
 			return source;
-		return source.Substring(pointer);
+		return source[pointer..];
 	}
 
 	public string Substring(int start, int length)
@@ -134,7 +132,7 @@ internal sealed class StringStream
 	/// </summary>
 	public int Find(char c)
 	{
-		return source.IndexOf(c, pointer) - pointer;
+		return source.AsSpan()[pointer..].IndexOf(c);
 	}
 
 	public override string ToString()
@@ -161,7 +159,7 @@ internal sealed class StringStream
 	{
 		if (pointer + 3 > source.Length)
 			return false;
-		return (source[pointer] == source[pointer + 1]) && (source[pointer] == source[pointer + 2]);
+		return source[pointer] == source[pointer + 1] && source[pointer] == source[pointer + 2];
 	}
 
 

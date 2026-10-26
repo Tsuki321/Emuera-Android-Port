@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MinorShift.Emuera.Sub;
-using MinorShift.Emuera.GameProc;
 using MinorShift.Emuera.GameData.Expression;
+using MinorShift.Emuera.Sub;
+using System.Collections.Generic;
 using trerror = EvilMask.Emuera.Lang.Error;
 
 namespace MinorShift.Emuera.GameData.Variable;
@@ -15,7 +12,7 @@ internal sealed class VariableStrArgTerm : IOperandTerm
 	// public VariableStrArgTerm(VariableCode code, IOperandTerm strTerm, int index)
 	public VariableStrArgTerm(VariableCode code, IOperandTerm strTerm, int index, string varname)
 	#endregion
-		: base(typeof(Int64))
+		: base(typeof(long))
 	{
 		this.strTerm = strTerm;
 		parentCode = code;
@@ -31,10 +28,10 @@ internal sealed class VariableStrArgTerm : IOperandTerm
 	#region EE_ERD
 	readonly string varname;
 	#endregion
-	Dictionary<string, int> dic = null;
-	string errPos = null;
+	Dictionary<string, int> dic;
+	string errPos;
 
-	public override Int64 GetIntValue(ExpressionMediator exm)
+	public override long GetIntValue(ExpressionMediator exm)
 	{
 		if (dic == null)
 			#region EE_ERD
@@ -42,7 +39,7 @@ internal sealed class VariableStrArgTerm : IOperandTerm
 			dic = exm.VEvaluator.Constant.GetKeywordDictionary(out errPos, parentCode, index, varname);
 		#endregion
 		string key = strTerm.GetStrValue(exm);
-		if (key == "")
+		if (string.IsNullOrEmpty(key))
 			throw new CodeEE(trerror.KeywordCanNotEmpty.Text);
 		#region EE_ERD
 		if (dic == null && key != "")
@@ -70,6 +67,6 @@ internal sealed class VariableStrArgTerm : IOperandTerm
 		strTerm = strTerm.Restructure(exm);
 		if (!(strTerm is SingleTerm))
 			return this;
-		return new SingleTerm(this.GetIntValue(exm));
+		return new SingleLongTerm(GetIntValue(exm));
 	}
 }

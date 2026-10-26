@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MinorShift.Emuera.GameProc;
+using MinorShift.Emuera.GameData.Variable;
 using MinorShift.Emuera.Sub;
 using MinorShift.Emuera.GameData.Expression;
+using MinorShift.Emuera.Sub;
 using trerror = EvilMask.Emuera.Lang.Error;
 
 namespace MinorShift.Emuera.GameData.Variable;
@@ -12,8 +10,8 @@ internal static class VariableParser
 {
 	public static void Initialize()
 	{
-		ZeroTerm = new SingleTerm(0);
-		IOperandTerm[] zeroArgs = new IOperandTerm[] { ZeroTerm };
+		ZeroTerm = new SingleLongTerm(0);
+		IOperandTerm[] zeroArgs = [ZeroTerm];
 		TARGET = new VariableTerm(GlobalStatic.VariableData.GetSystemVariableToken("TARGET"), zeroArgs);
 	}
 
@@ -95,20 +93,17 @@ internal static class VariableParser
 		{
 			if (id.IsArray2D)
 			{
-				if ((op1 == null) && (op2 == null) && (op3 == null))
+				if (op1 == null && op2 == null && op3 == null)
 					return new VariableNoArgTerm(id);
-				if ((op1 == null) || (op2 == null) || (op3 == null))
+				if (op1 == null || op2 == null || op3 == null)
 					throw new CodeEE(string.Format(trerror.CanNotOmit1DCharaVarArg1.Text, id.Name));
-				terms = new IOperandTerm[3];
-				terms[0] = op1;
-				terms[1] = op2;
-				terms[2] = op3;
+				terms = [op1, op2, op3];
 			}
 			else if (id.IsArray1D)
 			{
 				if (op3 != null)
 					throw new CodeEE(string.Format(trerror.TooMany1DCharaVarArg.Text, id.Name));
-				if ((op1 == null) && (op2 == null) && (op3 == null) && Config.SystemNoTarget)
+				if (op1 == null && op2 == null && op3 == null && Config.SystemNoTarget)
 					return new VariableNoArgTerm(id);
 				if (op2 == null)
 				{
@@ -120,15 +115,13 @@ internal static class VariableParser
 						op2 = op1;
 					op1 = TARGET;
 				}
-				terms = new IOperandTerm[2];
-				terms[0] = op1;
-				terms[1] = op2;
+				terms = [op1, op2];
 			}
 			else
 			{
 				if (op2 != null)
 					throw new CodeEE(string.Format(trerror.TooManyCharaVarArg.Text, id.Name));
-				if ((op1 == null) && (op2 == null) && (op3 == null) && Config.SystemNoTarget)
+				if (op1 == null && op2 == null && op3 == null && Config.SystemNoTarget)
 					return new VariableNoArgTerm(id);
 				if (op1 == null)
 				{
@@ -136,32 +129,26 @@ internal static class VariableParser
 						throw new CodeEE(string.Format(trerror.CanNotOmitCharaVarArg2.Text, id.Name));
 					op1 = TARGET;
 				}
-				terms = new IOperandTerm[1];
-				terms[0] = op1;
+				terms = [op1];
 			}
 		}
 		else if (id.IsArray3D)
 		{
-			if ((op1 == null) && (op2 == null) && (op3 == null))
+			if (op1 == null && op2 == null && op3 == null)
 				return new VariableNoArgTerm(id);
-			if ((op1 == null) || (op2 == null) || (op3 == null))
+			if (op1 == null || op2 == null || op3 == null)
 				throw new CodeEE(string.Format(trerror.CanNotOmit3DVarArg.Text, id.Name));
-			terms = new IOperandTerm[3];
-			terms[0] = op1;
-			terms[1] = op2;
-			terms[2] = op3;
+			terms = [op1, op2, op3];
 		}
 		else if (id.IsArray2D)
 		{
-			if ((op1 == null) && (op2 == null) && (op3 == null))
+			if (op1 == null && op2 == null && op3 == null)
 				return new VariableNoArgTerm(id);
-			if ((op1 == null) || (op2 == null))
+			if (op1 == null || op2 == null)
 				throw new CodeEE(string.Format(trerror.CanNotOmit2DVarArg.Text, id.Name));
 			if (op3 != null)
 				throw new CodeEE(string.Format(trerror.TooMany2DVarArg.Text, id.Name));
-			terms = new IOperandTerm[2];
-			terms[0] = op1;
-			terms[1] = op2;
+			terms = [op1, op2];
 		}
 		else if (id.IsArray1D)
 		{
@@ -175,20 +162,19 @@ internal static class VariableParser
 					throw new CodeEE(trerror.OmittedRandArg.Text);
 				}
 			}
-			if (!Config.CompatiRAND && op1 is SingleTerm && id.Code == VariableCode.RAND)
+			if (!Config.CompatiRAND && op1 is SingleTerm op1SingleTerm && id.Code == VariableCode.RAND)
 			{
-				if (((SingleTerm)op1).Int == 0)
+				if (((SingleLongTerm)op1SingleTerm).Int == 0)
 					throw new CodeEE(trerror.RandArgIsZero.Text);
 			}
-			terms = new IOperandTerm[1];
-			terms[0] = op1;
+			terms = [op1];
 		}
 		else if (op1 != null)
 		{
 			throw new CodeEE(string.Format(trerror.ZeroDVarHasArg.Text, id.Name));
 		}
 		else
-			terms = new IOperandTerm[0];
+			terms = [];
 		for (int i = 0; i < terms.Length; i++)
 			if (terms[i].IsString)
 				#region EE_ERD

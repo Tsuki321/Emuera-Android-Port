@@ -1,7 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace MinorShift.Emuera.Sub;
 
 /// <summary>
@@ -12,7 +8,7 @@ internal abstract class SubWord
 	protected SubWord(WordCollection w) { words = w; }
 	readonly WordCollection words;
 	public WordCollection Words { get { return words; } }
-	public bool IsMacro = false;
+	public bool IsMacro;
 	public virtual void SetIsMacro()
 	{
 		IsMacro = true;

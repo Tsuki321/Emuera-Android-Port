@@ -1,9 +1,13 @@
-﻿using MinorShift.Emuera.GameData.Expression;
-using MinorShift.Emuera.GameData.Variable;
+using MinorShift.Emuera.GameProc;
 using MinorShift.Emuera.GameProc.Function;
+using MinorShift.Emuera.GameView;
+using MinorShift.Emuera.GameProc;
 using MinorShift.Emuera.Sub;
+using MinorShift.Emuera.GameProc;
+using MinorShift.Emuera.GameData.Variable;
 using System;
 using System.Collections.Generic;
+using System.CommandLine;
 using System.Data;
 using System.Drawing;
 using System.IO;
@@ -31,7 +35,7 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 
 		}
 
-		static private PluginManager instance = null;
+		static private PluginManager instance;
 
 		/// <summary>
 		/// Unsafe rudimentary method to execute ERB line of code from Plugin.
@@ -64,7 +68,7 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 		}
 		public void PrintPlainWithSingleLine(string text)
 		{
-			expressionMediator.Console.PrintPlainwithSingleLine(text);
+			expressionMediator.Console.PrintPlainWithSingleLineFix(text);
 		}
 		public void PrintSingleLine(string text)
 		{
@@ -91,7 +95,8 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 			if (text == "")
 			{
 				expressionMediator.Console.PrintBar();
-			} else
+			}
+			else
 			{
 				expressionMediator.Console.printCustomBar(text, isConst);
 			}
@@ -102,15 +107,21 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 		}
 		public void PrintImage(string resourceName, int width, int height, int y, string buttonResourceName = null, string mapResourceName = null)
 		{
-			MixedNum widthNum = new MixedNum();
-			widthNum.isPx = true;
-			widthNum.num = width;
-			MixedNum heightNum = new MixedNum();
-			heightNum.isPx = true;
-			heightNum.num = height;
-			MixedNum yNum = new MixedNum();
-			yNum.isPx = true;
-			yNum.num = y;
+			MixedNum widthNum = new()
+			{
+				isPx = true,
+				num = width
+			};
+			MixedNum heightNum = new()
+			{
+				isPx = true,
+				num = height
+			};
+			MixedNum yNum = new()
+			{
+				isPx = true,
+				num = y
+			};
 			expressionMediator.Console.PrintImg(resourceName, buttonResourceName, mapResourceName, heightNum, widthNum, yNum);
 		}
 		public void PrintNewLine()
@@ -144,9 +155,11 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 		}
 		public void WaitInput(bool oneInput = true, int timelimit = -1)
 		{
-			InputRequest request = new InputRequest();
-			request.OneInput = oneInput;
-			request.Timelimit = timelimit;
+			InputRequest request = new()
+			{
+				OneInput = oneInput,
+				Timelimit = timelimit
+			};
 			expressionMediator.Console.WaitInput(request);
 		}
 		public void ReadAnyKey()
@@ -167,13 +180,14 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 			if (force)
 			{
 				expressionMediator.Console.ForceQuit();
-			}  else
+			}
+			else
 			{
 				expressionMediator.Console.Quit();
 			}
 		}
 
-		public Int64[] GetCharacterIDs()
+		public long[] GetCharacterIDs()
 		{
 			return expressionMediator.VEvaluator.VariableData.CharacterList.Select(v => v.NO).ToArray();
 		}
@@ -194,24 +208,24 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 			expressionMediator.VEvaluator.VariableData.GetVarTokenDic()[name].SetValue(val, [index]);
 		}
 
-		public void SetCharVar(string name, Int64 charId, string key, Int64 value)
+		public void SetCharVar(string name, long charId, string key, long value)
 		{
 			var variable = expressionMediator.VEvaluator.VariableData.GetVarTokenDic()[name];
 			var errPos = "";
 			var dict = expressionMediator.VEvaluator.Constant.GetKeywordDictionary(out errPos, VariableCode.CFLAG, 1, key);
 			variable.SetValue(value, [charId, dict[key]]);
 		}
-		public void SetCharVar(string name, Int64 charId, Int64 key, Int64 value)
+		public void SetCharVar(string name, long charId, long key, long value)
 		{
 			var variable = expressionMediator.VEvaluator.VariableData.GetVarTokenDic()[name];
 			variable.SetValue(value, [charId, key]);
 		}
-		public Int64 GetCharVar(string name, Int64 charId, Int64 key)
+		public long GetCharVar(string name, long charId, long key)
 		{
 			var variable = expressionMediator.VEvaluator.VariableData.GetVarTokenDic()[name];
 			return variable.GetIntValue(expressionMediator, [charId, key]);
 		}
-		public Int64 GetCharVar(string name, Int64 charId, string key)
+		public long GetCharVar(string name, long charId, string key)
 		{
 			var variable = expressionMediator.VEvaluator.VariableData.GetVarTokenDic()[name];
 			var errPos = "";
@@ -224,9 +238,31 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 			return expressionMediator.VEvaluator.VariableData.DataDataTables[name];
 		}
 
-		public PluginAPICharContext CreateCharContext(long charId)
+		public static PluginAPICharContext CreateCharContext(long charId)
 		{
 			return new PluginAPICharContext(charId);
+		}
+
+
+		/// <summary>
+		/// Returns call stacktrace from emuera/ERB side
+		/// </summary>
+		public IEnumerable<String> GetStackTrace(){
+			LogicalLine parent;
+			List<String> stackTraceCollecter = [];
+			int depth = 0;
+
+			// add initial caller
+			stackTraceCollecter.Add(this.processState.CurrentLine.Position.Value.Filename + ":" + this.processState.CurrentLine.Position.Value.LineNo.ToString() + "@" +  this.processState.CurrentLine.ParentLabelLine.LabelName);
+			// loop call stack
+			while ((parent = this.processState.GetReturnAddressSequensial(depth++)) != null)
+			{
+				if (parent.Position != null)
+				{
+					stackTraceCollecter.Add(parent.Position.Value.Filename + ":" + parent.Position.Value.LineNo.ToString() + "@" + parent.ParentLabelLine.LabelName);
+				}
+			}
+			return stackTraceCollecter;
 		}
 
 		/// <summary>
@@ -250,6 +286,14 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 			string[] plugins = Directory.GetFiles(pluginsDir, "*.dll");
 			bool pluginsAware = File.Exists(Path.Combine(Program.WorkingDir, "pluginsAware.txt"));
 			ClearMethods();
+
+			//プラグインがある
+			if (plugins.Length > 0)
+				GlobalStatic.ExistPlugin = true;
+			else
+				GlobalStatic.ExistPlugin = false;
+
+
 			foreach (var pluginPath in plugins)
 			{
 				Assembly DLL = Assembly.LoadFrom(pluginPath);
@@ -259,10 +303,12 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 					//TODO: throw warning
 					continue;
 				}
+				/*
 				if (!pluginsAware)
 				{
 					throw new ExeEE("This game comes prepackaged with plugins. This is a security check to make sure you're aware of that: Never run your EE under Administrator rights, Always get your games and Plugins from verified sources and If you're maintainer of the build and it should NOT come with plugins, Investigate immediately. If everything is okay, create file pluginsAware.txt at the root of the game distributive and restart");
 				}
+				*/
 
 				PluginManifestAbstract manifest = (PluginManifestAbstract)Activator.CreateInstance(manifestType);
 				if (manifest == null)
@@ -282,7 +328,7 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 		public IPluginMethod GetMethod(string name)
 		{
 			var key = name;
-			if (Config.ICFunction)
+			if (Config.IgnoreCase)
 			{
 				key = key.ToUpper();
 			}
@@ -292,7 +338,7 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 		public bool HasMethod(string name)
 		{
 			var key = name;
-			if (Config.ICFunction)
+			if (Config.IgnoreCase)
 			{
 				key = key.ToUpper();
 			}
@@ -346,6 +392,7 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 			RESULTS = new GlobalString1dWrapper(expressionMediator.VEvaluator.VariableData.GetVarTokenDic()["RESULTS"], expressionMediator, VariableCode.RESULTS);
 			GLOBALS = new GlobalString1dWrapper(expressionMediator.VEvaluator.VariableData.GetVarTokenDic()["GLOBALS"], expressionMediator, VariableCode.GLOBALS);
 
+			NO = new GlobalConstInt1dWrapper(expressionMediator.VEvaluator.VariableData.GetVarTokenDic()["NO"], expressionMediator, VariableCode.NO);
 			ITEMPRICE = new GlobalConstInt1dWrapper(expressionMediator.VEvaluator.VariableData.GetVarTokenDic()["ITEMPRICE"], expressionMediator, VariableCode.ITEMPRICE);
 
 			ABLNAME = new GlobalConstString1dWrapper(expressionMediator.VEvaluator.VariableData.GetVarTokenDic()["ABLNAME"], expressionMediator, VariableCode.ABLNAME);
@@ -384,14 +431,14 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 		private void AddMethod(IPluginMethod method)
 		{
 			var key = method.Name;
-			if (Config.ICFunction)
+			if (Config.IgnoreCase)
 			{
 				key = key.ToUpper();
 			}
 			methods.Add(key, method);
 		}
 
-		private Dictionary<string, IPluginMethod> methods = new Dictionary<string, IPluginMethod>();
+		private Dictionary<string, IPluginMethod> methods = [];
 		private Process process;
 		private ProcessState processState;
 		private ExpressionMediator expressionMediator;
@@ -431,7 +478,8 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 		public GlobalString1dWrapper STR;
 		public GlobalString1dWrapper RESULTS;
 		public GlobalString1dWrapper GLOBALS;
-
+		
+		public GlobalConstInt1dWrapper NO;
 		public GlobalConstInt1dWrapper ITEMPRICE;
 
 		public GlobalConstString1dWrapper ABLNAME;

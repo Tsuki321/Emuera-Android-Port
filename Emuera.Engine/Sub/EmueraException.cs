@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System;
 using trerror = EvilMask.Emuera.Lang.Error;
 
 namespace MinorShift.Emuera.Sub;
 
-[Serializable]
 internal abstract class EmueraException : ApplicationException
 {
-	protected EmueraException(string errormes, ScriptPosition position)
+	protected EmueraException(string errormes, ScriptPosition? position)
 		: base(errormes)
 	{
 		Position = position;
@@ -18,20 +15,20 @@ internal abstract class EmueraException : ApplicationException
 	{
 		Position = null;
 	}
-	public ScriptPosition Position;
+	public ScriptPosition? Position;
 }
 
 /// <summary>
 /// emuera本体に起因すると思われるエラー
 /// </summary>
-[Serializable]
+
 internal sealed class ExeEE : EmueraException
 {
 	public ExeEE(string errormes)
 		: base(errormes)
 	{
 	}
-	public ExeEE(string errormes, ScriptPosition position)
+	public ExeEE(string errormes, ScriptPosition? position)
 		: base(errormes, position)
 	{
 	}
@@ -40,10 +37,10 @@ internal sealed class ExeEE : EmueraException
 /// <summary>
 /// スクリプト側に起因すると思われるエラー
 /// </summary>
-[Serializable]
+
 internal class CodeEE : EmueraException
 {
-	public CodeEE(string errormes, ScriptPosition position)
+	public CodeEE(string errormes, ScriptPosition? position)
 		: base(errormes, position)
 	{
 	}
@@ -56,10 +53,10 @@ internal class CodeEE : EmueraException
 /// <summary>
 /// スクリプト側に起因すると思われるエラーのうち、未定義の識別子に関連するもの
 /// </summary>
-[Serializable]
-internal class IdentifierNotFoundCodeEE : CodeEE
+
+internal sealed class IdentifierNotFoundCodeEE : CodeEE
 {
-	public IdentifierNotFoundCodeEE(string errormes, ScriptPosition position)
+	public IdentifierNotFoundCodeEE(string errormes, ScriptPosition? position)
 		: base(errormes, position)
 	{
 	}
@@ -72,10 +69,10 @@ internal class IdentifierNotFoundCodeEE : CodeEE
 /// <summary>
 /// 未実装エラー
 /// </summary>
-[Serializable]
+
 internal sealed class NotImplCodeEE : CodeEE
 {
-	public NotImplCodeEE(ScriptPosition position)
+	public NotImplCodeEE(ScriptPosition? position)
 		: base(trerror.CanNotUseFuncCurrentVer.Text, position)
 	{
 	}
@@ -88,7 +85,7 @@ internal sealed class NotImplCodeEE : CodeEE
 /// <summary>
 /// Save, Load中のエラー
 /// </summary>
-[Serializable]
+
 internal sealed class FileEE : EmueraException
 {
 	public FileEE(string errormes)
@@ -99,7 +96,7 @@ internal sealed class FileEE : EmueraException
 /// <summary>
 /// エラー箇所を表示するための位置データ。整形前のデータなのでエラー表示以外の理由で参照するべきではない。
 /// </summary>
-internal sealed class ScriptPosition : IEquatable<ScriptPosition>, IEqualityComparer<ScriptPosition>
+readonly record struct ScriptPosition
 {
 	public ScriptPosition()
 	{
@@ -108,44 +105,9 @@ internal sealed class ScriptPosition : IEquatable<ScriptPosition>, IEqualityComp
 	}
 	public ScriptPosition(string srcFile, int srcLineNo)
 	{
-		LineNo = srcLineNo;
-		if (srcFile == null)
-			Filename = "";
-		else
-			Filename = srcFile;
+		LineNo = srcLineNo + 1;
+		Filename = srcFile ?? "";
 	}
 	public readonly int LineNo;
 	public readonly string Filename;
-
-	public override string ToString()
-	{
-		if (LineNo == -1)
-			return base.ToString();
-		return Filename + ":" + LineNo.ToString();
-	}
-
-	#region IEqualityComparer<ScriptPosition> メンバ
-
-	public bool Equals(ScriptPosition x, ScriptPosition y)
-	{
-		if ((x == null) || (y == null))
-			return false;
-		return (x.Filename == y.Filename) && (x.LineNo == y.LineNo);
-	}
-
-	public int GetHashCode(ScriptPosition obj)
-	{
-		return Filename.GetHashCode() ^ LineNo.GetHashCode();
-	}
-
-	#endregion
-
-	#region IEquatable<ScriptPosition> メンバ
-
-	public bool Equals(ScriptPosition other)
-	{
-		return this.Equals(this, other);
-	}
-
-	#endregion
 }

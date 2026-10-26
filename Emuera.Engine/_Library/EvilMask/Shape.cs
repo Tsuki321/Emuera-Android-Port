@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 // Note: System.Drawing.Color/Rectangle are cross-platform via System.Drawing.Primitives.
 // All GDI+ rendering (Graphics, GraphicsPath, SmoothingMode) removed — rendering handled by platform host.

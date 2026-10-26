@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MinorShift.Emuera.Sub;
+using System;
 
 namespace MinorShift.Emuera.GameData.Expression;
 
@@ -16,7 +13,7 @@ internal abstract class IOperandTerm
 		return type;
 	}
 
-	public virtual Int64 GetIntValue(ExpressionMediator exm)
+	public virtual long GetIntValue(ExpressionMediator exm)
 	{
 		return 0;
 	}
@@ -26,14 +23,14 @@ internal abstract class IOperandTerm
 	}
 	public virtual SingleTerm GetValue(ExpressionMediator exm)
 	{
-		if (type == typeof(Int64))
-			return new SingleTerm(0);
+		if (type == typeof(long))
+			return new SingleLongTerm(0);
 		else
-			return new SingleTerm("");
+			return new SingleStrTerm("");
 	}
 	public bool IsInteger
 	{
-		get { return type == typeof(Int64); }
+		get { return type == typeof(long); }
 	}
 	public bool IsString
 	{

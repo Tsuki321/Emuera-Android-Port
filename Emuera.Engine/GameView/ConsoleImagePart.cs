@@ -1,4 +1,4 @@
-﻿using EvilMask.Emuera;
+using EvilMask.Emuera;
 using MinorShift._Library;
 using MinorShift.Emuera.Content;
 using System;

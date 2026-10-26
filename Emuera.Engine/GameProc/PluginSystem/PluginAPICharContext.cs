@@ -1,6 +1,6 @@
-﻿using MinorShift.Emuera.GameData.Expression;
 using MinorShift.Emuera.GameData.Variable;
-using System;
+using MinorShift.Emuera.GameProc;
+using MinorShift.Emuera.GameData.Variable;
 using System.Collections.Generic;
 
 namespace MinorShift.Emuera.GameProc.PluginSystem
@@ -45,7 +45,7 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 				var key = userCharVar.Name;
 				_UserDefinedVars.Add(key, userCharVar);
 			}
-			
+
 			PluginAPICharContext.exm = exm;
 		}
 
@@ -84,10 +84,11 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 		//Cached int[][] variables
 		static VariableToken _CDFLAG;
 
-		static Dictionary<string, VariableToken> _UserDefinedVars = new Dictionary<string, VariableToken>();
+		static Dictionary<string, VariableToken> _UserDefinedVars = [];
 
 		static ExpressionMediator exm;
-		internal PluginAPICharContext(Int64 charId) { 
+		internal PluginAPICharContext(long charId)
+		{
 			this.charId = charId;
 			BASE = new CharInt1dWrapper(charId, _BASE, exm, VariableCode.BASE);
 			MAXBASE = new CharInt1dWrapper(charId, _MAXBASE, exm, VariableCode.MAXBASE);
@@ -155,6 +156,6 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 
 		public CharInt2dWrapper CDFLAG;
 
-		Int64 charId;
+		long charId;
 	}
 }

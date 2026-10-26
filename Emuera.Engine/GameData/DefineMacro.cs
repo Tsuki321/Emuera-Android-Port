@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
 using MinorShift.Emuera.Sub;
-using System.IO;
-using System;
 
 namespace MinorShift.Emuera.GameData;
 
@@ -12,7 +9,7 @@ internal sealed class DefineMacro
 		Keyword = key;
 		Statement = wc;
 		ArgCount = argcount;
-		Statement.Pointer = 0;
+		Statement.PointerReset();;
 		HasArguments = argcount != 0;
 		if (Statement.Collection.Count == 1)
 			IDWord = Statement.Current as IdentifierWord;

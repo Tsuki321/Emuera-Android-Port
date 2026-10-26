@@ -1,11 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MinorShift.Emuera.Sub;
-using MinorShift.Emuera.GameData;
+using MinorShift.Emuera.GameData.Function;
+using MinorShift.Emuera.GameData.Variable;
+using MinorShift.Emuera.GameProc;
+using MinorShift.Emuera;
+using MinorShift.Emuera.GameProc;
 using MinorShift.Emuera.GameData.Expression;
 using MinorShift.Emuera.GameData.Function;
 using MinorShift.Emuera.GameData.Variable;
+using MinorShift.Emuera.Sub;
+using System;
+using System.Collections.Generic;
 using trerror = EvilMask.Emuera.Lang.Error;
 
 namespace MinorShift.Emuera.GameProc;
@@ -15,7 +18,7 @@ internal sealed class UserDefinedFunctionArgument
 	public UserDefinedFunctionArgument(IOperandTerm[] srcArgs, VariableTerm[] destArgs)
 	{
 		Arguments = srcArgs;
-		TransporterInt = new Int64[Arguments.Length];
+		TransporterInt = new long[Arguments.Length];
 		TransporterStr = new string[Arguments.Length];
 		TransporterRef = new Array[Arguments.Length];
 		isRef = new bool[Arguments.Length];
@@ -25,7 +28,7 @@ internal sealed class UserDefinedFunctionArgument
 		}
 	}
 	public readonly IOperandTerm[] Arguments;
-	public readonly Int64[] TransporterInt;
+	public readonly long[] TransporterInt;
 	public readonly string[] TransporterStr;
 	public readonly Array[] TransporterRef;
 	public readonly bool[] isRef;
@@ -40,8 +43,8 @@ internal sealed class UserDefinedFunctionArgument
 				VariableTerm vTerm = (VariableTerm)Arguments[i];
 				if (vTerm.Identifier.IsCharacterData)
 				{
-					Int64 charaNo = vTerm.GetElementInt(0, exm);
-					if ((charaNo < 0) || (charaNo >= GlobalStatic.VariableData.CharacterList.Count))
+					long charaNo = vTerm.GetElementInt(0, exm);
+					if (charaNo < 0 || charaNo >= GlobalStatic.VariableData.CharacterList.Count)
 						throw new CodeEE(string.Format(trerror.OoRCharaVarArg.Text, vTerm.Identifier.Name, "1", charaNo.ToString()));
 					TransporterRef[i] = (Array)vTerm.Identifier.GetArrayChara((int)charaNo);
 				}
@@ -49,7 +52,7 @@ internal sealed class UserDefinedFunctionArgument
 					TransporterRef[i] = (Array)vTerm.Identifier.GetArray();
 
 			}
-			else if (Arguments[i].GetOperandType() == typeof(Int64))
+			else if (Arguments[i].GetOperandType() == typeof(long))
 				TransporterInt[i] = Arguments[i].GetIntValue(exm);
 			else
 				TransporterStr[i] = Arguments[i].GetStrValue(exm);
@@ -79,16 +82,18 @@ internal sealed class CalledFunction
 	private CalledFunction(string label) { FunctionName = label; }
 	public static CalledFunction CallEventFunction(Process parent, string label, LogicalLine retAddress)
 	{
-		CalledFunction called = new CalledFunction(label);
-		//List<FunctionLabelLine> newLabelList = new List<FunctionLabelLine>();
-		called.Finished = false;
-		called.eventLabelList = parent.LabelDictionary.GetEventLabels(label);
+		CalledFunction called = new(label)
+		{
+			//List<FunctionLabelLine> newLabelList = new List<FunctionLabelLine>();
+			Finished = false,
+			eventLabelList = parent.LabelDictionary.GetEventLabels(label)
+		};
 		if (called.eventLabelList == null)
 		{
 			FunctionLabelLine line = parent.LabelDictionary.GetNonEventLabel(label);
 			if (parent.LabelDictionary.GetNonEventLabel(label) != null)
 			{
-				throw new CodeEE(string.Format(trerror.CalleventToNonEventFunc.Text, label, line.Position.Filename, line.Position.LineNo));
+				throw new CodeEE(string.Format(trerror.CalleventToNonEventFunc.Text, label, line.Position.Value.Filename, line.Position.Value.LineNo));
 			}
 			return null;
 		}
@@ -103,8 +108,10 @@ internal sealed class CalledFunction
 
 	public static CalledFunction CallFunction(Process parent, string label, LogicalLine retAddress)
 	{
-		CalledFunction called = new CalledFunction(label);
-		called.Finished = false;
+		CalledFunction called = new(label)
+		{
+			Finished = false
+		};
 		FunctionLabelLine labelline = parent.LabelDictionary.GetNonEventLabel(label);
 		if (labelline == null)
 		{
@@ -116,7 +123,7 @@ internal sealed class CalledFunction
 		}
 		else if (labelline.IsMethod)
 		{
-			throw new CodeEE(string.Format(trerror.CallToUserFunc.Text, labelline.LabelName, labelline.Position.Filename, labelline.Position.LineNo.ToString()));
+			throw new CodeEE(string.Format(trerror.CallToUserFunc.Text, labelline.LabelName, labelline.Position.Value.Filename, labelline.Position.Value.LineNo.ToString()));
 		}
 		called.TopLabel = labelline;
 		called.CurrentLabel = labelline;
@@ -127,22 +134,24 @@ internal sealed class CalledFunction
 
 	public static CalledFunction CreateCalledFunctionMethod(FunctionLabelLine labelline, string label)
 	{
-		CalledFunction called = new CalledFunction(label);
-		called.TopLabel = labelline;
-		called.CurrentLabel = labelline;
-		called.returnAddress = null;
-		called.IsEvent = false;
+		CalledFunction called = new(label)
+		{
+			TopLabel = labelline,
+			CurrentLabel = labelline,
+			returnAddress = null,
+			IsEvent = false
+		};
 		return called;
 	}
 
 
-	static FunctionMethod tostrMethod = null;
+	static FunctionMethod tostrMethod;
 	/// <summary>
 	/// 1803beta005 予め引数の数を合わせて規定値を代入しておく
 	/// 1806+v6.99 式中関数の引数に無効な#DIM変数を与えている場合に例外になるのを修正
 	/// 1808beta009 REF型に対応
 	/// </summary>
-	public UserDefinedFunctionArgument ConvertArg(IOperandTerm[] srcArgs, out string errMes)
+	public UserDefinedFunctionArgument ConvertArg(List<IOperandTerm> srcArgs, out string errMes)
 	{
 		errMes = null;
 		if (TopLabel.IsError)
@@ -152,7 +161,7 @@ internal sealed class CalledFunction
 		}
 		FunctionLabelLine func = TopLabel;
 		IOperandTerm[] convertedArg = new IOperandTerm[func.Arg.Length];
-		if (convertedArg.Length < srcArgs.Length)
+		if (convertedArg.Length < srcArgs.Count)
 		{
 			errMes = string.Format(trerror.TooManyFuncArgs.Text, func.LabelName);
 			return null;
@@ -162,7 +171,7 @@ internal sealed class CalledFunction
 		//bool isString = false;
 		for (int i = 0; i < func.Arg.Length; i++)
 		{
-			term = (i < srcArgs.Length) ? srcArgs[i] : null;
+			term = i < srcArgs.Count ? srcArgs[i] : null;
 			destArg = func.Arg[i];
 			//isString = destArg.IsString;
 			if (destArg.Identifier.IsReference)//参照渡しの場合
@@ -213,7 +222,7 @@ internal sealed class CalledFunction
 					}
 					if (tostrMethod == null)
 						tostrMethod = FunctionMethodCreator.GetMethodList()["TOSTR"];
-					term = new FunctionMethodTerm(tostrMethod, new IOperandTerm[] { term });
+					term = new FunctionMethodTerm(tostrMethod, [term]);
 				}
 			}
 			convertedArg[i] = term;
@@ -223,7 +232,7 @@ internal sealed class CalledFunction
 
 	public LogicalLine CallLabel(Process parent, string label)
 	{
-		return parent.LabelDictionary.GetLabelDollar(label, this.CurrentLabel);
+		return parent.LabelDictionary.GetLabelDollar(label, CurrentLabel);
 	}
 
 	public void updateRetAddress(LogicalLine line)
@@ -233,15 +242,17 @@ internal sealed class CalledFunction
 
 	public CalledFunction Clone()
 	{
-		CalledFunction called = new CalledFunction(this.FunctionName);
-		called.eventLabelList = this.eventLabelList;
-		called.CurrentLabel = this.CurrentLabel;
-		called.TopLabel = this.TopLabel;
-		called.group = this.group;
-		called.IsEvent = this.IsEvent;
+		CalledFunction called = new(FunctionName)
+		{
+			eventLabelList = eventLabelList,
+			CurrentLabel = CurrentLabel,
+			TopLabel = TopLabel,
+			group = group,
+			IsEvent = IsEvent,
 
-		called.counter = this.counter;
-		called.returnAddress = this.returnAddress;
+			counter = counter,
+			returnAddress = returnAddress
+		};
 		return called;
 	}
 
@@ -249,7 +260,7 @@ internal sealed class CalledFunction
 	public FunctionLabelLine CurrentLabel { get; private set; }
 	public FunctionLabelLine TopLabel { get; private set; }
 	int counter = -1;
-	int group = 0;
+	int group;
 	LogicalLine returnAddress;
 	public readonly string FunctionName = "";
 	public bool IsJump { get; set; }

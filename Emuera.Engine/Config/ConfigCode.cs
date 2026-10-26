@@ -1,8 +1,5 @@
-﻿
 namespace MinorShift.Emuera;
 
-//難読化用属性。enum.ToString()やenum.Parse()を行うなら(Exclude=true)にすること。
-[global::System.Reflection.Obfuscation(Exclude = true)]
 internal enum DisplayWarningFlag
 {
 	IGNORE = 0,
@@ -11,7 +8,6 @@ internal enum DisplayWarningFlag
 	DISPLAY = 3,
 }
 
-[global::System.Reflection.Obfuscation(Exclude = true)]
 internal enum ReduceArgumentOnLoadFlag
 {
 	YES = 0,
@@ -19,7 +15,6 @@ internal enum ReduceArgumentOnLoadFlag
 	NO = 2,
 }
 
-[global::System.Reflection.Obfuscation(Exclude = true)]
 internal enum TextDrawingMode
 {
 	GRAPHICS = 0,
@@ -27,7 +22,6 @@ internal enum TextDrawingMode
 	WINAPI = 2,
 }
 
-[global::System.Reflection.Obfuscation(Exclude = true)]
 internal enum UseLanguage
 {
 	JAPANESE = 0,
@@ -36,7 +30,6 @@ internal enum UseLanguage
 	CHINESE_HANT = 3,
 }
 
-[global::System.Reflection.Obfuscation(Exclude = true)]
 internal enum TextEditorType
 {
 	SAKURA = 0,
@@ -45,8 +38,6 @@ internal enum TextEditorType
 	USER_SETTING = 3,
 }
 
-//数字に意味は無い。
-[global::System.Reflection.Obfuscation(Exclude = true)]
 internal enum ConfigCode
 {
 	IgnoreCase = 0,
@@ -161,6 +152,13 @@ internal enum ConfigCode
 	#region EE_重複定義の確認
 	CheckDuplicateIdentifier,
 	#endregion
+	#region EE_行連結の改行コード置換
+	ReplaceContinuationBR,
+	#endregion
+	#region EE_CALLSHARP注意
+	PluginAvailableWarn,
+	#endregion
+
 
 	#region EM_私家版_LoadText＆SaveText機能拡張
 	ValidExtension = 200,
@@ -175,6 +173,7 @@ internal enum ConfigCode
 	RikaiColorText,
 	RikaiUseSeparateBoxes,
 	#endregion
+	Ctrl_Z_Enabled,
 	#region EM_私家版_Emuera多言語化改造
 	EnglishConfigOutput,
 	EmueraLang,

@@ -1,6 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using MinorShift.Emuera.GameData.Expression;
 
 namespace MinorShift.Emuera.Sub;
@@ -8,7 +5,7 @@ namespace MinorShift.Emuera.Sub;
 internal abstract class Word
 {
 	public abstract char Type { get; }
-	public bool IsMacro = false;
+	public bool IsMacro;
 	public virtual void SetIsMacro()
 	{
 		IsMacro = true;
@@ -39,9 +36,9 @@ internal sealed class IdentifierWord : Word
 
 internal sealed class LiteralIntegerWord : Word
 {
-	public LiteralIntegerWord(Int64 i) { code = i; }
-	readonly Int64 code;
-	public Int64 Int { get { return code; } }
+	public LiteralIntegerWord(long i) { code = i; }
+	readonly long code;
+	public long Int { get { return code; } }
 	public override char Type { get { return '0'; } }
 	public override string ToString()
 	{
@@ -103,15 +100,6 @@ internal sealed class StrFormWord : Word
 			subword.SetIsMacro();
 		}
 	}
-}
-
-
-internal sealed class TermWord : Word
-{
-	public TermWord(IOperandTerm term) { this.term = term; }
-	readonly IOperandTerm term;
-	public IOperandTerm Term { get { return term; } }
-	public override char Type { get { return 'T'; } }
 }
 
 internal sealed class MacroWord : Word

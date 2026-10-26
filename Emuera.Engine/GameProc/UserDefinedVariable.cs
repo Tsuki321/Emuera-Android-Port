@@ -1,33 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using MinorShift.Emuera.Sub;
-using System.Text.RegularExpressions;
-using MinorShift.Emuera.GameData.Variable;
 using MinorShift.Emuera.GameData.Expression;
-using MinorShift.Emuera.GameView;
-using MinorShift.Emuera.GameData;
-using MinorShift.Emuera.GameData.Function;
-using MinorShift.Emuera.GameProc.Function;
+using MinorShift.Emuera.Sub;
+using System;
+using System.Collections.Generic;
 using trerror = EvilMask.Emuera.Lang.Error;
 
 namespace MinorShift.Emuera.GameProc;
 
 internal sealed class UserDefinedVariableData
 {
-	public string Name = null;
-	public bool TypeIsStr = false;
-	public bool Reference = false;
+	public string Name;
+	public bool TypeIsStr;
+	public bool Reference;
 	public int Dimension = 1;
-	public int[] Lengths = null;
-	public Int64[] DefaultInt = null;
-	public string[] DefaultStr = null;
-	public bool Global = false;
-	public bool Save = false;
+	public int[] Lengths;
+	public long[] DefaultInt;
+	public string[] DefaultStr;
+	public bool Global;
+	public bool Save;
 	public bool Static = true;
-	public bool Private = false;
-	public bool CharaData = false;
-	public bool Const = false;
+	public bool Private;
+	public bool CharaData;
+	public bool Const;
 
 	//1822 Privateの方もDIMだけ遅延させようとしたけどちょっと課題がおおいのでやめとく
 	public static UserDefinedVariableData Create(DimLineWC dimline)
@@ -35,7 +29,7 @@ internal sealed class UserDefinedVariableData
 		return Create(dimline.WC, dimline.Dims, dimline.IsPrivate, dimline.SC);
 	}
 
-	public static UserDefinedVariableData Create(WordCollection wc, bool dims, bool isPrivate, ScriptPosition sc)
+	public static UserDefinedVariableData Create(WordCollection wc, bool dims, bool isPrivate, ScriptPosition? sc)
 	{
 		string dimtype = dims ? "#DIM" : "#DIMS";
 		UserDefinedVariableData ret = new()
@@ -52,12 +46,11 @@ internal sealed class UserDefinedVariableData
 		{
 			wc.ShiftNext();
 			keyword = idw.Code;
-			if (Config.ICVariable)
-				keyword = keyword.ToUpper();
+			var cmp = Config.StringComparison;
 			//TODO ifの数があたまわるい なんとかしたい
 			switch (keyword)
 			{
-				case "CONST":
+				case var s when s.Equals("CONST", cmp):
 					if (ret.CharaData)
 						throw new CodeEE(string.Format(trerror.CanNotSpecifiedWith.Text, keyword, "CHARADATA"), sc);
 					if (ret.Global)
@@ -72,7 +65,7 @@ internal sealed class UserDefinedVariableData
 						throw new CodeEE(string.Format(trerror.DuplicateKeyword.Text, keyword), sc);
 					ret.Const = true;
 					break;
-				case "REF":
+				case var s when s.Equals("REF", cmp):
 					//throw new CodeEE("未実装の機能です", sc);
 					//if (!isPrivate)
 					//	throw new CodeEE("広域変数の宣言に" + keyword + "キーワードは指定できません", sc);
@@ -91,7 +84,7 @@ internal sealed class UserDefinedVariableData
 					ret.Reference = true;
 					ret.Static = false;
 					break;
-				case "DYNAMIC":
+				case var s when s.Equals("DYNAMIC", cmp):
 					if (!isPrivate)
 						throw new CodeEE(string.Format(trerror.CanNotUseKeywordGlobalVar.Text, keyword), sc);
 					if (ret.CharaData)
@@ -106,7 +99,7 @@ internal sealed class UserDefinedVariableData
 					staticDefined = true;
 					ret.Static = false;
 					break;
-				case "STATIC":
+				case var s when s.Equals("STATIC", cmp):
 					if (!isPrivate)
 						throw new CodeEE(string.Format(trerror.CanNotUseKeywordGlobalVar.Text, keyword), sc);
 					if (ret.CharaData)
@@ -121,7 +114,7 @@ internal sealed class UserDefinedVariableData
 					staticDefined = true;
 					ret.Static = true;
 					break;
-				case "GLOBAL":
+				case var s when s.Equals("GLOBAL", cmp):
 					if (isPrivate)
 						throw new CodeEE(string.Format(trerror.CanNotUseKeywordLocalVar.Text, keyword), sc);
 					if (ret.CharaData)
@@ -137,7 +130,7 @@ internal sealed class UserDefinedVariableData
 							throw new CodeEE(string.Format(trerror.CanNotSpecifiedWith.Text, "DYNAMIC", "GLOBAL"), sc);
 					ret.Global = true;
 					break;
-				case "SAVEDATA":
+				case var s when s.Equals("SAVEDATA", cmp):
 					if (isPrivate)
 						throw new CodeEE(string.Format(trerror.CanNotUseKeywordLocalVar.Text, keyword), sc);
 					if (staticDefined)
@@ -153,7 +146,7 @@ internal sealed class UserDefinedVariableData
 						throw new CodeEE(string.Format(trerror.DuplicateKeyword.Text, keyword), sc);
 					ret.Save = true;
 					break;
-				case "CHARADATA":
+				case var s when s.Equals("CHARADATA", cmp):
 					if (isPrivate)
 						throw new CodeEE(string.Format(trerror.CanNotUseKeywordLocalVar.Text, keyword), sc);
 					if (ret.Reference)
@@ -222,8 +215,7 @@ internal sealed class UserDefinedVariableData
 				if (wc.EOL)
 					throw new CodeEE(trerror.HasNotExpressionAfterComma.Text, sc);
 				IOperandTerm arg = ExpressionParser.ReduceIntegerTerm(wc, TermEndWith.Comma_Assignment);
-				SingleTerm sizeTerm = arg.Restructure(null) as SingleTerm;
-				if ((sizeTerm == null) || (sizeTerm.GetOperandType() != typeof(Int64)))
+				if (arg.Restructure(null) is not SingleLongTerm sizeTerm)
 					throw new CodeEE(trerror.HasNotExpressionAfterComma.Text, sc);
 				if (ret.Reference)//参照型には要素数指定不可(0にするか書かないかどっちか
 				{
@@ -232,7 +224,7 @@ internal sealed class UserDefinedVariableData
 
 					continue;
 				}
-				else if ((sizeTerm.Int <= 0) || (sizeTerm.Int > 1000000))
+				else if (sizeTerm.Int <= 0 || sizeTerm.Int > 1000000)
 					throw new CodeEE(trerror.OoRDefinable.Text, sc);
 				sizeNum.Add((int)sizeTerm.Int);
 			}
@@ -258,38 +250,37 @@ internal sealed class UserDefinedVariableData
 			if (sizeNum.Count == 1)
 				size = sizeNum[0];
 			wc.ShiftNext();
-			IOperandTerm[] terms = ExpressionParser.ReduceArguments(wc, ArgsEndWith.EoL, false);
-			if (terms.Length == 0)
+			var terms = ExpressionParser.ReduceArguments(wc, ArgsEndWith.EoL, false);
+			if (terms.Count == 0)
 				throw new CodeEE(trerror.ArrayVarCanNotOmitInitialValue.Text);
 			if (size > 0)
 			{
-				if (terms.Length > size)
+				if (terms.Count > size)
 					throw new CodeEE(trerror.InitialValueMoreThanArraySize.Text);
-				if (ret.Const && terms.Length != size)
+				if (ret.Const && terms.Count != size)
 					throw new CodeEE(trerror.ConstInitialValueDifferentArraySize.Text);
 			}
 			if (dims)
-				ret.DefaultStr = new string[terms.Length];
+				ret.DefaultStr = new string[terms.Count];
 			else
-				ret.DefaultInt = new Int64[terms.Length];
+				ret.DefaultInt = new long[terms.Count];
 
-			for (int i = 0; i < terms.Length; i++)
+			for (int i = 0; i < terms.Count; i++)
 			{
 				if (terms[i] == null)
 					throw new CodeEE(trerror.ArrayVarCanNotOmitInitialValue.Text);
 				terms[i] = terms[i].Restructure(GlobalStatic.EMediator);
-				SingleTerm sTerm = terms[i] as SingleTerm;
-				if (sTerm == null)
+				if (terms[i] is not SingleTerm sTerm)
 					throw new CodeEE(trerror.InitialValueOnlyConst.Text);
 				if (dims != sTerm.IsString)
 					throw new CodeEE(trerror.NotMatchVarTypeAndInitialValue.Text);
 				if (dims)
-					ret.DefaultStr[i] = sTerm.Str;
+					ret.DefaultStr[i] = ((SingleStrTerm)sTerm).Str;
 				else
-					ret.DefaultInt[i] = sTerm.Int;
+					ret.DefaultInt[i] = ((SingleLongTerm)sTerm).Int;
 			}
 			if (sizeNum.Count == 0)
-				sizeNum.Add(terms.Length);
+				sizeNum.Add(terms.Count);
 		}
 		if (!wc.EOL)
 			throw new CodeEE(trerror.WrongFormat.Text, sc);
@@ -308,13 +299,13 @@ internal sealed class UserDefinedVariableData
 		ret.Lengths = new int[sizeNum.Count];
 		if (ret.Reference)
 			return ret;
-		Int64 totalBytes = 1;
+		long totalBytes = 1;
 		for (int i = 0; i < sizeNum.Count; i++)
 		{
 			ret.Lengths[i] = sizeNum[i];
 			totalBytes *= ret.Lengths[i];
 		}
-		if ((totalBytes <= 0) || (totalBytes > 1000000))
+		if (totalBytes <= 0 || totalBytes > 1000000)
 			throw new CodeEE(trerror.OoRDefinable.Text, sc);
 		if (!isPrivate && ret.Save && !Config.SystemSaveInBinary)
 		{
@@ -331,8 +322,8 @@ internal sealed class DimLineWC
 	public WordCollection WC;
 	public bool Dims;
 	public bool IsPrivate;
-	public ScriptPosition SC;
-	public DimLineWC(WordCollection wc, bool isString, bool isPrivate, ScriptPosition position)
+	public ScriptPosition? SC;
+	public DimLineWC(WordCollection wc, bool isString, bool isPrivate, ScriptPosition? position)
 	{
 		WC = wc;
 		Dims = isString;

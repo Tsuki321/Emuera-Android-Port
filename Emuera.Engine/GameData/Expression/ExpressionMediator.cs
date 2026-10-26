@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MinorShift.Emuera.Sub;
-using MinorShift.Emuera.GameData.Variable;
-using MinorShift.Emuera.GameData.Function;
-using MinorShift.Emuera.GameProc;
 using Microsoft.VisualBasic;
+using MinorShift.Emuera.GameProc;
 using MinorShift.Emuera.GameProc.Function;
 using MinorShift.Emuera.GameView;
 using trerror = EvilMask.Emuera.Lang.Error;
@@ -33,27 +27,27 @@ internal sealed class ExpressionMediator
 	private bool forceKatakana;
 	private bool halftoFull;
 
-	public void ForceKana(Int64 flag)
+	public void ForceKana(long flag)
 	{
 		if (flag < 0 || flag > 3)
 			throw new CodeEE(trerror.OoRForcekanaArg.Text);
-		forceKatakana = (flag == 1) ? true : false;
-		forceHiragana = (flag > 1) ? true : false;
-		halftoFull = (flag == 3) ? true : false;
+		forceKatakana = flag == 1;
+		forceHiragana = flag > 1;
+		halftoFull = flag == 3;
 	}
 
 	public bool ForceKana()
 	{
-		return (forceHiragana | forceKatakana | halftoFull);
+		return forceHiragana | forceKatakana | halftoFull;
 	}
 
-	public void OutputToConsole(string str, FunctionIdentifier func)
+	public void OutputToConsole(string str, FunctionIdentifier func, bool lineEnd)
 	{
 		if (func.IsPrintSingle())
 			Console.PrintSingleLine(str, false);
 		else
 		{
-			Console.Print(str);
+			Console.Print(str, lineEnd);
 			if (func.IsNewLine() || func.IsWaitInput())
 			{
 				Console.NewLine();
@@ -80,7 +74,7 @@ internal sealed class ExpressionMediator
 		return str;
 	}
 
-	public string CheckEscape(string str)
+	public static string CheckEscape(string str)
 	{
 		StringStream st = new(str);
 		StringBuilder buffer = new();
@@ -118,7 +112,7 @@ internal sealed class ExpressionMediator
 		return buffer.ToString();
 	}
 
-	public string CreateBar(Int64 var, Int64 max, Int64 length)
+	public static string CreateBar(long var, long max, long length)
 	{
 		if (max <= 0)
 			throw new CodeEE(trerror.MaxBarNotPositive.Text);

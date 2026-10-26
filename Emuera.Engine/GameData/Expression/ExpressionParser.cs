@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+using MinorShift.Emuera.GameData.Variable;
+using MinorShift.Emuera.GameData;
 using MinorShift.Emuera.Sub;
 using MinorShift.Emuera.GameData.Variable;
 using MinorShift.Emuera.GameData.Function;
@@ -45,11 +45,12 @@ internal static class ExpressionParser
 	/// 呼び出し元はCodeEEを適切に処理すること
 	/// </summary>
 	/// <returns></returns>
-	public static IOperandTerm[] ReduceArguments(WordCollection wc, ArgsEndWith endWith, bool isDefine)
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	public static List<IOperandTerm> ReduceArguments(WordCollection wc, ArgsEndWith endWith, bool isDefine)
 	{
 		if (wc == null)
 			throw new ExeEE(trerror.EmptyStream.Text);
-		List<IOperandTerm> terms = [];
+		var terms = new LinkedList<IOperandTerm>();
 		TermEndWith termEndWith = TermEndWith.EoL;
 		switch (endWith)
 		{
@@ -64,64 +65,68 @@ internal static class ExpressionParser
 				break;
 		}
 		TermEndWith termEndWith_Assignment = termEndWith | TermEndWith.Assignment;
-		while (true)
+		void local()
 		{
-			Word word = wc.Current;
-			switch (word.Type)
+			while (true)
 			{
-				case '\0':
-					if (endWith == ArgsEndWith.RightBracket)
-						throw new CodeEE(trerror.NotCloseSBrackets.Text);
-					if (endWith == ArgsEndWith.RightParenthesis)
-						throw new CodeEE(trerror.NotCloseBrackets.Text);
-					goto end;
-				case ')':
-					if (endWith == ArgsEndWith.RightParenthesis)
-					{
-						wc.ShiftNext();
-						goto end;
-					}
-					throw new CodeEE(trerror.UnexpectedBrackets.Text);
-				case ']':
-					if (endWith == ArgsEndWith.RightBracket)
-					{
-						wc.ShiftNext();
-						goto end;
-					}
-					throw new CodeEE(trerror.UnexpectedSBrackets.Text);
-			}
-			if (!isDefine)
-				terms.Add(ReduceExpressionTerm(wc, termEndWith));
-			else
-			{
-				terms.Add(ReduceExpressionTerm(wc, termEndWith_Assignment));
-				if (terms[terms.Count - 1] == null)
-					throw new CodeEE(trerror.CannotOmitFuncArg.Text);
-				if (wc.Current is OperatorWord)
-				{//=がある
-					wc.ShiftNext();
-					IOperandTerm term = reduceTerm(wc, false, termEndWith, VariableCode.__NULL__);
-					if (term == null)
-						throw new CodeEE(trerror.NoExpressionAfterEqual.Text);
-					if (term.GetOperandType() != terms[terms.Count - 1].GetOperandType())
-						throw new CodeEE(trerror.DoesNotMatchEqual.Text);
-					terms.Add(term);
+				Word word = wc.Current;
+				switch (word.Type)
+				{
+					case '\0':
+						if (endWith == ArgsEndWith.RightBracket)
+							throw new CodeEE(trerror.NotCloseSBrackets.Text);
+						if (endWith == ArgsEndWith.RightParenthesis)
+							throw new CodeEE(trerror.NotCloseBrackets.Text);
+						return;
+					case ')':
+						if (endWith == ArgsEndWith.RightParenthesis)
+						{
+							wc.ShiftNext();
+							return;
+						}
+						throw new CodeEE(trerror.UnexpectedBrackets.Text);
+					case ']':
+						if (endWith == ArgsEndWith.RightBracket)
+						{
+							wc.ShiftNext();
+							return;
+						}
+						throw new CodeEE(trerror.UnexpectedSBrackets.Text);
+
 				}
+				if (!isDefine)
+					terms.AddLast(ReduceExpressionTerm(wc, termEndWith));
+
 				else
 				{
-					if (terms[terms.Count - 1].GetOperandType() == typeof(Int64))
-						terms.Add(new NullTerm(0));
+					terms.AddLast(ReduceExpressionTerm(wc, termEndWith_Assignment));
+					if (terms.Last == null)
+						throw new CodeEE(trerror.CannotOmitFuncArg.Text);
+					if (wc.Current is OperatorWord)
+					{//=がある
+						wc.ShiftNext();
+						IOperandTerm term = reduceTerm(wc, false, termEndWith, VariableCode.__NULL__);
+						if (term == null)
+							throw new CodeEE(trerror.NoExpressionAfterEqual.Text);
+						if (term.GetOperandType() != terms.Last.Value.GetOperandType())
+							throw new CodeEE(trerror.DoesNotMatchEqual.Text);
+						terms.AddLast(term);
+					}
 					else
-						terms.Add(new NullTerm(""));
+					{
+						if (terms.Last.Value.GetOperandType() == typeof(long))
+							terms.AddLast(new NullTerm(0));
+						else
+							terms.AddLast(new NullTerm(""));
+					}
 				}
+				if (wc.Current.Type == ',')
+					wc.ShiftNext();
+
 			}
-			if (wc.Current.Type == ',')
-				wc.ShiftNext();
 		}
-	end:
-		IOperandTerm[] ret = new IOperandTerm[terms.Count];
-		terms.CopyTo(ret);
-		return ret;
+		local();
+		return [.. terms];
 	}
 
 
@@ -157,7 +162,7 @@ internal static class ExpressionParser
 		IOperandTerm term = reduceTerm(wc, false, endwith, VariableCode.__NULL__);
 		if (term == null)
 			throw new CodeEE(trerror.CanNotInterpretedExpression.Text);
-		if (term.GetOperandType() != typeof(Int64))
+		if (term.GetOperandType() != typeof(long))
 			throw new CodeEE(trerror.ExpressionResultIsNotNumeric.Text);
 		return term;
 	}
@@ -171,7 +176,7 @@ internal static class ExpressionParser
 	{
 		StrForm strf = StrForm.FromWordToken(sfw);
 		if (strf.IsConst)
-			return new SingleTerm(strf.GetString(null));
+			return new SingleStrTerm(strf.GetString(null));
 		return new StrFormTerm(strf);
 	}
 
@@ -182,15 +187,13 @@ internal static class ExpressionParser
 	/// <returns></returns>
 	public static CaseExpression[] ReduceCaseExpressions(WordCollection wc)
 	{
-		List<CaseExpression> terms = [];
+		LinkedList<CaseExpression> terms = [];
 		while (!wc.EOL)
 		{
-			terms.Add(reduceCaseExpression(wc));
+			terms.AddLast(reduceCaseExpression(wc));
 			wc.ShiftNext();
 		}
-		CaseExpression[] ret = new CaseExpression[terms.Count];
-		terms.CopyTo(ret);
-		return ret;
+		return [.. terms];
 	}
 	#region EE_ERD
 	// public static IOperandTerm ReduceVariableArgument(WordCollection wc, VariableCode varCode)
@@ -245,7 +248,7 @@ internal static class ExpressionParser
 			if (symbol.Type == '[')//1810 多分永久に実装されない
 				throw new CodeEE(trerror.SBracketsFuncNotImprement.Text);
 			//引数を処理
-			IOperandTerm[] args = ReduceArguments(wc, ArgsEndWith.RightParenthesis, false);
+			var args = ReduceArguments(wc, ArgsEndWith.RightParenthesis, false);
 			IOperandTerm mToken = GlobalStatic.IdentifierDictionary.GetFunctionMethod(GlobalStatic.LabelDictionary, idStr, args, false);
 			if (mToken == null)
 			{
@@ -253,8 +256,8 @@ internal static class ExpressionParser
 					GlobalStatic.IdentifierDictionary.ThrowException(idStr, true);
 				else
 				{
-					if (GlobalStatic.tempDic.ContainsKey(idStr))
-						GlobalStatic.tempDic[idStr]++;
+					if (GlobalStatic.tempDic.TryGetValue(idStr, out long value))
+						GlobalStatic.tempDic[idStr] = ++value;
 					else
 						GlobalStatic.tempDic.Add(idStr, 1);
 					return new NullTerm(0);
@@ -277,7 +280,7 @@ internal static class ExpressionParser
 			if (refToken != null)//関数参照と名前が一致したらそれを返す。実際に使うとエラー
 				return refToken;
 			if (varCode != VariableCode.__NULL__ && GlobalStatic.ConstantData.isDefined(varCode, idStr))//連想配列的な可能性アリ
-				return new SingleTerm(idStr);
+				return new SingleStrTerm(idStr);
 			#region EE_ERD
 			else if (varId != null)
 			{
@@ -288,19 +291,19 @@ internal static class ExpressionParser
 					case VariableCode.CVAR:
 					case VariableCode.CVARS:
 						if (GlobalStatic.ConstantData.isUserDefined(varId.Name, idStr, 1))//ユーザー定義変数は名前付けられるようになったので通す
-							return new SingleTerm(idStr);
+							return new SingleStrTerm(idStr);
 						break;
 					case VariableCode.VAR2D:
 					case VariableCode.VARS2D:
 					case VariableCode.CVAR2D:
 					case VariableCode.CVARS2D:
 						if (GlobalStatic.ConstantData.isUserDefined(varId.Name, idStr, 2))//ユーザー定義変数は名前付けられるようになったので通す
-							return new SingleTerm(idStr);
+							return new SingleStrTerm(idStr);
 						break;
 					case VariableCode.VAR3D:
 					case VariableCode.VARS3D:
 						if (GlobalStatic.ConstantData.isUserDefined(varId.Name, idStr, 3))//ユーザー定義変数は名前付けられるようになったので通す
-							return new SingleTerm(idStr);
+							return new SingleStrTerm(idStr);
 						break;
 				}
 			}
@@ -318,7 +321,7 @@ internal static class ExpressionParser
 	{
 		CaseExpression ret = new();
 		IdentifierWord id = wc.Current as IdentifierWord;
-		if ((id != null) && id.Code.Equals("IS", Config.SCVariable))
+		if (id != null && id.Code.Equals("IS", Config.StringComparison))
 		{
 			wc.ShiftNext();
 			ret.CaseType = CaseExpressionType.Is;
@@ -341,7 +344,7 @@ internal static class ExpressionParser
 		if (ret.LeftTerm == null)
 			throw new CodeEE(trerror.CanNotOmitCaseArg.Text);
 		id = wc.Current as IdentifierWord;
-		if ((id != null) && id.Code.Equals("TO", Config.SCVariable))
+		if (id != null && id.Code.Equals("TO", Config.StringComparison))
 		{
 			ret.CaseType = CaseExpressionType.To;
 			wc.ShiftNext();
@@ -349,7 +352,7 @@ internal static class ExpressionParser
 			if (ret.RightTerm == null)
 				throw new CodeEE(trerror.NoExpressionAfterTo.Text);
 			id = wc.Current as IdentifierWord;
-			if ((id != null) && (id.Code.Equals("TO", Config.SCVariable)))
+			if (id != null && id.Code.Equals("TO", Config.StringComparison))
 				throw new CodeEE(trerror.DuplicateTo.Text);
 			if (ret.LeftTerm.GetOperandType() != ret.RightTerm.GetOperandType())
 				throw new CodeEE(trerror.DoesNotMatchTo.Text);
@@ -384,33 +387,33 @@ internal static class ExpressionParser
 			switch (token.Type)
 			{
 				case '\0':
-					goto end;
+					return end(stack, ternaryCount);
 				case '"'://LiteralStringWT
-					stack.Add(((LiteralStringWord)token).Str);
+					stack.Add((token as LiteralStringWord).Str);
 					break;
 				case '0'://LiteralIntegerWT
-					stack.Add(((LiteralIntegerWord)token).Int);
+					stack.Add((token as LiteralIntegerWord).Int);
 					break;
 				case 'F'://FormattedStringWT
-					stack.Add(ToStrFormTerm((StrFormWord)token));
+					stack.Add(ToStrFormTerm(token as StrFormWord));
 					break;
 				case 'A'://IdentifierWT
 					{
-						string idStr = ((IdentifierWord)token).Code;
-						if (idStr.Equals("TO", Config.SCVariable))
+						string idStr = (token as IdentifierWord).Code;
+						if (idStr.Equals("TO", Config.StringComparison))
 						{
 							if (allowKeywordTo)
-								goto end;
+								return end(stack, ternaryCount);
 							else
 								throw new CodeEE(trerror.InvalidTo.Text);
 						}
-						else if (idStr.Equals("IS", Config.SCVariable))
+						else if (idStr.Equals("IS", Config.StringComparison))
 							throw new CodeEE(trerror.InvalidIs.Text);
 
 						#region EM_私家版_HTMLパラメータ拡張
 						if ((endWith & TermEndWith.KeyWordPx) == TermEndWith.KeyWordPx && idStr.Equals("px", StringComparison.OrdinalIgnoreCase) && (wc.Next.Type == ',' || wc.Next.Type == '\0'))
 						{
-							goto end;
+							return end(stack, ternaryCount);
 						}
 						#endregion
 						#region EE_ERD
@@ -424,11 +427,11 @@ internal static class ExpressionParser
 					{
 						if (varArg)
 							throw new CodeEE(trerror.UnexpectedOpInVarArg.Text);
-						OperatorCode op = ((OperatorWord)token).Code;
+						OperatorCode op = (token as OperatorWord).Code;
 						if (op == OperatorCode.Assignment)
 						{
 							if ((endWith & TermEndWith.Assignment) == TermEndWith.Assignment)
-								goto end;
+								return end(stack, ternaryCount);
 							throw new CodeEE(trerror.EqualInExpression.Text);
 						}
 
@@ -467,15 +470,15 @@ internal static class ExpressionParser
 					continue;
 				case ')':
 					if ((endWith & TermEndWith.RightParenthesis) == TermEndWith.RightParenthesis)
-						goto end;
+						return end(stack, ternaryCount);
 					throw new CodeEE(string.Format(trerror.UnexpectedSymbol.Text, token.Type));
 				case ']':
 					if ((endWith & TermEndWith.RightBracket) == TermEndWith.RightBracket)
-						goto end;
+						return end(stack, ternaryCount);
 					throw new CodeEE(string.Format(trerror.UnexpectedSymbol.Text, token.Type));
 				case ',':
 					if ((endWith & TermEndWith.Comma) == TermEndWith.Comma)
-						goto end;
+						return end(stack, ternaryCount);
 					throw new CodeEE(string.Format(trerror.UnexpectedSymbol.Text, token.Type));
 				case 'M':
 					throw new ExeEE(trerror.FailedSolveMacro.Text);
@@ -485,10 +488,14 @@ internal static class ExpressionParser
 			//termCount++;
 			wc.ShiftNext();
 		} while (!varArg);
-	end:
-		if (ternaryCount > 0)
-			throw new CodeEE(trerror.TernaryBinaryError.Text);
-		return stack.ReduceAll();
+		return end(stack, ternaryCount);
+
+		static IOperandTerm end(TermStack stack, int ternaryCount)
+		{
+			if (ternaryCount > 0)
+				throw new CodeEE(trerror.TernaryBinaryError.Text);
+			return stack.ReduceAll();
+		}
 	}
 
 	#endregion
@@ -496,17 +503,17 @@ internal static class ExpressionParser
 	/// <summary>
 	/// 式解決用クラス
 	/// </summary>
-	private class TermStack
+	private sealed class TermStack
 	{
 		/// <summary>
 		/// 次に来るべきものの種類。
 		/// (前置)単項演算子か値待ちなら0、二項・三項演算子待ちなら1、値待ちなら2、++、--、!に対応する値待ちの場合は3。
 		/// </summary>
-		int state = 0;
-		bool hasBefore = false;
-		bool hasAfter = false;
-		bool waitAfter = false;
-		Stack<Object> stack = new Stack<Object>();
+		int state;
+		bool hasBefore;
+		bool hasAfter;
+		bool waitAfter;
+		Stack<object> stack = new(5);
 		public void Add(OperatorCode op)
 		{
 			if (state == 2 || state == 3)
@@ -556,7 +563,7 @@ internal static class ExpressionParser
 				//直前の計算の優先度が同じか高いなら還元。
 				while (lastPriority() >= priority)
 				{
-					this.reduceLastThree();
+					reduceLastThree();
 				}
 				stack.Push(op);
 				state = 0;
@@ -567,8 +574,8 @@ internal static class ExpressionParser
 			}
 			throw new CodeEE(trerror.UnrecognizedSyntax.Text);
 		}
-		public void Add(Int64 i) { Add(new SingleTerm(i)); }
-		public void Add(string s) { Add(new SingleTerm(s)); }
+		public void Add(long i) { Add(new SingleLongTerm(i)); }
+		public void Add(string s) { Add(new SingleStrTerm(s)); }
 		public void Add(IOperandTerm term)
 		{
 			stack.Push(term);
@@ -590,7 +597,7 @@ internal static class ExpressionParser
 		{
 			if (stack.Count < 3)
 				return -1;
-			object temp = (object)stack.Pop();
+			object temp = stack.Pop();
 			OperatorCode opCode = (OperatorCode)stack.Peek();
 			int priority = OperatorManager.GetPriority(opCode);
 			stack.Push(temp);

@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MinorShift.Emuera.GameData.Expression;
-using MinorShift.Emuera.GameView;
+using MinorShift.Emuera.GameProc.Function;
 using MinorShift.Emuera.Sub;
 
 namespace MinorShift.Emuera.GameProc.Function;
 
-internal abstract class AbstractInstruction
+internal abstract class AInstruction
 {
 	protected int flag;
 	public int Flag { get { return flag; } }

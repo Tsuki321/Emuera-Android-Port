@@ -1,10 +1,11 @@
-﻿using System;
+using MinorShift.Emuera.Sub;
+using EvilMask.Emuera;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using System.Drawing;
-using MinorShift.Emuera.Sub;
-using EvilMask.Emuera;
+using System.Text;
 
 namespace MinorShift.Emuera;
 
@@ -14,12 +15,12 @@ internal abstract class AConfigItem
 	// public AConfigItem(ConfigCode code, string text)
 	public AConfigItem(ConfigCode code, string text, string etext)
 	{
-		this.Code = code;
-		this.Name = code.ToString();
+		Code = code;
+		Name = EnumsNET.Enums.AsString(code);
 		// this.Text = text;
-		this.Text = text.ToUpper();
+		Text = text.ToUpper();
 		// this.EngText = etext;
-		this.EngText = etext.ToUpper();
+		EngText = etext.ToUpper();
 	}
 	#endregion
 
@@ -29,8 +30,10 @@ internal abstract class AConfigItem
 		if (other == null)
 			return null;
 		//ConfigItem<T> ret = new ConfigItem<T>(other.Code, other.Text, other.Value);
-		ConfigItem<T> ret = new ConfigItem<T>(other.Code, other.Text, other.EngText, other.Value);
-		ret.Fixed = other.Fixed;
+		ConfigItem<T> ret = new(other.Code, other.Text, other.EngText, other.Value)
+		{
+			Fixed = other.Fixed
+		};
 		return ret;
 	}
 	#endregion
@@ -55,7 +58,7 @@ internal sealed class ConfigItem<T> : AConfigItem
 	public ConfigItem(ConfigCode code, string text, string etext, T t) : base(code, text, etext)
 	#endregion
 	{
-		this.val = t;
+		val = t;
 	}
 	private T val;
 	public T Value
@@ -72,10 +75,10 @@ internal sealed class ConfigItem<T> : AConfigItem
 	public override void CopyTo(AConfigItem other)
 	{
 
-		ConfigItem<T> item = ((ConfigItem<T>)other);
+		ConfigItem<T> item = (ConfigItem<T>)other;
 		item.Fixed = false;
-		item.Value = this.Value;
-		item.Fixed = this.Fixed;
+		item.Value = Value;
+		item.Fixed = Fixed;
 	}
 
 	public override void SetValue<U>(U p)
@@ -144,9 +147,9 @@ internal sealed class ConfigItem<T> : AConfigItem
 	public override bool TryParse(string param)
 	{
 		bool ret = false;
-		if ((param == null) || (param.Length == 0))
+		if (param == null || param.Length == 0)
 			return false;
-		if (this.Fixed)
+		if (Fixed)
 			return false;
 		string str = param.Trim();
 		if (this is ConfigItem<bool>)
@@ -172,34 +175,34 @@ internal sealed class ConfigItem<T> : AConfigItem
 			if (ret)
 				((ConfigItem<char>)(AConfigItem)this).Value = c;
 		}
-		else if (this is ConfigItem<Int32>)
+		else if (this is ConfigItem<int>)
 		{
-			Int32 i;
-			ret = Int32.TryParse(str, out i);
+			int i;
+			ret = int.TryParse(str, out i);
 			if (ret)
-				((ConfigItem<Int32>)(AConfigItem)this).Value = i;
+				((ConfigItem<int>)(AConfigItem)this).Value = i;
 			else
 				throw new CodeEE(Lang.Error.ContainsNonNumericCharacters.Text);
 		}
-		else if (this is ConfigItem<Int64>)
+		else if (this is ConfigItem<long>)
 		{
-			Int64 i;
-			ret = Int64.TryParse(str, out i);
+			long i;
+			ret = long.TryParse(str, out i);
 			if (ret)
-				((ConfigItem<Int64>)(AConfigItem)this).Value = i;
+				((ConfigItem<long>)(AConfigItem)this).Value = i;
 			else
 				throw new CodeEE(Lang.Error.ContainsNonNumericCharacters.Text);
 		}
-		else if (this is ConfigItem<List<Int64>>)
+		else if (this is ConfigItem<List<long>>)
 		{
-			((ConfigItem<List<Int64>>)(AConfigItem)this).Value.Clear();
-			Int64 i;
+			((ConfigItem<List<long>>)(AConfigItem)this).Value.Clear();
+			long i;
 			string[] strs = str.Split('/');
 			foreach (string st in strs)
 			{
-				ret = Int64.TryParse(st.Trim(), out i);
+				ret = long.TryParse(st.Trim(), out i);
 				if (ret)
-					((ConfigItem<List<Int64>>)(AConfigItem)this).Value.Add(i);
+					((ConfigItem<List<long>>)(AConfigItem)this).Value.Add(i);
 				else
 				{
 					throw new CodeEE(Lang.Error.ContainsNonNumericCharacters.Text);
@@ -224,60 +227,45 @@ internal sealed class ConfigItem<T> : AConfigItem
 		}
 		else if (this is ConfigItem<TextDrawingMode>)
 		{
-			str = str.ToUpper();
-			ret = Enum.IsDefined(typeof(TextDrawingMode), str);
-			if (ret)
+			if (Enum.TryParse<TextDrawingMode>(str, true, out var result))
 			{
-				((ConfigItem<TextDrawingMode>)(AConfigItem)this).Value
-				 = (TextDrawingMode)Enum.Parse(typeof(TextDrawingMode), str);
+				((ConfigItem<TextDrawingMode>)(AConfigItem)this).Value = result;
 			}
 			else
 				throw new CodeEE(Lang.Error.InvalidSpecification.Text);
 		}
 		else if (this is ConfigItem<ReduceArgumentOnLoadFlag>)
 		{
-			str = str.ToUpper();
-			ret = Enum.IsDefined(typeof(ReduceArgumentOnLoadFlag), str);
-			if (ret)
+			if (Enum.TryParse<ReduceArgumentOnLoadFlag>(str, true, out var result))
 			{
-				((ConfigItem<ReduceArgumentOnLoadFlag>)(AConfigItem)this).Value
-				 = (ReduceArgumentOnLoadFlag)Enum.Parse(typeof(ReduceArgumentOnLoadFlag), str);
+				((ConfigItem<ReduceArgumentOnLoadFlag>)(AConfigItem)this).Value = result;
 			}
 			else
 				throw new CodeEE(Lang.Error.InvalidSpecification.Text);
 		}
 		else if (this is ConfigItem<DisplayWarningFlag>)
 		{
-			str = str.ToUpper();
-			ret = Enum.IsDefined(typeof(DisplayWarningFlag), str);
-			if (ret)
+			if (Enum.TryParse<DisplayWarningFlag>(str, true, out var result))
 			{
-				((ConfigItem<DisplayWarningFlag>)(AConfigItem)this).Value
-				 = (DisplayWarningFlag)Enum.Parse(typeof(DisplayWarningFlag), str);
+				((ConfigItem<DisplayWarningFlag>)(AConfigItem)this).Value = result;
 			}
 			else
 				throw new CodeEE(Lang.Error.InvalidSpecification.Text);
 		}
 		else if (this is ConfigItem<UseLanguage>)
 		{
-			str = str.ToUpper();
-			ret = Enum.IsDefined(typeof(UseLanguage), str);
-			if (ret)
+			if (Enum.TryParse<UseLanguage>(str, true, out var result))
 			{
-				((ConfigItem<UseLanguage>)(AConfigItem)this).Value
-					= (UseLanguage)Enum.Parse(typeof(UseLanguage), str);
+				((ConfigItem<UseLanguage>)(AConfigItem)this).Value = result;
 			}
 			else
 				throw new CodeEE(Lang.Error.InvalidSpecification.Text);
 		}
 		else if (this is ConfigItem<TextEditorType>)
 		{
-			str = str.ToUpper();
-			ret = Enum.IsDefined(typeof(TextEditorType), str);
-			if (ret)
+			if (Enum.TryParse<TextEditorType>(str, true, out var result))
 			{
-				((ConfigItem<TextEditorType>)(AConfigItem)this).Value
-					= (TextEditorType)Enum.Parse(typeof(TextEditorType), str);
+				((ConfigItem<TextEditorType>)(AConfigItem)this).Value = result;
 			}
 			else
 				throw new CodeEE(Lang.Error.InvalidSpecification.Text);
@@ -289,7 +277,7 @@ internal sealed class ConfigItem<T> : AConfigItem
 
 
 	#region EM_私家版_LoadText＆SaveText機能拡張
-	private bool tryStringToStringList(string arg, ref List<string> vs)
+	private static bool tryStringToStringList(string arg, ref List<string> vs)
 	{
 		string[] tokens = arg.Split(',');
 		vs.Clear();
@@ -301,26 +289,26 @@ internal sealed class ConfigItem<T> : AConfigItem
 	}
 	#endregion
 
-	private bool tryStringToBool(string arg, ref bool p)
+	private static bool tryStringToBool(string arg, ref bool p)
 	{
 		if (arg == null)
 			return false;
 		string str = arg.Trim();
-		if (Int32.TryParse(str, out int i))
+		if (int.TryParse(str, out int i))
 		{
-			p = (i != 0);
+			p = i != 0;
 			return true;
 		}
-		if (str.Equals("NO", StringComparison.CurrentCultureIgnoreCase)
-			|| str.Equals("FALSE", StringComparison.CurrentCultureIgnoreCase)
-			|| str.Equals("後", StringComparison.CurrentCultureIgnoreCase))//"単位の位置"用
+		if (str.Equals("NO", StringComparison.OrdinalIgnoreCase)
+			|| str.Equals("FALSE", StringComparison.OrdinalIgnoreCase)
+			|| str.Equals("後", StringComparison.Ordinal))//"単位の位置"用
 		{
 			p = false;
 			return true;
 		}
-		if (str.Equals("YES", StringComparison.CurrentCultureIgnoreCase)
-			|| str.Equals("TRUE", StringComparison.CurrentCultureIgnoreCase)
-			|| str.Equals("前", StringComparison.CurrentCultureIgnoreCase))
+		if (str.Equals("YES", StringComparison.OrdinalIgnoreCase)
+			|| str.Equals("TRUE", StringComparison.OrdinalIgnoreCase)
+			|| str.Equals("前", StringComparison.Ordinal))
 		{
 			p = true;
 			return true;
@@ -328,18 +316,18 @@ internal sealed class ConfigItem<T> : AConfigItem
 		throw new CodeEE(Lang.Error.InvalidSpecification.Text);
 	}
 
-	private bool tryStringsToColor(string str, out Color c)
+	private static bool tryStringsToColor(string str, out Color c)
 	{
 		string[] tokens = str.Split(',');
 		c = Color.Black;
 		int r, g, b;
 		if (tokens.Length < 3)
 			return false;
-		if (!Int32.TryParse(tokens[0].Trim(), out r) || (r < 0) || (r > 255))
+		if (!int.TryParse(tokens[0].Trim(), out r) || r < 0 || r > 255)
 			return false;
-		if (!Int32.TryParse(tokens[1].Trim(), out g) || (g < 0) || (g > 255))
+		if (!int.TryParse(tokens[1].Trim(), out g) || g < 0 || g > 255)
 			return false;
-		if (!Int32.TryParse(tokens[2].Trim(), out b) || (b < 0) || (b > 255))
+		if (!int.TryParse(tokens[2].Trim(), out b) || b < 0 || b > 255)
 			return false;
 		c = Color.FromArgb(r, g, b);
 		return true;

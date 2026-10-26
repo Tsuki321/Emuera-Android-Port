@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using MinorShift.Emuera.GameData;
-using MinorShift.Emuera.GameData.Expression;
 using MinorShift.Emuera.GameData.Variable;
+using MinorShift.Emuera.GameData.Expression;
 using MinorShift.Emuera.GameData.Function;
-using MinorShift.Emuera.GameView;
+using MinorShift.Emuera.GameData.Variable;
 using MinorShift.Emuera.GameProc.PluginSystem;
+using System;
+using System.Collections.Generic;
 
 namespace MinorShift.Emuera.GameProc.Function;
 
@@ -26,8 +25,8 @@ internal sealed class SpInputsArgument : Argument
 #region EM_私家版_HTMLパラメータ拡張
 internal sealed class MixedIntegerExprTerm
 {
-	public IOperandTerm num = null;
-	public bool isPx = false;
+	public IOperandTerm num;
+	public bool isPx;
 }
 internal sealed class SpPrintShapeArgument : Argument
 {
@@ -88,7 +87,7 @@ internal abstract class Argument
 {
 	public bool IsConst;
 	public string ConstStr;
-	public Int64 ConstInt;
+	public long ConstInt;
 }
 
 /// <summary>
@@ -96,7 +95,7 @@ internal abstract class Argument
 /// </summary>
 internal sealed class ExpressionsArgument : Argument
 {
-	public ExpressionsArgument(Type[] types, IOperandTerm[] terms)
+	public ExpressionsArgument(Type[] types, List<IOperandTerm> terms)
 	{
 		ArgumentTypeArray = types;
 		ArgumentArray = terms;
@@ -105,21 +104,12 @@ internal sealed class ExpressionsArgument : Argument
 	/// 引数の型(ArgumentArrayよりもLengthが大きい可能性があるので見るのはArgumentArrayにすること)
 	/// </summary>
 	readonly public Type[] ArgumentTypeArray;
-	readonly public IOperandTerm[] ArgumentArray;
+	readonly public List<IOperandTerm> ArgumentArray;
 }
 
 internal sealed class VoidArgument : Argument
 {
 	public VoidArgument() { }
-}
-
-internal sealed class ErrorArgument : Argument
-{
-	public ErrorArgument(string errorMes)
-	{
-		this.errorMes = errorMes;
-	}
-	readonly string errorMes;
 }
 
 internal sealed class ExpressionArgument : Argument
@@ -143,11 +133,11 @@ internal sealed class ExpressionArrayArgument : Argument
 
 internal sealed class SpPrintVArgument : Argument
 {
-	public SpPrintVArgument(IOperandTerm[] list)
+	public SpPrintVArgument(List<IOperandTerm> list)
 	{
 		Terms = list;
 	}
-	readonly public IOperandTerm[] Terms;
+	readonly public List<IOperandTerm> Terms;
 }
 
 internal sealed class SpTimesArgument : Argument
@@ -267,44 +257,44 @@ internal sealed class SpSortcharaArgument : Argument
 
 internal sealed class SpCallFArgment : Argument
 {
-	public SpCallFArgment(IOperandTerm funcname, IOperandTerm[] subNames, IOperandTerm[] args)
+	public SpCallFArgment(IOperandTerm funcname, List<IOperandTerm> subNames, List<IOperandTerm> args)
 	{
 		FuncnameTerm = funcname;
 		SubNames = subNames;
 		RowArgs = args;
 	}
 	readonly public IOperandTerm FuncnameTerm;
-	readonly public IOperandTerm[] SubNames;
-	readonly public IOperandTerm[] RowArgs;
+	readonly public List<IOperandTerm> SubNames;
+	readonly public List<IOperandTerm> RowArgs;
 	public IOperandTerm FuncTerm;
 }
 
 internal sealed class SpCallArgment : Argument
 {
-	public SpCallArgment(IOperandTerm funcname, IOperandTerm[] subNames, IOperandTerm[] args)
+	public SpCallArgment(IOperandTerm funcname, List<IOperandTerm> subNames, List<IOperandTerm> args)
 	{
 		FuncnameTerm = funcname;
 		SubNames = subNames;
 		RowArgs = args;
 	}
 	readonly public IOperandTerm FuncnameTerm;
-	readonly public IOperandTerm[] SubNames;
-	readonly public IOperandTerm[] RowArgs;
+	readonly public List<IOperandTerm> SubNames;
+	readonly public List<IOperandTerm> RowArgs;
 	public UserDefinedFunctionArgument UDFArgument;
 	public CalledFunction CallFunc;
 }
 
 internal sealed class SpCallSharpArgment : Argument
 {
-	public SpCallSharpArgment(IOperandTerm funcname, IOperandTerm[] subNames, IOperandTerm[] args)
+	public SpCallSharpArgment(IOperandTerm funcname, List<IOperandTerm> subNames, List<IOperandTerm> args)
 	{
 		FuncnameTerm = funcname;
 		SubNames = subNames;
 		RowArgs = args;
 	}
 	readonly public IOperandTerm FuncnameTerm;
-	readonly public IOperandTerm[] SubNames;
-	readonly public IOperandTerm[] RowArgs;
+	readonly public List<IOperandTerm> SubNames;
+	readonly public List<IOperandTerm> RowArgs;
 	public UserDefinedFunctionArgument UDFArgument;
 	public IPluginMethod CallFunc;
 }
@@ -313,10 +303,10 @@ internal sealed class SpForNextArgment : Argument
 {
 	public SpForNextArgment(VariableTerm var, IOperandTerm start, IOperandTerm end, IOperandTerm step)
 	{
-		this.Cnt = var;
-		this.Start = start;
-		this.End = end;
-		this.Step = step;
+		Cnt = var;
+		Start = start;
+		End = end;
+		Step = step;
 	}
 	readonly public VariableTerm Cnt;
 	readonly public IOperandTerm Start;
@@ -580,35 +570,13 @@ internal sealed class RefArgument : Argument
 		RefVarToken = vt;
 		SrcTerm = src;
 	}
-	readonly public UserDefinedRefMethod RefMethodToken = null;
-	readonly public UserDefinedRefMethod SrcRefMethodToken = null;
-	readonly public CalledFunction SrcCalledFunction = null;
+	readonly public UserDefinedRefMethod RefMethodToken;
+	readonly public UserDefinedRefMethod SrcRefMethodToken;
+	readonly public CalledFunction SrcCalledFunction;
 
-	readonly public ReferenceToken RefVarToken = null;
-	readonly public VariableToken SrcVarToken = null;
-	readonly public IOperandTerm SrcTerm = null;
-}
-
-internal sealed class OneInputArgument : Argument
-{
-	public OneInputArgument(IOperandTerm term, IOperandTerm flag)
-	{
-		Term = term;
-		Flag = flag;
-	}
-	readonly public IOperandTerm Term;
-	readonly public IOperandTerm Flag;
-}
-
-internal sealed class OneInputsArgument : Argument
-{
-	public OneInputsArgument(IOperandTerm term, IOperandTerm flag)
-	{
-		Term = term;
-		Flag = flag;
-	}
-	readonly public IOperandTerm Term;
-	readonly public IOperandTerm Flag;
+	readonly public ReferenceToken RefVarToken;
+	readonly public VariableToken SrcVarToken;
+	readonly public IOperandTerm SrcTerm;
 }
 #region EE
 internal sealed class StrDoubleArgument : Argument
@@ -633,26 +601,71 @@ internal sealed class SpSetArgument : Argument
 	}
 	readonly public VariableTerm VariableDest;
 	readonly public IOperandTerm Term;
-	public bool AddConst = false;
+	public bool AddConst;
 }
 
 internal sealed class SpSetArrayArgument : Argument
 {
-	public SpSetArrayArgument(VariableTerm var, IOperandTerm[] termList, Int64[] constList)
+	public SpSetArrayArgument(VariableTerm var, List<IOperandTerm> termList, long[] constList)
 	{
 		VariableDest = var;
 		TermList = termList;
 		ConstIntList = constList;
 	}
-	public SpSetArrayArgument(VariableTerm var, IOperandTerm[] termList, string[] constList)
+	public SpSetArrayArgument(VariableTerm var, List<IOperandTerm> termList, string[] constList)
 	{
 		VariableDest = var;
 		TermList = termList;
 		ConstStrList = constList;
 	}
 	readonly public VariableTerm VariableDest;
-	readonly public IOperandTerm[] TermList;
-	readonly public Int64[] ConstIntList;
+	readonly public List<IOperandTerm> TermList;
+	readonly public long[] ConstIntList;
 	readonly public string[] ConstStrList;
 }
 #endregion
+
+#region Emuera.NET VAR命令
+internal sealed class IntAsignArgument : Argument
+{
+	public int[] Lengths;
+	public IntAsignArgument(string str, int[] lengths)
+	{
+		ConstStr = str;
+	}
+	public IOperandTerm Exp;
+	public IntAsignArgument(string name, int[] lengths, IOperandTerm exp)
+	{
+		ConstStr = name;
+		Lengths = lengths;
+		Exp = exp;
+	}
+}
+
+internal sealed class StrAsignArgument : Argument
+{
+	public int[] Lengths;
+	public StrAsignArgument(string str)
+	{
+		ConstStr = str;
+	}
+	public string Value;
+	public StrAsignArgument(string str, int[] lengths, string value)
+	{
+		ConstStr = str;
+		Lengths = lengths;
+		Value = value;
+	}
+}
+#endregion
+
+internal sealed class HTML_PRINTArgument : Argument
+{
+	public HTML_PRINTArgument(IOperandTerm termSrc, IOperandTerm lineEnd)
+	{
+		Term = termSrc;
+		LineEnd = lineEnd;
+	}
+	readonly public IOperandTerm LineEnd;
+	readonly public IOperandTerm Term;
+}

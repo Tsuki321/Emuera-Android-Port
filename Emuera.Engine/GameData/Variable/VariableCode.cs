@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace MinorShift.Emuera.GameData.Variable;
 
-//難読化用属性。enum.ToString()やenum.Parse()を行うなら(Exclude=true)にすること。
-[global::System.Reflection.Obfuscation(Exclude = true)]
 internal enum VariableCode
 {
 	__NULL__ = 0x00000000,

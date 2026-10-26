@@ -14,6 +14,8 @@ internal static class Program
     public static string WorkingDir
         => (GlobalStatic.Paths?.GameRootDirectory ?? "") + "/";
 
+    public static string ExeDir => WorkingDir;
+
     public static string CsvDir
         => WorkingDir + "csv/";
 

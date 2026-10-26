@@ -1,12 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using MinorShift.Emuera;
+using MinorShift.Emuera.Sub;
+using MinorShift.Emuera.Sub;
+using System;
 using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using trerror = EvilMask.Emuera.Lang.Error;
 
 namespace MinorShift.Emuera.Sub;
 
-internal sealed class EraStreamReader : IDisposable
+internal sealed partial class EraStreamReader : IDisposable
 {
 	public EraStreamReader(bool useRename)
 	{
@@ -15,12 +19,10 @@ internal sealed class EraStreamReader : IDisposable
 
 	string filepath;
 	string filename;
-	readonly bool useRename = false;
-	int curNo = 0;
-	int nextNo = 0;
-	StreamReader reader;
-	FileStream stream;
-
+	readonly bool useRename;
+	int curNo;
+	int nextNo = 1;
+	string[] _fileLines;
 	public bool Open(string path)
 	{
 		return Open(path, Path.GetFileName(path));
@@ -35,27 +37,50 @@ internal sealed class EraStreamReader : IDisposable
 		//    throw new ExeEE("使用中のオブジェクトを別用途に再利用しようとした");
 		filepath = path;
 		filename = name;
-		nextNo = 0;
 		curNo = 0;
+		nextNo = 0;
 		try
 		{
-			stream = new FileStream(filepath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-			reader = new StreamReader(stream, EncodingHandler.DetectEncoding(stream));
+			_fileLines = File.ReadAllLines(filepath, EncodingHandler.DetectEncoding(path));
 		}
 		catch
 		{
-			this.Dispose();
+			Dispose();
 			return false;
 		}
 		return true;
 	}
+	public bool OpenOnCache(string path)
+	{
+
+		return OpenOnCache(path, Path.GetFileName(path));
+	}
+
+	public bool OpenOnCache(string path, string name)
+	{
+		filepath = path.ToString();
+		filename = name.ToString();
+		curNo = 0;
+		nextNo = 0;
+		_fileLines = Preload.GetFileLines(path);
+		return true;
+	}
+
 
 	public string ReadLine()
 	{
-		nextNo++;
+		string ret = null;
 		curNo = nextNo;
-		return reader.ReadLine();
+		if (_fileLines.Length > curNo)
+		{
+			ret = _fileLines[curNo];
+			nextNo++;
+		}
+		return ret;
 	}
+
+	[GeneratedRegex(@"\[\[.*?\]\]")]
+	private static partial Regex regexRenameIdentifer();
 
 	/// <summary>
 	/// 次の有効な行を読む。LexicalAnalyzer経由でConfigを参照するのでConfig完成までつかわないこと。
@@ -64,21 +89,29 @@ internal sealed class EraStreamReader : IDisposable
 	{
 		string line;
 		StringStream st;
-		curNo = nextNo;
 		while (true)
 		{
-			line = reader.ReadLine();
-			curNo++;
-			nextNo++;
+			line = ReadLine();
 			if (line == null)
 				return null;
 			if (line.Length == 0)
 				continue;
 
-			if (useRename && (line.IndexOf("[[", StringComparison.Ordinal) >= 0) && (line.IndexOf("]]", StringComparison.Ordinal) >= 0))
+			//Ordinal消して大丈夫なのかわからないのでコメントアウト
+			//if (useRename && (line.IndexOf("[[", StringComparison.Ordinal) >= 0) && (line.IndexOf("]]", StringComparison.Ordinal) >= 0))
+			if (useRename)
 			{
-				foreach (KeyValuePair<string, string> pair in ParserMediator.RenameDic)
-					line = line.Replace(pair.Key, pair.Value);
+				var match = regexRenameIdentifer().Match(line);
+				while (match.Success)
+				{
+					//この段階でマッチしないパターンもある
+					if (ParserMediator.RenameDic.TryGetValue(match.Value, out var targetStr))
+					{
+						line = line.Replace(match.Value, targetStr);
+					}
+
+					match = match.NextMatch();
+				}
 			}
 			st = new StringStream(line);
 			LexicalAnalyzer.SkipWhiteSpace(st);
@@ -102,36 +135,45 @@ internal sealed class EraStreamReader : IDisposable
 		StringBuilder b = new();
 		while (true)
 		{
-			line = reader.ReadLine();
-			nextNo++;
+			line = ReadLine();
 			if (line == null)
 			{
 				throw new CodeEE(trerror.NotCloseLineContinuation.Text, new ScriptPosition(filename, curNo));
 			}
 
-			if (useRename && (line.IndexOf("[[", StringComparison.Ordinal) >= 0) && (line.IndexOf("]]", StringComparison.Ordinal) >= 0))
+			//if (useRename && (line.IndexOf("[[", StringComparison.Ordinal) >= 0) && (line.IndexOf("]]", StringComparison.Ordinal) >= 0))
+			if (useRename)
 			{
-				foreach (KeyValuePair<string, string> pair in ParserMediator.RenameDic)
-					line = line.Replace(pair.Key, pair.Value);
+				//この段階でマッチしないパターンもある
+				var match = regexRenameIdentifer().Match(line);
+				while (match.Success)
+				{
+					if (ParserMediator.RenameDic.TryGetValue(match.Value, out var targetStr))
+					{
+						line = line.Replace(match.Value, targetStr);
+					}
+
+					match = match.NextMatch();
+				}
 			}
-			string test = line.TrimStart();
+			var test = line.AsSpan().TrimStart();
 			if (test.Length > 0)
 			{
 				if (test[0] == '}')
 				{
-					if (test.Trim() != "}")
-						throw new CodeEE(trerror.CharacterAfterContinuationEnd.Text, new ScriptPosition(filename, nextNo));
+					if (!test.TrimEnd().SequenceEqual("}"))
+						throw new CodeEE(trerror.CharacterAfterContinuationEnd.Text, new ScriptPosition(filename, curNo));
 					break;
 				}
 				//行連結文字なら1字でないとおかしい、というか、こうしないとFORMの数値変数処理が誤爆する。
 				//{
 				//A}
 				//みたいなどうしようもないコードは知ったこっちゃない
-				if (test[0] == '{' && test.Length == 1)
-					throw new CodeEE(trerror.UnexpectedContinuation.Text, new ScriptPosition(filename, nextNo));
+				if (test.SequenceEqual("{"))
+					throw new CodeEE(trerror.UnexpectedContinuation.Text, new ScriptPosition(filename, curNo));
 			}
 			b.Append(line);
-			b.Append(" ");
+			b.Append(Config.ReplaceContinuationBR.Replace("\"", ""));
 		}
 		st = new StringStream(b.ToString());
 		LexicalAnalyzer.SkipWhiteSpace(st);
@@ -158,23 +200,18 @@ internal sealed class EraStreamReader : IDisposable
 	//    }
 	//}
 
-	public void Close() { this.Dispose(); }
-	bool disposed = false;
+	public void Close() { Dispose(); }
+	bool disposed;
 	#region IDisposable メンバ
 
 	public void Dispose()
 	{
 		if (disposed)
 			return;
-		if (reader != null)
-			reader.Close();
-		else if (stream != null)
-			stream.Close();
 		filepath = null;
 		filename = null;
-		reader = null;
-		stream = null;
 		disposed = true;
+		_fileLines = null;
 	}
 
 	#endregion

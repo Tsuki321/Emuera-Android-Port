@@ -1,4 +1,5 @@
-﻿using System.IO;
+using System;
+using System.IO;
 using System.Text;
 
 namespace MinorShift.Emuera.Sub;
@@ -16,7 +17,10 @@ public static class EncodingHandler
 		{
 			// 'using var' ensures sr is disposed on every code path.
 			using var sr = new StreamReader(filePath, UTF8Encoding);
+			//Peek for detecting any BOM encoding
 			sr.Peek();
+			//If any BOM was detected durig Peek(), sr.CurrentEncoding won't be the same 
+			//as the encoding we passed as a argument
 			if (!UTF8Encoding.Equals(sr.CurrentEncoding))
 			{
 				return sr.CurrentEncoding;

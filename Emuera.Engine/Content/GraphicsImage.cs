@@ -1,4 +1,4 @@
-﻿using MinorShift._Library;
+using MinorShift._Library;
 using MinorShift.Emuera.Platform;
 using System;
 using System.Collections.Generic;

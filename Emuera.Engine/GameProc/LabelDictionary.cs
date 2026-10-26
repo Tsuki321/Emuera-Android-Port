@@ -1,4 +1,5 @@
-﻿using System;
+using MinorShift.Emuera.GameProc;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using MinorShift.Emuera.Sub;
@@ -24,14 +25,14 @@ internal sealed class LabelDictionary
 	/// <summary>
 	/// 本体。全てのFunctionLabelLineを記録
 	/// </summary>
-	Dictionary<string, List<FunctionLabelLine>> labelAtDic = [];
+	Dictionary<string, List<FunctionLabelLine>> labelAtDic = new(Config.StrComper);
 	List<FunctionLabelLine> invalidList = [];
-	List<GotoLabelLine> labelDollarList = [];
+	Dictionary<string, Dictionary<FunctionLabelLine, GotoLabelLine>> labelDollarList = new(Config.StrComper);
 	int count;
 
-	Dictionary<string, int> loadedFileDic = [];
-	int currentFileCount = 0;
-	int totalFileCount = 0;
+	HashSet<string> loadedFileSet = [];
+	int currentFileCount;
+	int totalFileCount;
 
 	public int Count { get { return count; } }
 
@@ -44,19 +45,19 @@ internal sealed class LabelDictionary
 	public FunctionLabelLine GetSameNameLabel(FunctionLabelLine point)
 	{
 		string id = point.LabelName;
-		if (!labelAtDic.ContainsKey(id))
+		if (!labelAtDic.TryGetValue(id, out List<FunctionLabelLine> value))
 			return null;
 		if (point.IsError)
 			return null;
-		List<FunctionLabelLine> labelList = labelAtDic[id];
+		List<FunctionLabelLine> labelList = value;
 		if (labelList.Count <= 1)
 			return null;
 		return labelList[0];
 	}
 
 
-	Dictionary<string, List<FunctionLabelLine>[]> eventLabelDic = [];
-	Dictionary<string, FunctionLabelLine> noneventLabelDic = [];
+	Dictionary<string, List<FunctionLabelLine>[]> eventLabelDic = new(Config.StrComper);
+	Dictionary<string, FunctionLabelLine> noneventLabelDic = new(Config.StrComper);
 
 	public void SortLabels()
 	{
@@ -101,7 +102,7 @@ internal sealed class LabelDictionary
 					prilist.Add(list[i]);
 				if (list[i].IsLater)
 					laterlist.Add(list[i]);//#PRIかつ#LATERなら二重に登録する。eramakerの仕様
-				if ((!list[i].IsPri) && (!list[i].IsLater))
+				if (!list[i].IsPri && !list[i].IsLater)
 					normallist.Add(list[i]);
 			}
 			if (localMax < GlobalStatic.IdentifierDictionary.getLocalDefaultSize("LOCAL"))
@@ -128,70 +129,66 @@ internal sealed class LabelDictionary
 	{
 		Initialized = false;
 		count = 0;
-		foreach (KeyValuePair<string, List<FunctionLabelLine>[]> pair in eventLabelDic)
-			foreach (List<FunctionLabelLine> list in pair.Value)
+		foreach ((_, var array) in eventLabelDic)
+			foreach (var list in array)
 				list.Clear();
 		eventLabelDic.Clear();
 		noneventLabelDic.Clear();
 
-		foreach (KeyValuePair<string, List<FunctionLabelLine>> pair in labelAtDic)
-			pair.Value.Clear();
+		foreach ((_, var value) in labelAtDic)
+			value.Clear();
 		labelAtDic.Clear();
+		foreach ((_, var value) in labelDollarList)
+			value.Clear();
 		labelDollarList.Clear();
-		loadedFileDic.Clear();
+		loadedFileSet.Clear();
 		invalidList.Clear();
 		currentFileCount = 0;
 		totalFileCount = 0;
 	}
 
+	//ファイル名に基づき、そのファイルに紐づくラベルを削除する
 	public void RemoveLabelWithPath(string fname)
 	{
-		List<FunctionLabelLine> labelLines;
-		List<FunctionLabelLine> removeLine = [];
-		List<string> removeKey = [];
-		foreach (KeyValuePair<string, List<FunctionLabelLine>> pair in labelAtDic)
+		List<string> removeFunctions = [];
+		foreach (var (functionName, functions) in labelAtDic)
 		{
-			string key = pair.Key;
-			labelLines = pair.Value;
-			foreach (FunctionLabelLine labelLine in labelLines)
-			{
-				if (string.Equals(labelLine.Position.Filename, fname, Config.SCIgnoreCase))
-					removeLine.Add(labelLine);
-			}
-			foreach (FunctionLabelLine remove in removeLine)
-			{
-				labelLines.Remove(remove);
-				if (labelLines.Count == 0)
-					removeKey.Add(key);
-			}
-			removeLine.Clear();
+			var removeCount = functions.RemoveAll(line => IsMatch(fname, line));
+
+			count -= removeCount;
+
+			if (functions.Count == 0)
+				removeFunctions.Add(functionName);
 		}
-		foreach (string rKey in removeKey)
+
+		foreach (var rKey in removeFunctions)
 		{
 			labelAtDic.Remove(rKey);
 		}
-		for (int i = 0; i < invalidList.Count; i++)
+
+		invalidList.RemoveAll(line => IsMatch(fname, line));
+
+		static bool IsMatch(string fname, FunctionLabelLine line)
 		{
-			if (string.Equals(invalidList[i].Position.Filename, fname, Config.SCIgnoreCase))
-			{
-				invalidList.RemoveAt(i);
-				i--;
-			}
+			return string.Equals(line.Position.Value.Filename, fname, Config.SCIgnoreCase);
 		}
 	}
 
 
-	public void AddFilename(string filename)
+	/// <summary>
+	/// ファイルの重複をチェックし、重複していたらすでにあるそのファイルに関連するラベルを消去する
+	/// </summary>
+	public void IfFileLoadClearLabelWithPath(string filename)
 	{
-		if (loadedFileDic.TryGetValue(filename, out int curCount))
+		if (loadedFileSet.Contains(filename))
 		{
-			currentFileCount = curCount;
+			currentFileCount = loadedFileSet.Count;
 			RemoveLabelWithPath(filename);
 			return;
 		}
 		totalFileCount++;
 		currentFileCount = totalFileCount;
-		loadedFileDic.Add(filename, totalFileCount);
+		loadedFileSet.Add(filename);
 	}
 	public void AddLabel(FunctionLabelLine point)
 	{
@@ -199,26 +196,24 @@ internal sealed class LabelDictionary
 		point.FileIndex = currentFileCount;
 		count++;
 		string id = point.LabelName;
-		if (labelAtDic.ContainsKey(id))
+		if (labelAtDic.TryGetValue(id, out List<FunctionLabelLine> labelList))
 		{
-			labelAtDic[id].Add(point);
+			labelList.Add(point);
 		}
 		else
 		{
-			List<FunctionLabelLine> labelList = [point]; 
-			labelAtDic.Add(id, labelList);
+			labelAtDic.TryAdd(id, [point]);
 		}
 	}
 
 	public bool AddLabelDollar(GotoLabelLine point)
 	{
 		string id = point.LabelName;
-		foreach (GotoLabelLine label in labelDollarList)
+		if (labelDollarList.TryGetValue(id, out var label))
 		{
-			if (label.LabelName == id && label.ParentLabelLine == point.ParentLabelLine)
-				return false;
-		}
-		labelDollarList.Add(point);
+			return label.TryAdd(point.ParentLabelLine, point);
+		};
+		labelDollarList.TryAdd(id, new() { { point.ParentLabelLine, point }, });
 		return true;
 	}
 
@@ -253,9 +248,9 @@ internal sealed class LabelDictionary
 
 	public GotoLabelLine GetLabelDollar(string key, FunctionLabelLine labelAtLine)
 	{
-		foreach (GotoLabelLine label in labelDollarList)
+		if (labelDollarList.TryGetValue(key, out var labels))
 		{
-			if ((label.LabelName == key) && (label.ParentLabelLine == labelAtLine))
+			if (labels.TryGetValue(labelAtLine, out var label))
 				return label;
 		}
 		return null;

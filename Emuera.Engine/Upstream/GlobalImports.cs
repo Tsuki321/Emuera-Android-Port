@@ -1,0 +1,9 @@
+global using MinorShift.Emuera;
+global using MinorShift.Emuera.GameData;
+global using MinorShift.Emuera.GameData.Expression;
+global using MinorShift.Emuera.GameData.Variable;
+global using MinorShift.Emuera.GameProc;
+global using MinorShift.Emuera.GameProc.Function;
+global using MinorShift.Emuera.GameView;
+global using MinorShift.Emuera.Sub;
+global using MinorShift._Library;

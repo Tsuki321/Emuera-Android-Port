@@ -1,4 +1,4 @@
-﻿using MinorShift.Emuera.GameView;
+using MinorShift.Emuera.GameView;
 using System;
 using System.Text;
 using System.Text.RegularExpressions;

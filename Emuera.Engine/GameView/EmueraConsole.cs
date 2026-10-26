@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -404,7 +404,7 @@ internal sealed partial class EmueraConsole : IDisposable
 	{
 		GlobalStatic.Console = this;
 		GlobalStatic.ConsoleHost = window;
-		emuera = new GameProc.Process(this, Program.AnalysisMode);
+		emuera = new GameProc.Process(this);
 		GlobalStatic.Process = emuera;
 		if (Program.DebugMode && Config.DebugShowWindow)
 		{
@@ -412,7 +412,7 @@ internal sealed partial class EmueraConsole : IDisposable
 			// window.Focus() - no-op in cross-platform host
 		}
 		ClearDisplay();
-		if (!emuera.Initialize())
+		if (!emuera.Initialize(null).GetAwaiter().GetResult())
 		{
 			state = ConsoleState.Error;
 			OutputLog(null);

@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MinorShift.Emuera.GameProc;
+using MinorShift.Emuera.GameData;
 using MinorShift.Emuera.GameData.Expression;
 using MinorShift.Emuera.Sub;
+using System;
+using System.Collections.Generic;
 using trerror = EvilMask.Emuera.Lang.Error;
 
 namespace MinorShift.Emuera.GameData.Function;
@@ -18,15 +17,13 @@ internal abstract class SuperUserDefinedMethodTerm : IOperandTerm
 	public abstract CalledFunction Call { get; }
 	public override long GetIntValue(ExpressionMediator exm)
 	{
-		SingleTerm term = exm.Process.GetValue(this);
-		if (term == null)
+		if (exm.Process.GetValue(this) is not SingleLongTerm term)
 			return 0;
 		return term.Int;
 	}
 	public override string GetStrValue(ExpressionMediator exm)
 	{
-		SingleTerm term = exm.Process.GetValue(this);
-		if (term == null)
+		if (exm.Process.GetValue(this) is not SingleStrTerm term)
 			return "";
 		return term.Str;
 	}
@@ -35,10 +32,10 @@ internal abstract class SuperUserDefinedMethodTerm : IOperandTerm
 		SingleTerm term = exm.Process.GetValue(this);
 		if (term == null)
 		{
-			if (GetOperandType() == typeof(Int64))
-				return new SingleTerm(0);
+			if (GetOperandType() == typeof(long))
+				return new SingleLongTerm(0);
 			else
-				return new SingleTerm("");
+				return new SingleStrTerm("");
 		}
 		return term;
 	}
@@ -50,7 +47,7 @@ internal sealed class UserDefinedMethodTerm : SuperUserDefinedMethodTerm
 	/// <summary>
 	/// エラーならnullを返す。
 	/// </summary>
-	public static UserDefinedMethodTerm Create(FunctionLabelLine targetLabel, IOperandTerm[] srcArgs, out string errMes)
+	public static UserDefinedMethodTerm Create(FunctionLabelLine targetLabel, List<IOperandTerm> srcArgs, out string errMes)
 	{
 		CalledFunction call = CalledFunction.CreateCalledFunctionMethod(targetLabel, targetLabel.LabelName);
 		UserDefinedFunctionArgument arg = call.ConvertArg(srcArgs, out errMes);
@@ -81,14 +78,14 @@ internal sealed class UserDefinedMethodTerm : SuperUserDefinedMethodTerm
 }
 internal sealed class UserDefinedRefMethodTerm : SuperUserDefinedMethodTerm
 {
-	public UserDefinedRefMethodTerm(UserDefinedRefMethod reffunc, IOperandTerm[] srcArgs)
+	public UserDefinedRefMethodTerm(UserDefinedRefMethod reffunc, List<IOperandTerm> srcArgs)
 		: base(reffunc.RetType)
 	{
 		this.srcArgs = srcArgs;
 		this.reffunc = reffunc;
 	}
-	IOperandTerm[] srcArgs = null;
-	readonly UserDefinedRefMethod reffunc = null;
+	List<IOperandTerm> srcArgs;
+	readonly UserDefinedRefMethod reffunc;
 	public override UserDefinedFunctionArgument Argument
 	{
 		get
@@ -113,7 +110,7 @@ internal sealed class UserDefinedRefMethodTerm : SuperUserDefinedMethodTerm
 
 	public override IOperandTerm Restructure(ExpressionMediator exm)
 	{
-		for (int i = 0; i < srcArgs.Length; i++)
+		for (int i = 0; i < srcArgs.Count; i++)
 		{
 			if ((reffunc.ArgTypeList[i] & UserDifinedFunctionDataArgType.__Ref) == UserDifinedFunctionDataArgType.__Ref)
 				srcArgs[i].Restructure(exm);
@@ -133,7 +130,7 @@ internal sealed class UserDefinedRefMethodNoArgTerm : SuperUserDefinedMethodTerm
 	{
 		this.reffunc = reffunc;
 	}
-	readonly UserDefinedRefMethod reffunc = null;
+	readonly UserDefinedRefMethod reffunc;
 	public override UserDefinedFunctionArgument Argument
 	{ get { throw new CodeEE(string.Format(trerror.RefFuncHasNotArg.Text, reffunc.Name)); } }
 	public override CalledFunction Call

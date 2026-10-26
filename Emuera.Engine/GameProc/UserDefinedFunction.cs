@@ -1,14 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using MinorShift.Emuera.Sub;
-using System.Text.RegularExpressions;
-using MinorShift.Emuera.GameData.Variable;
-using MinorShift.Emuera.GameData.Expression;
-using MinorShift.Emuera.GameView;
-using MinorShift.Emuera.GameData;
-using MinorShift.Emuera.GameData.Function;
-using MinorShift.Emuera.GameProc.Function;
+using MinorShift.Emuera.Sub;
+using System.Collections.Generic;
 using trerror = EvilMask.Emuera.Lang.Error;
 
 namespace MinorShift.Emuera.GameProc;
@@ -34,11 +26,11 @@ internal sealed class UserDefinedFunctionData
 	private UserDefinedFunctionData()
 	{
 	}
-	public string Name = null;
-	public bool TypeIsStr = false;
+	public string Name;
+	public bool TypeIsStr;
 	public UserDifinedFunctionDataArgType[] ArgList;
 
-	public static UserDefinedFunctionData Create(WordCollection wc, bool dims, ScriptPosition sc)
+	public static UserDefinedFunctionData Create(WordCollection wc, bool dims, ScriptPosition? sc)
 	{
 		string dimtype = dims ? "#FUNCTION" : "#FUNCTIONS";
 		UserDefinedFunctionData ret = new()
@@ -51,8 +43,6 @@ internal sealed class UserDefinedFunctionData
 		{
 			wc.ShiftNext();
 			keyword = idw.Code;
-			if (Config.ICVariable)
-				keyword = keyword.ToUpper();
 			switch (keyword)
 			{
 				case "CONST":
@@ -75,7 +65,7 @@ internal sealed class UserDefinedFunctionData
 			throw new CodeEE(trerror.NotIdentifierArg.Text, sc);
 		string errMes = "";
 		int errLevel = -1;
-		GlobalStatic.IdentifierDictionary.CheckUserLabelName(ref errMes, ref errLevel, true, ret.Name);
+		GlobalStatic.IdentifierDictionary.CheckUserLabelName(out errMes, ref errLevel, true, ret.Name);
 		if (errLevel == 0)//関数と変数の両方からチェック エラーメッセージが微妙だがひとまず気にしない
 			GlobalStatic.IdentifierDictionary.CheckUserVarName(ref errMes, ref errLevel, ret.Name);
 		if (errLevel >= 0)
@@ -102,7 +92,7 @@ internal sealed class UserDefinedFunctionData
 						goto argend;
 					if (state == 4 || state == 5)
 					{
-						if ((int)(argType & UserDifinedFunctionDataArgType.__Dimention) == 0)
+						if ((argType & UserDifinedFunctionDataArgType.__Dimention) == 0)
 							throw new CodeEE(trerror.RefArgIsNotArray.Text, sc);
 						//state = 2;
 						argList.Add(argType);
@@ -135,7 +125,7 @@ internal sealed class UserDefinedFunctionData
 					}
 					if (state == 4 || state == 5)
 					{
-						if ((int)(argType & UserDifinedFunctionDataArgType.__Dimention) == 0)
+						if ((argType & UserDifinedFunctionDataArgType.__Dimention) == 0)
 							throw new CodeEE(trerror.RefArgIsNotArray.Text, sc);
 						state = 2;
 						argList.Add(argType);
@@ -145,8 +135,6 @@ internal sealed class UserDefinedFunctionData
 				case 'A':
 					{
 						string str = ((IdentifierWord)wc.Current).Code;
-						if (Config.ICVariable)
-							str = str.ToUpper();
 						if (str == "REF")
 						{
 							if (state == 0 || state == 2)

@@ -1,7 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace MinorShift.Emuera.GameProc;
 
 enum InputType
@@ -35,7 +31,7 @@ internal sealed class InputRequest
 	{
 		ID = LastRequestID++;
 	}
-	public readonly Int64 ID;
+	public readonly long ID;
 	public InputType InputType;
 	public bool NeedValue
 	{
@@ -49,13 +45,13 @@ internal sealed class InputRequest
 		}
 	}
 	#region EM_私家版_INPUT系機能拡張
-	public bool MouseInput = false;
+	public bool MouseInput;
 	#endregion
-	public bool OneInput = false;
-	public bool StopMesskip = false;
-	public bool IsSystemInput = false;
+	public bool OneInput;
+	public bool StopMesskip;
+	public bool IsSystemInput;
 
-	public bool HasDefValue = false;
+	public bool HasDefValue;
 	public long DefIntValue;
 	public string DefStrValue;
 
@@ -63,5 +59,5 @@ internal sealed class InputRequest
 	public bool DisplayTime;
 	public string TimeUpMes;
 
-	static Int64 LastRequestID = 0;
+	static long LastRequestID;
 }

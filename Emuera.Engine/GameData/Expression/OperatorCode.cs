@@ -1,6 +1,4 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace MinorShift.Emuera.GameData.Expression;
 
@@ -53,42 +51,35 @@ internal enum OperatorCode
 internal static class OperatorManager
 {
 
-	readonly static Dictionary<string, OperatorCode> opDictionary;
-	static OperatorManager()
+	readonly static Dictionary<string, OperatorCode> opDictionary = new()
 	{
-
-		opDictionary = new Dictionary<string, OperatorCode>();
-		opDictionary.Add("+", OperatorCode.Plus);
-		opDictionary.Add("-", OperatorCode.Minus);
-		opDictionary.Add("*", OperatorCode.Mult);
-		opDictionary.Add("/", OperatorCode.Div);
-		opDictionary.Add("%", OperatorCode.Mod);
-		opDictionary.Add("==", OperatorCode.Equal);
-		opDictionary.Add(">", OperatorCode.Greater);
-		opDictionary.Add("<", OperatorCode.Less);
-		opDictionary.Add(">=", OperatorCode.GreaterEqual);
-		opDictionary.Add("<=", OperatorCode.LessEqual);
-		opDictionary.Add("!=", OperatorCode.NotEqual);
-		opDictionary.Add("&&", OperatorCode.And);
-		opDictionary.Add("||", OperatorCode.Or);
-		opDictionary.Add("^^", OperatorCode.Xor);
-		opDictionary.Add("!&", OperatorCode.Nand);
-		opDictionary.Add("!|", OperatorCode.Nor);
-		opDictionary.Add("&", OperatorCode.BitAnd);
-		opDictionary.Add("|", OperatorCode.BitOr);
-		opDictionary.Add("!", OperatorCode.Not);
-		opDictionary.Add("^", OperatorCode.BitXor);
-		opDictionary.Add("~", OperatorCode.BitNot);
-		opDictionary.Add("?", OperatorCode.Ternary_a);
-		opDictionary.Add("#", OperatorCode.Ternary_b);
-		opDictionary.Add(">>", OperatorCode.RightShift);
-		opDictionary.Add("<<", OperatorCode.LeftShift);
-		opDictionary.Add("++", OperatorCode.Increment);
-		opDictionary.Add("--", OperatorCode.Decrement);
-
-		opDictionary.Add("=", OperatorCode.Assignment);
-		opDictionary.Add("'=", OperatorCode.AssignmentStr);
-	}
+		{ "+", OperatorCode.Plus },
+		{ "-", OperatorCode.Minus },
+		{ "*", OperatorCode.Mult },
+		{ ">", OperatorCode.Greater },
+		{ "<", OperatorCode.Less },
+		{ ">=", OperatorCode.GreaterEqual },
+		{ "<=", OperatorCode.LessEqual },
+		{ "!=", OperatorCode.NotEqual },
+		{ "&&", OperatorCode.And },
+		{ "||", OperatorCode.Or },
+		{ "^^", OperatorCode.Xor },
+		{ "!&", OperatorCode.Nand },
+		{ "!|", OperatorCode.Nor },
+		{ "&", OperatorCode.BitAnd },
+		{ "|", OperatorCode.BitOr },
+		{ "!", OperatorCode.Not },
+		{ "^", OperatorCode.BitXor },
+		{ "~", OperatorCode.BitNot },
+		{ "?", OperatorCode.Ternary_a },
+		{ "#", OperatorCode.Ternary_b },
+		{ ">>", OperatorCode.RightShift },
+		{ "<<", OperatorCode.LeftShift },
+		{ "++", OperatorCode.Increment },
+		{ "--", OperatorCode.Decrement },
+		{ "=", OperatorCode.Assignment },
+		{ "'=", OperatorCode.AssignmentStr }
+	};
 
 	public static string ToOperatorString(OperatorCode op)
 	{

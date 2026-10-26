@@ -1,4 +1,4 @@
-﻿using MinorShift.Emuera;
+using MinorShift.Emuera;
 using MinorShift.Emuera.GameView;
 using System;
 using System.Collections.Generic;

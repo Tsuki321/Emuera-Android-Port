@@ -1,11 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
-using MinorShift.Emuera.Sub;
 using MinorShift.Emuera.GameView;
+using MinorShift.Emuera.Sub;
 using MinorShift.Emuera.GameData.Variable;
-using EvilMask.Emuera;
+using MinorShift.Emuera.Sub;
+using MinorShift.Emuera.Sub;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Text;
 using trerror = EvilMask.Emuera.Lang.Error;
 using trsl = EvilMask.Emuera.Lang.SystemLine;
 using System.Linq;
@@ -13,8 +16,6 @@ using MinorShift.Emuera.GameProc;
 
 namespace MinorShift.Emuera.GameData;
 
-//難読化用属性。enum.ToString()やenum.Parse()を行うなら(Exclude=true)にすること。
-[global::System.Reflection.Obfuscation(Exclude = false)]
 internal enum CharacterStrData
 {
 	NAME = 0,
@@ -24,8 +25,6 @@ internal enum CharacterStrData
 	CSTR = 4,
 }
 
-//難読化用属性。enum.ToString()やenum.Parse()を行うなら(Exclude=true)にすること。
-[global::System.Reflection.Obfuscation(Exclude = false)]
 internal enum CharacterIntData
 {
 	BASE = 0,
@@ -83,26 +82,26 @@ internal sealed class ConstantData
 
 	public int[] VariableIntArrayLength;
 	public int[] VariableStrArrayLength;
-	public Int64[] VariableIntArray2DLength;
-	public Int64[] VariableStrArray2DLength;
-	public Int64[] VariableIntArray3DLength;
-	public Int64[] VariableStrArray3DLength;
+	public long[] VariableIntArray2DLength;
+	public long[] VariableStrArray2DLength;
+	public long[] VariableIntArray3DLength;
+	public long[] VariableStrArray3DLength;
 	public int[] CharacterIntArrayLength;
 	public int[] CharacterStrArrayLength;
-	public Int64[] CharacterIntArray2DLength;
-	public Int64[] CharacterStrArray2DLength;
+	public long[] CharacterIntArray2DLength;
+	public long[] CharacterStrArray2DLength;
 
 	#region EM_私家版_セーブ拡張
-	public HashSet<string> GlobalSaveMaps { get; private set; } = new HashSet<string>();
-	public HashSet<string> SaveMaps { get; private set; } = new HashSet<string>();
-	public HashSet<string> GlobalSaveXmls { get; private set; } = new HashSet<string>();
-	public HashSet<string> SaveXmls { get; private set; } = new HashSet<string>();
-	public HashSet<string> GlobalSaveDTs { get; private set; } = new HashSet<string>();
-	public HashSet<string> SaveDTs { get; private set; } = new HashSet<string>();
+	public HashSet<string> GlobalSaveMaps { get; private set; } = [];
+	public HashSet<string> SaveMaps { get; private set; } = [];
+	public HashSet<string> GlobalSaveXmls { get; private set; } = [];
+	public HashSet<string> SaveXmls { get; private set; } = [];
+	public HashSet<string> GlobalSaveDTs { get; private set; } = [];
+	public HashSet<string> SaveDTs { get; private set; } = [];
 
-	public HashSet<string> StaticMaps { get; private set; } = new HashSet<string>();
-	public HashSet<string> StaticXmls { get; private set; } = new HashSet<string>();
-	public HashSet<string> StaticDTs { get; private set; } = new HashSet<string>();
+	public HashSet<string> StaticMaps { get; private set; } = [];
+	public HashSet<string> StaticXmls { get; private set; } = [];
+	public HashSet<string> StaticDTs { get; private set; } = [];
 	#endregion
 
 	//private readonly GameBase gamebase;
@@ -111,7 +110,7 @@ internal sealed class ConstantData
 	private const int ERD_NAMES_INDEX = (int)VariableCode.__COUNT_CSV_STRING_ARRAY_1D__;
 	private readonly string[][] names = new string[(int)VariableCode.__COUNT_CSV_STRING_ARRAY_1D__ + 1][]; // 元より1増やす
 	private readonly Dictionary<string, int>[] aliases = new Dictionary<string, int>[(int)VariableCode.__COUNT_CSV_STRING_ARRAY_1D__ + 1];
-	private readonly Dictionary<string, Dictionary<string, int>> erdNameToIntDics = new Dictionary<string, Dictionary<string, int>>();
+	private readonly Dictionary<string, Dictionary<string, int>> erdNameToIntDics = [];
 	#endregion
 	private readonly Dictionary<string, int>[] nameToIntDics = new Dictionary<string, int>[(int)VariableCode.__COUNT_CSV_STRING_ARRAY_1D__];
 	private readonly Dictionary<string, int> relationDic = [];
@@ -120,7 +119,7 @@ internal sealed class ConstantData
 		return names[(int)(code & VariableCode.__LOWERCASE__)];
 	}
 
-	public Int64[] ItemPrice;
+	public long[] ItemPrice;
 
 	private readonly List<CharacterTemplate> CharacterTmplList;
 	private EmueraConsole output;
@@ -173,14 +172,14 @@ internal sealed class ConstantData
 
 		VariableIntArrayLength = new int[(int)VariableCode.__COUNT_INTEGER_ARRAY__];
 		VariableStrArrayLength = new int[(int)VariableCode.__COUNT_STRING_ARRAY__];
-		VariableIntArray2DLength = new Int64[(int)VariableCode.__COUNT_INTEGER_ARRAY_2D__];
-		VariableStrArray2DLength = new Int64[(int)VariableCode.__COUNT_STRING_ARRAY_2D__];
-		VariableIntArray3DLength = new Int64[(int)VariableCode.__COUNT_INTEGER_ARRAY_3D__];
-		VariableStrArray3DLength = new Int64[(int)VariableCode.__COUNT_STRING_ARRAY_3D__];
+		VariableIntArray2DLength = new long[(int)VariableCode.__COUNT_INTEGER_ARRAY_2D__];
+		VariableStrArray2DLength = [];
+		VariableIntArray3DLength = new long[(int)VariableCode.__COUNT_INTEGER_ARRAY_3D__];
+		VariableStrArray3DLength = [];
 		CharacterIntArrayLength = new int[(int)VariableCode.__COUNT_CHARACTER_INTEGER_ARRAY__];
 		CharacterStrArrayLength = new int[(int)VariableCode.__COUNT_CHARACTER_STRING_ARRAY__];
-		CharacterIntArray2DLength = new Int64[(int)VariableCode.__COUNT_CHARACTER_INTEGER_ARRAY_2D__];
-		CharacterStrArray2DLength = new Int64[(int)VariableCode.__COUNT_CHARACTER_STRING_ARRAY_2D__];
+		CharacterIntArray2DLength = new long[(int)VariableCode.__COUNT_CHARACTER_INTEGER_ARRAY_2D__];
+		CharacterStrArray2DLength = [];
 		for (int i = 0; i < VariableIntArrayLength.Length; i++)
 			VariableIntArrayLength[i] = 1000;
 		VariableIntArrayLength[(int)(VariableCode.__LOWERCASE__ & VariableCode.FLAG)] = 10000;
@@ -223,13 +222,13 @@ internal sealed class ConstantData
 		csvPath = PathHelper.FindFileCaseInsensitive(csvPath);
 		if (!File.Exists(csvPath))
 			return;
-		EraStreamReader eReader = new(false);
+		using var eReader = new EraStreamReader(false);
 		if (!eReader.Open(csvPath))
 		{
 			output.PrintError(string.Format(trerror.FailedOpenFile.Text, eReader.Filename));
 			return;
 		}
-		ScriptPosition position = null;
+		ScriptPosition? position = null;
 		if (disp)
 			output.PrintSystemLine(string.Format(trsl.LoadingFile.Text, eReader.Filename));
 		try
@@ -259,7 +258,7 @@ internal sealed class ConstantData
 	}
 
 
-	private void changeVariableSizeData(string line, ScriptPosition position)
+	private void changeVariableSizeData(string line, ScriptPosition? position)
 	{
 		string[] tokens = line.Split(',');
 		if (tokens.Length < 2)
@@ -274,12 +273,12 @@ internal sealed class ConstantData
 			ParserMediator.Warn(string.Format(trerror.CanNotInterpretVarName.Text, "1"), position, 1);
 			return;
 		}
-		if ((!id.IsArray1D) && (!id.IsArray2D) && (!id.IsArray3D))
+		if (!id.IsArray1D && !id.IsArray2D && !id.IsArray3D)
 		{
 			ParserMediator.Warn(string.Format(trerror.CanNotChange0DVarSize.Text, id.ToString()), position, 1);
 			return;
 		}
-		if (id.IsCalc || (id.Code == VariableCode.RANDDATA))
+		if (id.IsCalc || id.Code == VariableCode.RANDDATA)
 		{
 			ParserMediator.Warn(string.Format(trerror.CanNotChangeVarSize.Text, id.ToString()), position, 1);
 			return;
@@ -304,7 +303,7 @@ internal sealed class ConstantData
 				ParserMediator.Warn(trerror.CanNotDisableVarArrayLengthIsNegative.Text, position, 2);
 				return;
 			}
-			if (tokens.Length > 2 && tokens[2].Length > 0 && tokens[2].Trim().Length > 0 && char.IsDigit((tokens[2].Trim())[0]))
+			if (tokens.Length > 2 && tokens[2].Length > 0 && tokens[2].Trim().Length > 0 && char.IsDigit(tokens[2].Trim()[0]))
 			{
 				ParserMediator.Warn(string.Format(trerror.IgnoreNDData.Text, "1"), position, 0);
 			}
@@ -313,7 +312,7 @@ internal sealed class ConstantData
 		}
 		if (id.IsArray1D)
 		{
-			if (tokens.Length > 2 && tokens[2].Length > 0 && tokens[2].Trim().Length > 0 && char.IsDigit((tokens[2].Trim())[0]))
+			if (tokens.Length > 2 && tokens[2].Length > 0 && tokens[2].Trim().Length > 0 && char.IsDigit(tokens[2].Trim()[0]))
 			{
 				ParserMediator.Warn(string.Format(trerror.IgnoreNDData.Text, "1"), position, 0);
 			}
@@ -340,7 +339,7 @@ internal sealed class ConstantData
 				ParserMediator.Warn(string.Format(trerror.MissingVarSizeArg.Text, "2"), position, 1);
 				return;
 			}
-			if (tokens.Length > 3 && tokens[3].Length > 0 && tokens[3].Trim().Length > 0 && char.IsDigit((tokens[3].Trim())[0]))
+			if (tokens.Length > 3 && tokens[3].Length > 0 && tokens[3].Trim().Length > 0 && char.IsDigit(tokens[3].Trim()[0]))
 			{
 				ParserMediator.Warn(string.Format(trerror.IgnoreNDData.Text, "2"), position, 0);
 			}
@@ -349,12 +348,12 @@ internal sealed class ConstantData
 				ParserMediator.Warn(string.Format(trerror.CanNotInterpretVarName.Text, "3"), position, 1);
 				return;
 			}
-			if ((length < 1) || (length2 < 1))
+			if (length < 1 || length2 < 1)
 			{
 				ParserMediator.Warn(trerror.VarSizeCanNotLessThan1.Text, position, 1);
 				return;
 			}
-			if ((length > 1000000) || (length2 > 1000000))
+			if (length > 1000000 || length2 > 1000000)
 			{
 				ParserMediator.Warn(trerror.VarSizeCanNotGreaterThan1M.Text, position, 1);
 				return;
@@ -372,7 +371,7 @@ internal sealed class ConstantData
 				ParserMediator.Warn(string.Format(trerror.MissingVarSizeArg.Text, "3"), position, 1);
 				return;
 			}
-			if (tokens.Length > 4 && tokens[4].Length > 0 && tokens[4].Trim().Length > 0 && char.IsDigit((tokens[4].Trim())[0]))
+			if (tokens.Length > 4 && tokens[4].Length > 0 && tokens[4].Trim().Length > 0 && char.IsDigit(tokens[4].Trim()[0]))
 			{
 				ParserMediator.Warn(string.Format(trerror.IgnoreNDData.Text, "3"), position, 0);
 			}
@@ -386,13 +385,13 @@ internal sealed class ConstantData
 				ParserMediator.Warn(string.Format(trerror.CanNotInterpretVarName.Text, "4"), position, 1);
 				return;
 			}
-			if ((length < 1) || (length2 < 1) || (length3 < 1))
+			if (length < 1 || length2 < 1 || length3 < 1)
 			{
 				ParserMediator.Warn(trerror.VarSizeCanNotLessThan1.Text, position, 1);
 				return;
 			}
 			//1802 サイズ保存の都合上、2^20超えるとバグる
-			if ((length > 1000000) || (length2 > 1000000) || (length3 > 1000000))
+			if (length > 1000000 || length2 > 1000000 || length3 > 1000000)
 			{
 				ParserMediator.Warn(trerror.VarSizeCanNotGreaterThan1M.Text, position, 1);
 				return;
@@ -454,7 +453,7 @@ internal sealed class ConstantData
 					{
 						if (id.IsArray2D)
 						{
-							Int64 length64 = (((Int64)length) << 32) + ((Int64)length2);
+							long length64 = ((long)length << 32) + length2;
 							if (id.IsInteger)
 								CharacterIntArray2DLength[id.CodeInt] = length64;
 							else if (id.IsString)
@@ -470,7 +469,7 @@ internal sealed class ConstantData
 					}
 					else if (id.IsArray2D)
 					{
-						Int64 length64 = (((Int64)length) << 32) + ((Int64)length2);
+						long length64 = ((long)length << 32) + length2;
 						if (id.IsInteger)
 							VariableIntArray2DLength[id.CodeInt] = length64;
 						else if (id.IsString)
@@ -479,7 +478,7 @@ internal sealed class ConstantData
 					else if (id.IsArray3D)
 					{
 						//Int64 length3d = ((Int64)length << 32) + ((Int64)length2 << 16) + (Int64)length3;
-						Int64 length3d = ((Int64)length << 40) + ((Int64)length2 << 20) + (Int64)length3;
+						long length3d = ((long)length << 40) + ((long)length2 << 20) + length3;
 						if (id.IsInteger)
 							VariableIntArray3DLength[id.CodeInt] = length3d;
 						else
@@ -500,7 +499,7 @@ internal sealed class ConstantData
 			ParserMediator.Warn(string.Format(trerror.VarSizeAlreadyDefined.Text, id.Code.ToString()), position, 1);
 	}
 
-	private void _decideActualArraySize_sub(VariableCode mainCode, VariableCode nameCode, int[] arraylength, ScriptPosition position)
+	private void _decideActualArraySize_sub(VariableCode mainCode, VariableCode nameCode, int[] arraylength, ScriptPosition? position)
 	{
 		int nameIndex = (int)(nameCode & VariableCode.__LOWERCASE__);
 		int mainLengthIndex = (int)(mainCode & VariableCode.__LOWERCASE__);
@@ -524,7 +523,7 @@ internal sealed class ConstantData
 			MaxDataList[nameIndex] = arraylength[mainLengthIndex];
 	}
 
-	private void decideActualArraySize(ScriptPosition position)
+	private void decideActualArraySize(ScriptPosition? position)
 	{
 		_decideActualArraySize_sub(VariableCode.ABL, VariableCode.ABLNAME, CharacterIntArrayLength, position);
 		_decideActualArraySize_sub(VariableCode.TALENT, VariableCode.TALENTNAME, CharacterIntArrayLength, position);
@@ -593,14 +592,14 @@ internal sealed class ConstantData
 		//一部変更されたら双方変更されたと扱う
 		bool cdflagNameLengthChanged = changedCode.Contains(VariableCode.CDFLAGNAME1) || changedCode.Contains(VariableCode.CDFLAGNAME2);
 		int mainLengthIndex = (int)(VariableCode.__LOWERCASE__ & VariableCode.CDFLAG);
-		Int64 length64 = CharacterIntArray2DLength[mainLengthIndex];
+		long length64 = CharacterIntArray2DLength[mainLengthIndex];
 		int length1 = (int)(length64 >> 32);
 		int length2 = (int)(length64 & 0x7FFFFFFF);
 		if (changedCode.Contains(VariableCode.CDFLAG) && cdflagNameLengthChanged)
 		{
 			//調整が面倒なので投げる
-			if ((length1 != MaxDataList[cdflag1Index]) || (length2 != MaxDataList[cdflag2Index]))
-				throw new CodeEE(Lang.Error.DoesNotMatchCdflagElements.Text, position);
+			if (length1 != MaxDataList[cdflag1Index] || length2 != MaxDataList[cdflag2Index])
+				throw new CodeEE(trerror.DoesNotMatchCdflagElements.Text, position);
 		}
 		else if (cdflagNameLengthChanged && !changedCode.Contains(VariableCode.CDFLAG))
 		{
@@ -609,9 +608,9 @@ internal sealed class ConstantData
 			if (length1 * length2 > 1000000)
 			{
 				//調整が面倒なので投げる
-				throw new CodeEE(Lang.Error.TooManyCdflagElements.Text, position);
+				throw new CodeEE(trerror.TooManyCdflagElements.Text, position);
 			}
-			CharacterIntArray2DLength[mainLengthIndex] = (((Int64)length1) << 32) + ((Int64)length2);
+			CharacterIntArray2DLength[mainLengthIndex] = ((long)length1 << 32) + length2;
 		}
 		else if (!cdflagNameLengthChanged && changedCode.Contains(VariableCode.CDFLAG))
 		{
@@ -626,46 +625,46 @@ internal sealed class ConstantData
 	public void LoadData(string csvDir, EmueraConsole console, bool disp)
 	{
 		output = console;
-		loadVariableSizeData(csvDir + "VariableSize.CSV", disp);
+		loadVariableSizeData(Path.Combine(csvDir, "VariableSize.CSV"), disp);
 		for (int i = 0; i < countNameCsv; i++)
 		{
 			names[i] = new string[MaxDataList[i]];
 			nameToIntDics[i] = [];
 		}
-		ItemPrice = new Int64[MaxDataList[itemIndex]];
+		ItemPrice = new long[MaxDataList[itemIndex]];
 		#region EE_ERD
-		loadDataTo(csvDir + "ABL.CSV", ablIndex, null, disp);
-		loadDataTo(csvDir + "EXP.CSV", expIndex, null, disp);
-		loadDataTo(csvDir + "TALENT.CSV", talentIndex, null, disp);
-		loadDataTo(csvDir + "PALAM.CSV", paramIndex, null, disp);
-		loadDataTo(csvDir + "TRAIN.CSV", trainIndex, null, disp);
-		loadDataTo(csvDir + "MARK.CSV", markIndex, null, disp);
-		loadDataTo(csvDir + "ITEM.CSV", itemIndex, ItemPrice, disp);
-		loadDataTo(csvDir + "BASE.CSV", baseIndex, null, disp);
-		loadDataTo(csvDir + "SOURCE.CSV", sourceIndex, null, disp);
-		loadDataTo(csvDir + "EX.CSV", exIndex, null, disp);
-		loadDataTo(csvDir + "STR.CSV", strIndex, null, disp);
-		loadDataTo(csvDir + "EQUIP.CSV", equipIndex, null, disp);
-		loadDataTo(csvDir + "TEQUIP.CSV", tequipIndex, null, disp);
-		loadDataTo(csvDir + "FLAG.CSV", flagIndex, null, disp);
-		loadDataTo(csvDir + "TFLAG.CSV", tflagIndex, null, disp);
-		loadDataTo(csvDir + "CFLAG.CSV", cflagIndex, null, disp);
-		loadDataTo(csvDir + "TCVAR.CSV", tcvarIndex, null, disp);
-		loadDataTo(csvDir + "CSTR.CSV", cstrIndex, null, disp);
-		loadDataTo(csvDir + "STAIN.CSV", stainIndex, null, disp);
-		loadDataTo(csvDir + "CDFLAG1.CSV", cdflag1Index, null, disp);
-		loadDataTo(csvDir + "CDFLAG2.CSV", cdflag2Index, null, disp);
+		loadDataTo(Path.Combine(csvDir, "ABL.CSV"), ablIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "EXP.CSV"), expIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "TALENT.CSV"), talentIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "PALAM.CSV"), paramIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "TRAIN.CSV"), trainIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "MARK.CSV"), markIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "ITEM.CSV"), itemIndex, ItemPrice, disp);
+		loadDataTo(Path.Combine(csvDir, "BASE.CSV"), baseIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "SOURCE.CSV"), sourceIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "EX.CSV"), exIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "STR.CSV"), strIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "EQUIP.CSV"), equipIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "TEQUIP.CSV"), tequipIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "FLAG.CSV"), flagIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "TFLAG.CSV"), tflagIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "CFLAG.CSV"), cflagIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "TCVAR.CSV"), tcvarIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "CSTR.CSV"), cstrIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "STAIN.CSV"), stainIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "CDFLAG1.CSV"), cdflag1Index, null, disp);
+		loadDataTo(Path.Combine(csvDir, "CDFLAG2.CSV"), cdflag2Index, null, disp);
 
-		loadDataTo(csvDir + "STRNAME.CSV", strnameIndex, null, disp);
-		loadDataTo(csvDir + "TSTR.CSV", tstrnameIndex, null, disp);
-		loadDataTo(csvDir + "SAVESTR.CSV", savestrnameIndex, null, disp);
-		loadDataTo(csvDir + "GLOBAL.CSV", globalIndex, null, disp);
-		loadDataTo(csvDir + "GLOBALS.CSV", globalsIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "STRNAME.CSV"), strnameIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "TSTR.CSV"), tstrnameIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "SAVESTR.CSV"), savestrnameIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "GLOBAL.CSV"), globalIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "GLOBALS.CSV"), globalsIndex, null, disp);
 		#endregion
 		#region EE_CSV機能拡張
-		loadDataTo(csvDir + "DAY.CSV", dayIndex, null, disp);
-		loadDataTo(csvDir + "TIME.CSV", timeIndex, null, disp);
-		loadDataTo(csvDir + "MONEY.CSV", moneyIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "DAY.CSV"), dayIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "TIME.CSV"), timeIndex, null, disp);
+		loadDataTo(Path.Combine(csvDir, "MONEY.CSV"), moneyIndex, null, disp);
 		#endregion
 		//逆引き辞書を作成
 		for (int i = 0; i < names.Length; i++)
@@ -711,6 +710,8 @@ internal sealed class ConstantData
 				relationDic.Add(tmpl.Callname, (int)tmpl.No);
 			if (!string.IsNullOrEmpty(tmpl.Nickname) && !relationDic.ContainsKey(tmpl.Nickname))
 				relationDic.Add(tmpl.Nickname, (int)tmpl.No);
+			if (!string.IsNullOrEmpty(tmpl.Mastername) && !relationDic.ContainsKey(tmpl.Mastername))
+				relationDic.Add(tmpl.Mastername, (int)tmpl.No);
 		}
 	}
 	#region EE_ERD
@@ -719,10 +720,10 @@ internal sealed class ConstantData
 		public int num;
 		public string path;
 	};
-	public void UserDefineLoadData(List<string> filepaths, string varname, int varlength, bool disp, ScriptPosition sc)
+	public void UserDefineLoadData(List<string> filepaths, string varname, int varlength, bool disp, ScriptPosition? sc)
 	{
 
-		Dictionary<string, ErdDictInfo> preDict = new Dictionary<string, ErdDictInfo>();
+		Dictionary<string, ErdDictInfo> preDict = [];
 
 		foreach (var filepath in filepaths)
 		{
@@ -741,7 +742,7 @@ internal sealed class ConstantData
 					}
 					else
 					{
-						throw new CodeEE(string.Format(Lang.Error.DuplicateErdKey.Text,
+						throw new CodeEE(string.Format(trerror.DuplicateErdKey.Text,
 							varname, nameArray[j], preDict[nameArray[j]].path, filepath));
 					}
 				}
@@ -749,7 +750,7 @@ internal sealed class ConstantData
 		}
 		// ここで発生しないと思うが一応書いておく
 		if (erdNameToIntDics.ContainsKey(varname))
-			throw new CodeEE(string.Format(Lang.Error.DuplicateVariableDefine.Text, varname), sc);
+			throw new CodeEE(string.Format(trerror.DuplicateVariableDefine.Text, varname), sc);
 
 		var dict = new Dictionary<string, int>();
 		foreach (var pair in preDict)
@@ -758,9 +759,9 @@ internal sealed class ConstantData
 	}
 
 	#region EE_重複定義の確認
-	public void isDefinedErd(string varname, ScriptPosition sc)
+	public void isDefinedErd(string varname, ScriptPosition? sc)
 	{
-		List<string> erddic = new List<string>(erdNameToIntDics.Keys);
+		List<string> erddic = new(erdNameToIntDics.Keys);
 		foreach (var erdvarname in erddic)
 		{
 			foreach (string erdname in erdNameToIntDics[erdvarname].Keys)
@@ -781,7 +782,7 @@ internal sealed class ConstantData
 		{
 			// dic = GetKeywordDictionary(out _, VariableCode.CDFLAGNAME1, -1);
 			dic = GetKeywordDictionary(out _, VariableCode.CDFLAGNAME1, -1, null);
-			if ((dic == null) || (!dic.ContainsKey(str)))
+			if (dic == null || !dic.ContainsKey(str))
 				// dic = GetKeywordDictionary(out _, VariableCode.CDFLAGNAME2, -1);
 				dic = GetKeywordDictionary(out _, VariableCode.CDFLAGNAME2, -1, null);
 			if (dic == null)
@@ -800,14 +801,14 @@ internal sealed class ConstantData
 		if (string.IsNullOrEmpty(str))
 			return false;
 		if (dim == 1 && (!erdNameToIntDics.ContainsKey(varname) || !erdNameToIntDics[varname].ContainsKey(str)))
-			throw new CodeEE(string.Format(Lang.Error.NotDefinedErdKey.Text, varname, str));
+			throw new CodeEE(string.Format(trerror.NotDefinedErdKey.Text, varname, str));
 		//CDFLAGの判定も割とガバガバなのでこれで良い（暴論）
 		if (dim == 2)
 		{
 			if (!erdNameToIntDics.ContainsKey(varname + "@1") || !erdNameToIntDics[varname + "@1"].ContainsKey(str))
 			{
 				if (!erdNameToIntDics.ContainsKey(varname + "@2") || !erdNameToIntDics[varname + "@2"].ContainsKey(str))
-					throw new CodeEE(string.Format(Lang.Error.NotDefinedErdKey.Text, varname, str));
+					throw new CodeEE(string.Format(trerror.NotDefinedErdKey.Text, varname, str));
 			}
 		}
 		if (dim == 3)
@@ -817,7 +818,7 @@ internal sealed class ConstantData
 				if (!erdNameToIntDics.ContainsKey(varname + "@2") || !erdNameToIntDics[varname + "@2"].ContainsKey(str))
 				{
 					if (!erdNameToIntDics.ContainsKey(varname + "@3") || !erdNameToIntDics[varname + "@3"].ContainsKey(str))
-						throw new CodeEE(string.Format(Lang.Error.NotDefinedErdKey.Text, varname, str));
+						throw new CodeEE(string.Format(trerror.NotDefinedErdKey.Text, varname, str));
 				}
 			}
 		}
@@ -833,24 +834,26 @@ internal sealed class ConstantData
 		ret = 0;
 		if (string.IsNullOrEmpty(key))
 			return false;
-		Dictionary<string, int> dic;
-		try
-		{
-			// dic = GetKeywordDictionary(out string errPos, code, index);
-			dic = GetKeywordDictionary(out string errPos, code, index, null);
 
-			//ここで見つからなかったら下の処理でも通す
-			if (dic.TryGetValue(key, out ret))
-				return dic.TryGetValue(key, out ret);
-		}
-		catch { }
-		if (!string.IsNullOrEmpty(varname))
 		{
-			if (!erdNameToIntDics.ContainsKey(varname))
-				return false;
-			return erdNameToIntDics[varname].TryGetValue(key, out ret);
+			//ここで見つからなかったら下の処理でも通す
+			Dictionary<string, int> dic = GetKeywordDictionary(out string errPos, code, index, null);
+			if (dic != null)
+			{
+				var found = dic.TryGetValue(key, out ret);
+				if (found)
+					return true;
+			}
 		}
-		return false;
+		{
+			if (string.IsNullOrEmpty(varname))
+			{
+				return false;
+			}
+			bool found = erdNameToIntDics.TryGetValue(varname, out Dictionary<string, int> dic);
+			if (!found) return false;
+			return dic.TryGetValue(key, out ret);
+		}
 	}
 	#endregion
 	#region EE_ERDNAME
@@ -859,31 +862,24 @@ internal sealed class ConstantData
 		ret = "";
 		if (value < 0)
 			return false;
-		Dictionary<string, int> dic;
-		if (!string.IsNullOrEmpty(varname))
-		{
-			if (!erdNameToIntDics.ContainsKey(varname))
-				return false;
-			dic = erdNameToIntDics[varname];
-			try
-			{
-				ret = dic.First(x => x.Value == value).Key;
-			}
-			catch
-			{
-				return false;
-			}
-			if (!string.IsNullOrEmpty(ret))
-				return true;
-		}
-		return false;
+		if (string.IsNullOrEmpty(varname))
+			return false;
+
+		if (!erdNameToIntDics.TryGetValue(varname, out Dictionary<string, int> dic))
+			return false;
+
+		var keyValuePair = dic.FirstOrDefault(x => x.Value == value);
+		if (string.IsNullOrEmpty(keyValuePair.Key))
+			return false;
+		ret = keyValuePair.Key;
+		return true;
 	}
 	#endregion
 
 	public int KeywordToInteger(VariableCode code, string key, int index)
 	{
 		if (string.IsNullOrEmpty(key))
-			throw new CodeEE(Lang.Error.KeywordsCannotBeEmpty.Text);
+			throw new CodeEE(trerror.KeywordsCannotBeEmpty.Text);
 		#region EE_ERD
 		// Dictionary<string, int> dic = GetKeywordDictionary(out string errPos, code, index);
 		Dictionary<string, int> dic = GetKeywordDictionary(out string errPos, code, index, null);
@@ -891,9 +887,9 @@ internal sealed class ConstantData
 		if (dic.TryGetValue(key, out int ret))
 			return ret;
 		if (errPos == null)
-			throw new CodeEE(string.Format(Lang.Error.CanNotSpecifiedByString.Text, code.ToString()));
+			throw new CodeEE(string.Format(trerror.CanNotSpecifiedByString.Text, code.ToString()));
 		else
-			throw new CodeEE(string.Format(Lang.Error.NotDefinedKey.Text, errPos, key));
+			throw new CodeEE(string.Format(trerror.NotDefinedKey.Text, errPos, key));
 	}
 
 	#region EE_ERD
@@ -1043,9 +1039,9 @@ internal sealed class ConstantData
 						errPos = "cdflag2.csv";
 					}
 					else if (index >= 0)
-						throw new CodeEE(string.Format(Lang.Error.CannotIndexSpecifiedByString.Text, code.ToString(), (index + 1).ToString()));
+						throw new CodeEE(string.Format(trerror.CannotIndexSpecifiedByString.Text, code.ToString(), (index + 1).ToString()));
 					else
-						throw new CodeEE(Lang.Error.UseCdflagname.Text);
+						throw new CodeEE(trerror.UseCdflagname.Text);
 					return ret;
 				}
 			case VariableCode.STR:
@@ -1079,6 +1075,7 @@ internal sealed class ConstantData
 				allowIndex = 1;
 				break;
 			case VariableCode.NAME:
+			case VariableCode.CALLNAME:
 				ret = relationDic;
 				errPos = "chara*.csv";
 				allowIndex = -1;
@@ -1129,7 +1126,7 @@ internal sealed class ConstantData
 					case VariableCode.CVAR2D:
 					case VariableCode.CVARS2D:
 						{
-							if ((code == VariableCode.VAR2D && index == 0) || (code == VariableCode.CVAR2D && index == 1))
+							if ((code == VariableCode.VAR2D || code == VariableCode.VARS2D) && index == 0)
 							{
 								string varnamed = varname + "@1";
 								if (!erdNameToIntDics.ContainsKey(varnamed))
@@ -1173,12 +1170,12 @@ internal sealed class ConstantData
 		if (index < 0)
 			return ret;
 		if (ret == null)
-			throw new CodeEE(string.Format(Lang.Error.CanNotSpecifiedByString.Text, code.ToString()));
+			throw new CodeEE(string.Format(trerror.CanNotSpecifiedByString.Text, code.ToString()));
 		if (index != allowIndex)
 		{
 			if (allowIndex < 0)//GETNUM専用
-				throw new CodeEE(string.Format(Lang.Error.CanNotSpecifiedByString.Text, code.ToString()));
-			throw new CodeEE(string.Format(Lang.Error.CannotIndexSpecifiedByString.Text, code.ToString(), (index + 1).ToString()));
+				throw new CodeEE(string.Format(trerror.CanNotSpecifiedByString.Text, code.ToString()));
+			throw new CodeEE(string.Format(trerror.CannotIndexSpecifiedByString.Text, code.ToString(), (index + 1).ToString()));
 		}
 		return ret;
 	}
@@ -1198,7 +1195,7 @@ internal sealed class ConstantData
 	}
 	#endregion
 
-	public CharacterTemplate GetCharacterTemplate(Int64 index)
+	public CharacterTemplate GetCharacterTemplate(long index)
 	{
 		foreach (CharacterTemplate chara in CharacterTmplList)
 		{
@@ -1208,20 +1205,17 @@ internal sealed class ConstantData
 		return null;
 	}
 
-	public CharacterTemplate GetCharacterTemplate_UseSp(Int64 index, bool sp)
+	public CharacterTemplate GetCharacterTemplate_UseSp(long index, bool sp)
 	{
-		foreach (CharacterTemplate chara in CharacterTmplList)
+		var i = CharacterTmplList.BinarySearch(null, Comparer<CharacterTemplate>.Create((left, right) => (int)(left.No - index)));
+		if (i < 0)
 		{
-			if (chara.No != index)
-				continue;
-			if (Config.CompatiSPChara && sp != chara.IsSpchara)
-				continue;
-			return chara;
+			return null;
 		}
-		return null;
+		return CharacterTmplList[i];
 	}
 
-	public CharacterTemplate GetCharacterTemplateFromCsvNo(Int64 index)
+	public CharacterTemplate GetCharacterTemplateFromCsvNo(long index)
 	{
 		foreach (CharacterTemplate chara in CharacterTmplList)
 		{
@@ -1249,29 +1243,33 @@ internal sealed class ConstantData
 		if (!Directory.Exists(csvDir))
 			return;
 		List<KeyValuePair<string, string>> csvPaths = Config.GetFiles(csvDir, "CHARA*.CSV");
+
 		for (int i = 0; i < csvPaths.Count; i++)
 			loadCharacterDataFile(csvPaths[i].Value, csvPaths[i].Key, disp);
+
 		if (useCompatiName)
 		{
 			foreach (CharacterTemplate tmpl in CharacterTmplList)
 				if (string.IsNullOrEmpty(tmpl.Callname))
 					tmpl.Callname = tmpl.Name;
 		}
+
 		foreach (CharacterTemplate tmpl in CharacterTmplList)
 			tmpl.SetSpFlag();
-		Dictionary<Int64, CharacterTemplate> nList = [];
-		Dictionary<Int64, CharacterTemplate> spList = [];
+
+		Dictionary<long, CharacterTemplate> nList = [];
+		Dictionary<long, CharacterTemplate> spList = [];
 		foreach (CharacterTemplate tmpl in CharacterTmplList)
 		{
-			Dictionary<Int64, CharacterTemplate> targetList = nList;
+			Dictionary<long, CharacterTemplate> targetList = nList;
 			if (Config.CompatiSPChara && tmpl.IsSpchara)
 			{
 				targetList = spList;
 			}
-			if (targetList.ContainsKey(tmpl.No))
+			if (targetList.TryGetValue(tmpl.No, out CharacterTemplate chara))
 			{
 
-				if (!Config.CompatiSPChara && (tmpl.IsSpchara != targetList[tmpl.No].IsSpchara))
+				if (!Config.CompatiSPChara && tmpl.IsSpchara != chara.IsSpchara)
 					ParserMediator.Warn(string.Format(trerror.DuplicateCharaDefine1.Text, tmpl.No.ToString()), null, 1);
 				else
 					ParserMediator.Warn(string.Format(trerror.DuplicateCharaDefine2.Text, tmpl.No.ToString()), null, 1);
@@ -1292,13 +1290,13 @@ internal sealed class ConstantData
 		StaticXmls.Clear();
 		foreach (var path in PathHelper.GetFilesIgnoreCase(csvPath, "VarExt*.csv", SearchOption.AllDirectories))
 		{
-			EraStreamReader eReader = new EraStreamReader(false);
+			using var eReader = new EraStreamReader(false);
 			if (!eReader.Open(path))
 			{
 				output.PrintError(string.Format(trerror.FailedOpenFile.Text, eReader.Filename));
 				return;
 			}
-			ScriptPosition position = null;
+			ScriptPosition? position = null;
 			if (disp)
 				output.PrintSystemLine(string.Format(trsl.LoadingFile.Text, eReader.Filename));
 			try
@@ -1318,55 +1316,55 @@ internal sealed class ConstantData
 						ParserMediator.Warn(trerror.StartedComma.Text, position, 1);
 						continue;
 					}
-					if (tokens[0].Equals("GLOBAL_MAPS", Config.SCVariable))
+					if (tokens[0].Equals("GLOBAL_MAPS", Config.StringComparison))
 					{
 						for (int i = 1; i < tokens.Length; i++)
 							GlobalSaveMaps.Add(tokens[i].Trim());
 						continue;
 					}
-					if (tokens[0].Equals("SAVE_MAPS", Config.SCVariable))
+					if (tokens[0].Equals("SAVE_MAPS", Config.StringComparison))
 					{
 						for (int i = 1; i < tokens.Length; i++)
 							SaveMaps.Add(tokens[i].Trim());
 						continue;
 					}
-					if (tokens[0].Equals("GLOBAL_XMLS", Config.SCVariable))
+					if (tokens[0].Equals("GLOBAL_XMLS", Config.StringComparison))
 					{
 						for (int i = 1; i < tokens.Length; i++)
 							GlobalSaveXmls.Add(tokens[i].Trim());
 						continue;
 					}
-					if (tokens[0].Equals("SAVE_XMLS", Config.SCVariable))
+					if (tokens[0].Equals("SAVE_XMLS", Config.StringComparison))
 					{
 						for (int i = 1; i < tokens.Length; i++)
 							SaveXmls.Add(tokens[i].Trim());
 						continue;
 					}
-					if (tokens[0].Equals("GLOBAL_DTS", Config.SCVariable))
+					if (tokens[0].Equals("GLOBAL_DTS", Config.StringComparison))
 					{
 						for (int i = 1; i < tokens.Length; i++)
 							GlobalSaveDTs.Add(tokens[i].Trim());
 						continue;
 					}
-					if (tokens[0].Equals("SAVE_DTS", Config.SCVariable))
+					if (tokens[0].Equals("SAVE_DTS", Config.StringComparison))
 					{
 						for (int i = 1; i < tokens.Length; i++)
 							SaveDTs.Add(tokens[i].Trim());
 						continue;
 					}
-					if (tokens[0].Equals("STATIC_XMLS", Config.SCVariable))
+					if (tokens[0].Equals("STATIC_XMLS", Config.StringComparison))
 					{
 						for (int i = 1; i < tokens.Length; i++)
 							StaticXmls.Add(tokens[i].Trim());
 						continue;
 					}
-					if (tokens[0].Equals("STATIC_MAPS", Config.SCVariable))
+					if (tokens[0].Equals("STATIC_MAPS", Config.StringComparison))
 					{
 						for (int i = 1; i < tokens.Length; i++)
 							StaticMaps.Add(tokens[i].Trim());
 						continue;
 					}
-					if (tokens[0].Equals("STATIC_DTS", Config.SCVariable))
+					if (tokens[0].Equals("STATIC_DTS", Config.StringComparison))
 					{
 						for (int i = 1; i < tokens.Length; i++)
 							StaticDTs.Add(tokens[i].Trim());
@@ -1393,18 +1391,18 @@ internal sealed class ConstantData
 	private void loadCharacterDataFile(string csvPath, string csvName, bool disp)
 	{
 		CharacterTemplate tmpl = null;
-		EraStreamReader eReader = new(false);
-		if (!eReader.Open(csvPath, csvName))
+		using var eReader = new EraStreamReader(false);
+		if (!eReader.OpenOnCache(csvPath, csvName))
 		{
 			output.PrintError(string.Format(trerror.FailedOpenFile.Text, eReader.Filename));
 			return;
 		}
-		ScriptPosition position = null;
+		ScriptPosition? position = null;
 		if (disp)
 			output.PrintSystemLine(string.Format(trsl.LoadingFile.Text, eReader.Filename));
 		try
 		{
-			Int64 index = -1;
+			long index = -1;
 			StringStream st = null;
 			while ((st = eReader.ReadEnabledLine()) != null)
 			{
@@ -1420,22 +1418,22 @@ internal sealed class ConstantData
 					ParserMediator.Warn(trerror.StartedComma.Text, position, 1);
 					continue;
 				}
-				if (tokens[0].Equals("NO", Config.SCVariable)
-					|| tokens[0].Equals("番号", Config.SCVariable))
+				if (tokens[0].Equals("NO", Config.StringComparison)
+					|| tokens[0].Equals("番号", Config.StringComparison))
 				{
 					if (tmpl != null)
 					{
 						ParserMediator.Warn(trerror.CharaNoDefinedTwice.Text, position, 1);
 						continue;
 					}
-					if (!Int64.TryParse(tokens[1].TrimEnd(), out index))
+					if (!long.TryParse(tokens[1].TrimEnd(), out index))
 					{
 						ParserMediator.Warn(string.Format(trerror.CanNotConvertToInt.Text, tokens[1]), position, 1);
 						continue;
 					}
 					tmpl = new CharacterTemplate(index, this);
-					string no = eReader.Filename.ToUpper();
-					no = no.Substring(no.IndexOf("CHARA", StringComparison.Ordinal) + 5);
+					string no = eReader.Filename;
+					no = no[(no.IndexOf("CHARA", StringComparison.OrdinalIgnoreCase) + 5)..];
 					StringBuilder sb = new();
 					StringStream ss = new(no);
 					while (!ss.EOS && char.IsDigit(ss.Current))
@@ -1451,6 +1449,7 @@ internal sealed class ConstantData
 					CharacterTmplList.Add(tmpl);
 					continue;
 				}
+
 				if (tmpl == null)
 				{
 					ParserMediator.Warn(trerror.StartedDataBeforeCharaNo.Text, position, 1);
@@ -1458,6 +1457,8 @@ internal sealed class ConstantData
 				}
 				toCharacterTemplate(position, tmpl, tokens);
 			}
+
+			CharacterTmplList.Sort((left, right) => (int)(left.No - right.No));
 		}
 		catch
 		{
@@ -1474,12 +1475,12 @@ internal sealed class ConstantData
 		}
 	}
 
-	private bool tryToInt64(string str, out Int64 p)
+	private static bool tryToInt64(string str, out long p)
 	{
 		p = -1;
 		if (string.IsNullOrEmpty(str))
 			return false;
-		StringStream st = new (str);
+		StringStream st = new(str);
 		int sign = 1;
 		if (st.Current == '+')
 			st.ShiftNext();
@@ -1519,18 +1520,19 @@ internal sealed class ConstantData
 		return true;
 	}
 
-	private void toCharacterTemplate(ScriptPosition position, CharacterTemplate chara, string[] tokens)
+	private void toCharacterTemplate(ScriptPosition? position, CharacterTemplate chara, string[] tokens)
 	{
 		if (chara == null)
 			return;
 		int length;
-		Dictionary<int, Int64> intArray = null;
+		Dictionary<int, long> intArray = null;
 		Dictionary<int, string> strArray = null;
 		Dictionary<string, int> namearray;
 
 		string errPos = null;
-		string varname = tokens[0].ToUpper();
-		switch (varname)
+		Span<char> chars = stackalloc char[tokens[0].Length];
+		var varname = tokens[0].AsSpan().ToUpper(chars, CultureInfo.InvariantCulture);
+		switch (chars)
 		{
 			case "NAME":
 			case "名前":
@@ -1634,13 +1636,13 @@ internal sealed class ConstantData
 			return;
 		}
 		bool p1isNumeric = tryToInt64(tokens[1].TrimEnd(), out long p1);
-		if (p1isNumeric && ((p1 < 0) || (p1 >= length)))
+		if (p1isNumeric && (p1 < 0 || p1 >= length))
 		{
 			ParserMediator.Warn(string.Format(trerror.OoRArray.Text, p1.ToString()), position, 1);
 			return;
 		}
 		int index = (int)p1;
-		if ((!p1isNumeric) && (namearray != null))
+		if (!p1isNumeric && namearray != null)
 		{
 			if (!namearray.TryGetValue(tokens[1], out index))
 			{
@@ -1655,7 +1657,7 @@ internal sealed class ConstantData
 			}
 		}
 
-		if ((index < 0) || (index >= length))
+		if (index < 0 || index >= length)
 		{
 			if (p1isNumeric)
 				ParserMediator.Warn(string.Format(trerror.OoRArray.Text, index.ToString()), position, 1);
@@ -1675,7 +1677,7 @@ internal sealed class ConstantData
 		}
 		else
 		{
-			if ((tokens.Length < 3) || !tryToInt64(tokens[2], out long p2))
+			if (tokens.Length < 3 || !tryToInt64(tokens[2], out long p2))
 				p2 = 1;
 			if (intArray.ContainsKey(index))
 				ParserMediator.Warn(string.Format(trerror.VarKeyAreadyDefined.Text, varname, index.ToString()), position, 1);
@@ -1683,7 +1685,7 @@ internal sealed class ConstantData
 		}
 	}
 
-	private void loadDataTo(string csvPath, int targetIndex, Int64[] targetI, bool disp)
+	private void loadDataTo(string csvPath, int targetIndex, long[] targetI, bool disp)
 	{
 
 		csvPath = PathHelper.FindFileCaseInsensitive(csvPath);
@@ -1691,16 +1693,18 @@ internal sealed class ConstantData
 			return;
 		string[] target = names[targetIndex];
 		HashSet<int> defined = [];
-		EraStreamReader eReader = new(false);
+		using var eReader = new EraStreamReader(false);
 		#region EE_ERD
 		// if (!eReader.Open(csvPath))
+		// ERD機能と競合するっぽいので一旦保留
+		// if (!eReader.OpenOnCache(csvPath) && output != null)
 		if (!eReader.Open(csvPath) && output != null)
 		#endregion
 		{
 			output.PrintError(string.Format(trerror.FailedOpenFile.Text, eReader.Filename));
 			return;
 		}
-		ScriptPosition position = null;
+		ScriptPosition? position = null;
 		#region EE_ERD
 		// if (disp || Program.AnalysisMode)
 		if ((disp || Program.AnalysisMode) && output != null)
@@ -1709,16 +1713,18 @@ internal sealed class ConstantData
 		try
 		{
 			StringStream st = null;
+			Span<Range> dest = stackalloc Range[5];
 			while ((st = eReader.ReadEnabledLine()) != null)
 			{
 				position = new ScriptPosition(eReader.Filename, eReader.LineNo);
-				string[] tokens = st.Substring().Split(',');
-				if (tokens.Length < 2)
+				var ros = st.SubstringROS();
+				var length = ros.Split(dest, [',']);
+				if (length < 2)
 				{
 					ParserMediator.Warn(trerror.MissingComma.Text, position, 1);
 					continue;
 				}
-				if (!Int32.TryParse(tokens[0], out int index))
+				if (!int.TryParse(ros[dest[0]], out int index))
 				{
 					ParserMediator.Warn(trerror.FirstValueCanNotConvertToInt.Text, position, 1);
 					continue;
@@ -1728,18 +1734,18 @@ internal sealed class ConstantData
 					ParserMediator.Warn(trerror.ProhibitedArrayName.Text, position, 2);
 					break;
 				}
-				if (((index < 0) || (target.Length <= index)))
+				if (index < 0 || target.Length <= index)
 				{
 					ParserMediator.Warn(string.Format(trerror.OoRArray.Text, index.ToString()), position, 1);
 					continue;
 				}
 				if (!defined.Add(index))
 					ParserMediator.Warn(string.Format(trerror.VarKeyAreadyDefined.Text, index.ToString()), position, 1);
-				target[index] = tokens[1];
-				if ((targetI != null) && (tokens.Length >= 3))
+				target[index] = ros[dest[1]].ToString();
+				if (targetI != null && length >= 3)
 				{
 
-					if (!Int64.TryParse(tokens[2].TrimEnd(), out long price))
+					if (!long.TryParse(ros[dest[2]].TrimEnd(), out long price))
 					{
 						ParserMediator.Warn(trerror.CanNotReadAmountOfMoney.Text, position, 1);
 						continue;
@@ -1779,7 +1785,7 @@ internal sealed class ConstantData
 	{
 		if (aliases[targetIndex] == null)
 		{
-			aliases[targetIndex] = new Dictionary<string, int>();
+			aliases[targetIndex] = [];
 		}
 		Dictionary<string, int> target = aliases[targetIndex];
 		HashSet<int> defined = [];
@@ -1789,7 +1795,7 @@ internal sealed class ConstantData
 			output.PrintError(string.Format(trerror.FailedOpenFile.Text, eReader.Filename));
 			return;
 		}
-		ScriptPosition position = null;
+		ScriptPosition? position = null;
 		try
 		{
 			StringStream st = null;
@@ -1802,14 +1808,14 @@ internal sealed class ConstantData
 					ParserMediator.Warn(trerror.MissingComma.Text, position, 1);
 					continue;
 				}
-				if (!Int32.TryParse(tokens[0], out int index))
+				if (!int.TryParse(tokens[0], out int index))
 				{
 					ParserMediator.Warn(trerror.FirstValueCanNotConvertToInt.Text, position, 1);
 					continue;
 				}
 				if (!defined.Add(index))
 					ParserMediator.Warn(string.Format(trerror.VarKeyAreadyDefined.Text, index.ToString()), position, 1);
-				target.Add(tokens[1], index);
+				target.TryAdd(tokens[1], index);
 			}
 		}
 		catch
@@ -1839,21 +1845,21 @@ internal sealed class CharacterTemplate
 	public string Callname;
 	public string Nickname;
 	public string Mastername;
-	public readonly Int64 No;
-	public readonly Dictionary<Int32, Int64> Maxbase = [];
-	public readonly Dictionary<Int32, Int64> Mark = [];
-	public readonly Dictionary<Int32, Int64> Exp = [];
-	public readonly Dictionary<Int32, Int64> Abl = [];
-	public readonly Dictionary<Int32, Int64> Talent = [];
-	public readonly Dictionary<Int32, Int64> Relation = [];
-	public readonly Dictionary<Int32, Int64> CFlag = [];
-	public readonly Dictionary<Int32, Int64> Equip = [];
-	public readonly Dictionary<Int32, Int64> Juel = [];
-	public readonly Dictionary<Int32, string> CStr = [];
-	public Int64 csvNo;
+	public readonly long No = -1;
+	public readonly Dictionary<int, long> Maxbase = [];
+	public readonly Dictionary<int, long> Mark = [];
+	public readonly Dictionary<int, long> Exp = [];
+	public readonly Dictionary<int, long> Abl = [];
+	public readonly Dictionary<int, long> Talent = [];
+	public readonly Dictionary<int, long> Relation = [];
+	public readonly Dictionary<int, long> CFlag = [];
+	public readonly Dictionary<int, long> Equip = [];
+	public readonly Dictionary<int, long> Juel = [];
+	public readonly Dictionary<int, string> CStr = [];
+	public long csvNo;
 	public bool IsSpchara { get; private set; }
 
-	public CharacterTemplate(Int64 index, ConstantData constant)
+	public CharacterTemplate(long index, ConstantData constant)
 	{
 		arraySize = constant.CharacterIntArrayLength;
 		cstrSize = constant.CharacterStrArrayLength[(int)(VariableCode.__LOWERCASE__ & VariableCode.CSTR)];
@@ -1866,7 +1872,7 @@ internal sealed class CharacterTemplate
 			case CharacterStrData.CSTR:
 				return cstrSize;
 			default:
-				throw new CodeEE(Lang.Error.NotExistKey.Text);
+				throw new CodeEE(trerror.NotExistKey.Text);
 		}
 	}
 
@@ -1904,7 +1910,7 @@ internal sealed class CharacterTemplate
 	internal void SetSpFlag()
 	{
 		//bool res;
-		if (CFlag.ContainsKey(0) && CFlag[0] != 0L)
+		if (CFlag.TryGetValue(0, out long value) && value != 0L)
 			IsSpchara = true;
 	}
 }

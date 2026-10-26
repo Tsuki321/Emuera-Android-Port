@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+using MinorShift.Emuera.Sub;
+using MinorShift.Emuera.Sub;
+using System;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.IO;
-using MinorShift.Emuera.Sub;
 using trerror = EvilMask.Emuera.Lang.Error;
+
 
 namespace MinorShift.Emuera.GameData;
 
@@ -14,12 +15,12 @@ internal sealed class GameBase
 	public string ScriptDetail = "";//詳細な説明
 	public string ScriptYear = "";
 	public string ScriptTitle = "";
-	public Int64 ScriptUniqueCode = 0;
+	public long ScriptUniqueCode;
 	//1.713 訂正。eramakerのバージョンの初期値は1000ではなく0だった
-	public Int64 ScriptVersion = 0;//1000;
-								   //1.713 上の変更とあわせて。セーブデータのバージョンが1000であり、現在のバージョンが未定義である場合、セーブデータのバージョンを同じとみなす
-	public bool ScriptVersionDefined = false;
-	public Int64 ScriptCompatibleMinVersion = -1;
+	public long ScriptVersion;//1000;
+							  //1.713 上の変更とあわせて。セーブデータのバージョンが1000であり、現在のバージョンが未定義である場合、セーブデータのバージョンを同じとみなす
+	public bool ScriptVersionDefined;
+	public long ScriptCompatibleMinVersion = -1;
 	public string Compatible_EmueraVer = "0.000.0.0";
 	#region EE_UPDATECHECK
 	public string UpdateCheckURL = "";
@@ -27,22 +28,22 @@ internal sealed class GameBase
 	#endregion
 
 	//1.727 追加。Form.Text
-	public string ScriptWindowTitle = null;
+	public string ScriptWindowTitle;
 	public string ScriptVersionText
 	{
 		get
 		{
 			StringBuilder versionStr = new();
-			versionStr.Append((ScriptVersion / 1000).ToString());
-			versionStr.Append(".");
-			if ((ScriptVersion % 10) != 0)
+			versionStr.Append(ScriptVersion / 1000);
+			versionStr.Append('.');
+			if (ScriptVersion % 10 != 0)
 				versionStr.Append((ScriptVersion % 1000).ToString("000"));
 			else
 				versionStr.Append((ScriptVersion % 1000 / 10).ToString("00"));
 			return versionStr.ToString();
 		}
 	}
-	public bool UniqueCodeEqualTo(Int64 target)
+	public bool UniqueCodeEqualTo(long target)
 	{
 		//1804 UniqueCode Int64への拡張に伴い修正
 		if (target == 0L)
@@ -50,7 +51,7 @@ internal sealed class GameBase
 		return target == ScriptUniqueCode;
 	}
 
-	public bool CheckVersion(Int64 target)
+	public bool CheckVersion(long target)
 	{
 		if (!ScriptVersionDefined && target != 1000)
 			return true;
@@ -59,12 +60,12 @@ internal sealed class GameBase
 		return ScriptVersion == target;
 	}
 
-	public Int64 DefaultCharacter = -1;
-	public Int64 DefaultNoItem = 0;
+	public long DefaultCharacter = -1;
+	public long DefaultNoItem;
 
-	private bool tryatoi(ReadOnlySpan<char> str, out Int64 i)
+	private static bool tryatoi(ReadOnlySpan<char> str, out long i)
 	{
-		if (Int64.TryParse(str, out i))
+		if (long.TryParse(str, out i))
 			return true;
 		var sb = new StringBuilder(str.Length);
 		foreach (var character in str)
@@ -74,7 +75,7 @@ internal sealed class GameBase
 			sb.Append(character);
 		}
 		if (sb.Length > 0)
-			if (Int64.TryParse(sb.ToString(), out i))
+			if (long.TryParse(sb.ToString(), out i))
 				return true;
 		return false;
 	}
@@ -91,8 +92,8 @@ internal sealed class GameBase
 		{
 			return true;
 		}
-		ScriptPosition pos = null;
-		EraStreamReader eReader = new(false);
+		ScriptPosition? pos = null;
+		using var eReader = new EraStreamReader(false);
 		if (!eReader.Open(basePath))
 		{
 			//output.PrintLine(eReader.Filename + "のオープンに失敗しました");

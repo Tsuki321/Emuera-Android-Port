@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Data;
 using System.IO;
 using System.IO.Compression;
+using System.Text;
 using System.Xml;
-using System.Data;
 
 namespace MinorShift.Emuera.Sub;
 
@@ -35,11 +35,11 @@ internal sealed class EraBinaryDataWriter : IDisposable
 		}
 		#endregion
 	}
-	BinaryWriter writer = null;
+	BinaryWriter writer;
 
 	#region EM_私家版_セーブ圧縮
-	BinaryWriter fileWriter = null;
-	MemoryStream ms = null;
+	BinaryWriter fileWriter;
+	MemoryStream ms;
 	#endregion
 
 	public void WriteHeader()
@@ -60,7 +60,7 @@ internal sealed class EraBinaryDataWriter : IDisposable
 		fileWriter.Write(EraBDConst.DataCount);
 		for (int i = 0; i < EraBDConst.DataCount; i++)
 		{
-			fileWriter.Write((UInt32)0);
+			fileWriter.Write((uint)0);
 		}
 		#endregion
 	}
@@ -75,7 +75,7 @@ internal sealed class EraBinaryDataWriter : IDisposable
 	/// システム用。keyなしでInt64を保存
 	/// </summary>
 	/// <param name="v"></param>
-	public void WriteInt64(Int64 v)
+	public void WriteInt64(long v)
 	{
 		//圧縮しない
 		writer.Write(v);
@@ -105,29 +105,29 @@ internal sealed class EraBinaryDataWriter : IDisposable
 
 	public void WriteWithKey(string key, object v)
 	{
-		if (v is Int64)
+		if (v is long)
 		{
 			writer.Write((byte)EraSaveDataType.Int);
 			writer.Write(key);
-			writeData((Int64)v);
+			writeData((long)v);
 		}
-		else if (v is Int64[])
+		else if (v is long[])
 		{
 			writer.Write((byte)EraSaveDataType.IntArray);
 			writer.Write(key);
-			writeData((Int64[])v);
+			writeData((long[])v);
 		}
-		else if (v is Int64[,])
+		else if (v is long[,])
 		{
 			writer.Write((byte)EraSaveDataType.IntArray2D);
 			writer.Write(key);
-			writeData((Int64[,])v);
+			writeData((long[,])v);
 		}
-		else if (v is Int64[,,])
+		else if (v is long[,,])
 		{
 			writer.Write((byte)EraSaveDataType.IntArray3D);
 			writer.Write(key);
-			writeData((Int64[,,])v);
+			writeData((long[,,])v);
 		}
 		else if (v is string)
 		{
@@ -190,20 +190,20 @@ internal sealed class EraBinaryDataWriter : IDisposable
 
 	#region private
 
-	private void m_WriteInt(Int64 v)
+	private void m_WriteInt(long v)
 	{
 		//セーブデータ容量の爆発を避けるためにできるだけWrite(Int64)はしない
 		if (v >= 0 && v <= Ebdb.Byte)//0～207まではそのままbyteに詰め込む
 			writer.Write((byte)v);
-		else if (v >= Int16.MinValue && v <= Int16.MaxValue)//整数の範囲に応じて適当に
+		else if (v >= short.MinValue && v <= short.MaxValue)//整数の範囲に応じて適当に
 		{
 			writer.Write(Ebdb.Int16);
-			writer.Write((Int16)v);
+			writer.Write((short)v);
 		}
-		else if (v >= Int32.MinValue && v <= Int32.MaxValue)
+		else if (v >= int.MinValue && v <= int.MaxValue)
 		{
 			writer.Write(Ebdb.Int32);
-			writer.Write((Int32)v);
+			writer.Write((int)v);
 		}
 		else
 		{
@@ -212,15 +212,15 @@ internal sealed class EraBinaryDataWriter : IDisposable
 		}
 	}
 
-	private void writeData(Int64 v)
+	private void writeData(long v)
 	{
 		m_WriteInt(v);
 	}
 
-	private void writeData(Int64[] array)
+	private void writeData(long[] array)
 	{
 		//配列の記憶。0が連続する場合には圧縮を試みる。
-		writer.Write((Int32)array.Length);
+		writer.Write(array.Length);
 		int countZero = 0;//0については0が連続する数を記憶する。その他の数はそのまま記憶する。
 		for (int x = 0; x < array.Length; x++)
 		{
@@ -231,17 +231,17 @@ internal sealed class EraBinaryDataWriter : IDisposable
 				if (countZero > 0)
 				{
 					writer.Write(Ebdb.Zero);
-					this.m_WriteInt(countZero);
+					m_WriteInt(countZero);
 					countZero = 0;
 				}
-				this.m_WriteInt(array[x]);
+				m_WriteInt(array[x]);
 			}
 		}
 		//記憶途中で配列の残りが全部0であるなら0の数も記憶せず配列の終わりを記憶
 		writer.Write(Ebdb.EoD);
 	}
 
-	private void writeData(Int64[,] array)
+	private void writeData(long[,] array)
 	{
 		int countZero = 0;//0については0が連続する数を記憶する。その他はそのまま記憶する。
 		int countAllZero = 0;//列の要素が全て0である列の連続する数を記憶する。列の要素に一つでも非0があるなら通常の記憶方式。
@@ -261,16 +261,16 @@ internal sealed class EraBinaryDataWriter : IDisposable
 					if (countAllZero > 0)
 					{
 						writer.Write(Ebdb.ZeroA1);
-						this.m_WriteInt(countAllZero);
+						m_WriteInt(countAllZero);
 						countAllZero = 0;
 					}
 					if (countZero > 0)
 					{
 						writer.Write(Ebdb.Zero);
-						this.m_WriteInt(countZero);
+						m_WriteInt(countZero);
 						countZero = 0;
 					}
-					this.m_WriteInt(array[x, y]);
+					m_WriteInt(array[x, y]);
 				}
 			}
 			if (countZero == length1)//列の要素が全部0
@@ -282,7 +282,7 @@ internal sealed class EraBinaryDataWriter : IDisposable
 		writer.Write(Ebdb.EoD);
 	}
 
-	private void writeData(Int64[,,] array)
+	private void writeData(long[,,] array)
 	{
 		int countZero = 0;//0については0が連続する数を記憶する。その他はそのまま記憶する。
 		int countAllZero = 0;//列の要素が全て0である列の連続する数を記憶する。列の要素に一つでも非0があるなら通常の記憶方式。
@@ -306,22 +306,22 @@ internal sealed class EraBinaryDataWriter : IDisposable
 						if (countAllZero2D > 0)
 						{
 							writer.Write(Ebdb.ZeroA2);
-							this.m_WriteInt(countAllZero2D);
+							m_WriteInt(countAllZero2D);
 							countAllZero2D = 0;
 						}
 						if (countAllZero > 0)
 						{
 							writer.Write(Ebdb.ZeroA1);
-							this.m_WriteInt(countAllZero);
+							m_WriteInt(countAllZero);
 							countAllZero = 0;
 						}
 						if (countZero > 0)
 						{
 							writer.Write(Ebdb.Zero);
-							this.m_WriteInt(countZero);
+							m_WriteInt(countZero);
 							countZero = 0;
 						}
-						this.m_WriteInt(array[x, y, z]);
+						m_WriteInt(array[x, y, z]);
 					}
 				}
 				if (countZero == length2)
@@ -350,7 +350,7 @@ internal sealed class EraBinaryDataWriter : IDisposable
 	private void writeData(string[] array)
 	{
 		int countZero = 0;
-		writer.Write((int)array.Length);
+		writer.Write(array.Length);
 		for (int x = 0; x < array.Length; x++)
 		{
 			if (array[x] == null || array[x].Length == 0)
@@ -360,7 +360,7 @@ internal sealed class EraBinaryDataWriter : IDisposable
 				if (countZero > 0)
 				{
 					writer.Write(Ebdb.Zero);
-					this.m_WriteInt(countZero);
+					m_WriteInt(countZero);
 					countZero = 0;
 				}
 				writer.Write(Ebdb.String);
@@ -389,13 +389,13 @@ internal sealed class EraBinaryDataWriter : IDisposable
 					if (countAllZero > 0)
 					{
 						writer.Write(Ebdb.ZeroA1);
-						this.m_WriteInt(countAllZero);
+						m_WriteInt(countAllZero);
 						countAllZero = 0;
 					}
 					if (countZero > 0)
 					{
 						writer.Write(Ebdb.Zero);
-						this.m_WriteInt(countZero);
+						m_WriteInt(countZero);
 						countZero = 0;
 					}
 					writer.Write(Ebdb.String);
@@ -435,19 +435,19 @@ internal sealed class EraBinaryDataWriter : IDisposable
 						if (countAllZero2D > 0)
 						{
 							writer.Write(Ebdb.ZeroA2);
-							this.m_WriteInt(countAllZero2D);
+							m_WriteInt(countAllZero2D);
 							countAllZero2D = 0;
 						}
 						if (countAllZero > 0)
 						{
 							writer.Write(Ebdb.ZeroA1);
-							this.m_WriteInt(countAllZero);
+							m_WriteInt(countAllZero);
 							countAllZero = 0;
 						}
 						if (countZero > 0)
 						{
 							writer.Write(Ebdb.Zero);
-							this.m_WriteInt(countZero);
+							m_WriteInt(countZero);
 							countZero = 0;
 						}
 						writer.Write(Ebdb.String);

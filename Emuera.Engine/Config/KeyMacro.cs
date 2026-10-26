@@ -1,4 +1,3 @@
-﻿using System.IO;
 using MinorShift.Emuera.Sub;
 using System;
 using System.Text;
@@ -10,7 +9,7 @@ internal static class KeyMacro
 {
 	#region eee_カレントディレクトリー
 	//readonly static string macroPath = Program.ExeDir + "macro.txt";
-	readonly static string macroPath = Program.WorkingDir + "macro.txt";
+	readonly static string macroPath = Program.ExeDir + "macro.txt";
 	#endregion
 	public const string gID = "グループ";
 	public const int MaxGroup = 10;
@@ -25,7 +24,7 @@ internal static class KeyMacro
 	/// </summary>
 	static string[] macroName = new string[MaxMacro];
 	static string[] groupName = new string[MaxGroup];
-	static bool isMacroChanged = false;
+	static bool isMacroChanged;
 	static KeyMacro()
 	{
 		ResetNames();
@@ -81,7 +80,7 @@ internal static class KeyMacro
 
 	public static void LoadMacroFile(string filename)
 	{
-		EraStreamReader eReader = new(false);
+		using var eReader = new EraStreamReader(false);
 		if (!eReader.Open(filename))
 			return;
 		try
@@ -89,7 +88,7 @@ internal static class KeyMacro
 			string line = null;
 			while ((line = eReader.ReadLine()) != null)
 			{
-				if ((line.Length == 0) || (line[0] == ';'))
+				if (line.Length == 0 || line[0] == ';')
 					continue;
 				if (line.StartsWith(gID))
 				{
@@ -100,13 +99,13 @@ internal static class KeyMacro
 						continue;
 					if (line[gID.Length + 1] != ':')
 						continue;
-					groupName[num] = line.Substring(gID.Length + 2);
+					groupName[num] = line[(gID.Length + 2)..];
 				}
 				for (int i = 0; i < MaxMacro; i++)
 				{
 					if (line.StartsWith(macroName[i]))
 					{
-						macro[i] = line.Substring(macroName[i].Length);
+						macro[i] = line[macroName[i].Length..];
 						break;
 					}
 				}

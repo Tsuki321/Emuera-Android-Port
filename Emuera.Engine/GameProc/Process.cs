@@ -1,27 +1,32 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
 // System.Windows.Forms removed — not available on Android.
 using MinorShift.Emuera.GameData;
+using MinorShift.Emuera.GameProc;
 using MinorShift.Emuera.Sub;
-using MinorShift._Library;
-using MinorShift.Emuera.GameView;
+using MinorShift.Emuera.GameProc;
 using MinorShift.Emuera.GameData.Expression;
-using MinorShift.Emuera.GameData.Variable;
-using MinorShift.Emuera.GameProc.Function;
 using MinorShift.Emuera.GameData.Function;
+using MinorShift.Emuera.GameData.Variable;
+using MinorShift.Emuera.Sub;
+using MinorShift.Emuera.GameProc.PluginSystem;
+using MinorShift.Emuera.Content;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using trerror = EvilMask.Emuera.Lang.Error;
 using trmb = EvilMask.Emuera.Lang.MessageBox;
 using trsl = EvilMask.Emuera.Lang.SystemLine;
-using trerror = EvilMask.Emuera.Lang.Error;
-using MinorShift.Emuera.GameProc.PluginSystem;
 
 namespace MinorShift.Emuera.GameProc;
 
-internal sealed partial class Process(EmueraConsole view, bool analysisMode)
+internal sealed partial class Process(EmueraConsole view)
 {
-	readonly bool analysisMode = analysisMode;
 	public LogicalLine getCurrentLine { get { return state.CurrentLine; } }
 
 	/// <summary>
@@ -38,23 +43,30 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 	public VariableEvaluator VEvaluator { get { return vEvaluator; } }
 	private ExpressionMediator exm;
 	private GameBase gamebase;
+	public GameBase gameBase { get { return gamebase; } }
 	readonly EmueraConsole console = view;
 	private IdentifierDictionary idDic;
 	ProcessState state;
 	ProcessState originalState;//リセットする時のために
-	bool noError = false;
+	bool noError;
 	//色々あって復活させてみる
 	bool initialiing;
 	public bool inInitializeing { get { return initialiing; } }
 
-	public bool Initialize()
+	public async Task<bool> Initialize(StreamWriter logWriter)
 	{
+		var stopWatch = new Stopwatch();
+		stopWatch.Start();
+		await Preload.Load(Program.ErbDir);
+		await Preload.Load(Program.CsvDir);
 		LexicalAnalyzer.UseMacro = false;
 		state = new ProcessState(console);
 		originalState = state;
 		initialiing = true;
 		try
 		{
+			logWriter?.WriteLine($"Proc:Init:Start {stopWatch.ElapsedMilliseconds}ms");
+			logWriter?.WriteLine($"Proc:Init:Parser:Start {stopWatch.ElapsedMilliseconds}ms");
 			ParserMediator.Initialize(console);
 			//コンフィグファイルに関するエラーの処理（コンフィグファイルはこの関数に入る前に読込済み）
 			if (ParserMediator.HasWarning)
@@ -66,17 +78,24 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 					return false;
 				}
 			}
+			logWriter?.WriteLine($"Proc:Init:Parser:End {stopWatch.ElapsedMilliseconds}ms");
+
+			logWriter?.WriteLine($"Proc:Init:Image:Start {stopWatch.ElapsedMilliseconds}ms");
 			//リソースフォルダ読み込み
-			if (!Content.AppContents.LoadContents(false))
+			bool loaded = AppContents.LoadContents(false);
+			if (!loaded)
 			{
 				ParserMediator.FlushWarningList();
 				console.PrintSystemLine(trsl.ResourceReadError.Text);
 				return false;
 			}
 			ParserMediator.FlushWarningList();
+			logWriter?.WriteLine($"Proc:Init:Image:End {stopWatch.ElapsedMilliseconds}ms");
+
+			logWriter?.WriteLine($"Proc:Init:KeyMacro:Start {stopWatch.ElapsedMilliseconds}ms");
 			//キーマクロ読み込み
 			#region eee_カレントディレクトリー
-			if (Config.UseKeyMacro && !analysisMode)
+			if (Config.UseKeyMacro && !Program.AnalysisMode)
 			{
 				//if (File.Exists(Program.ExeDir + "macro.txt"))
 				string macroPath = PathHelper.FindFileCaseInsensitive(Program.WorkingDir + "macro.txt");
@@ -89,8 +108,11 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 				}
 			}
 			#endregion
+			logWriter?.WriteLine($"Proc:Init:KeyMacro:End {stopWatch.ElapsedMilliseconds}ms");
+
+			logWriter?.WriteLine($"Proc:Init:Replace:Start {stopWatch.ElapsedMilliseconds}ms");
 			//_replace.csv読み込み
-			if (Config.UseReplaceFile && !analysisMode)
+			if (Config.UseReplaceFile && !Program.AnalysisMode)
 			{
 				string replacePath = PathHelper.FindFileCaseInsensitive(Program.CsvDir + "_Replace.csv");
 				if (File.Exists(replacePath))
@@ -109,23 +131,28 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 					}
 				}
 			}
+			logWriter?.WriteLine($"Proc:Init:Replace:End {stopWatch.ElapsedMilliseconds}ms");
+
 			Config.SetReplace(ConfigData.Instance);
 			//ここでBARを設定すれば、いいことに気づいた予感
 			console.setStBar(Config.DrawLineString);
 
+			logWriter?.WriteLine($"Proc:Init:Rename:Load:Start {stopWatch.ElapsedMilliseconds}ms");
 			//_rename.csv読み込み
 			if (Config.UseRenameFile)
 			{
 				string renamePath = PathHelper.FindFileCaseInsensitive(Program.CsvDir + "_Rename.csv");
 				if (File.Exists(renamePath))
 				{
-					if (Config.DisplayReport || analysisMode)
+					if (Config.DisplayReport || Program.AnalysisMode)
 						console.PrintSystemLine(trsl.LoadingRename.Text);
 					ParserMediator.LoadEraExRenameFile(renamePath);
 				}
 				else
 					console.PrintError(trsl.MissingRename.Text);
 			}
+			logWriter?.WriteLine($"Proc:Init:Rename:Load:End {stopWatch.ElapsedMilliseconds}ms");
+
 			if (!Config.DisplayReport)
 			{
 				console.PrintSingleLine(Config.LoadLabel);
@@ -133,7 +160,7 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 			}
 			//gamebase.csv読み込み
 			gamebase = new GameBase();
-			if (!gamebase.LoadGameBaseCsv(Program.CsvDir + "GAMEBASE.CSV"))
+			if (!await Task.Run(() => gamebase.LoadGameBaseCsv(Program.CsvDir + "GAMEBASE.CSV")))
 			{
 				ParserMediator.FlushWarningList();
 				console.PrintSystemLine(trsl.GamebaseError.Text);
@@ -141,12 +168,16 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 			}
 			console.SetWindowTitle(gamebase.ScriptWindowTitle);
 			GlobalStatic.GameBaseData = gamebase;
+			logWriter?.WriteLine($"Proc:Init:MainCSV:End {stopWatch.ElapsedMilliseconds}ms");
 
 			//前記以外のcsvを全て読み込み
 			ConstantData constant = new();
 			constant.LoadData(Program.CsvDir, console, Config.DisplayReport);
+			logWriter?.WriteLine($"Proc:Init:EtcCSV:End {stopWatch.ElapsedMilliseconds}ms");
+
 			GlobalStatic.ConstantData = constant;
 			TrainName = constant.GetCsvNameList(VariableCode.TRAINNAME);
+			logWriter?.WriteLine($"Proc:Init:EtcCSV:End {stopWatch.ElapsedMilliseconds}ms");
 
 			vEvaluator = new VariableEvaluator(gamebase, constant);
 			GlobalStatic.VEvaluator = vEvaluator;
@@ -160,34 +191,48 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 			exm = new ExpressionMediator(this, vEvaluator, console);
 			GlobalStatic.EMediator = exm;
 
+			logWriter?.WriteLine($"Proc:Init:ERH:Start {stopWatch.ElapsedMilliseconds}ms");
+
 			labelDic = new LabelDictionary();
 			GlobalStatic.LabelDictionary = labelDic;
 			HeaderFileLoader hLoader = new(console, idDic, this);
 
-			LexicalAnalyzer.UseMacro = false;
+			await Preload.Load(Program.ErbDir);
+		await Preload.Load(Program.CsvDir);
+		LexicalAnalyzer.UseMacro = false;
 
 			PluginManager.GetInstance().SetParent(this, state, exm);
 			PluginManager.GetInstance().LoadPlugins();
+			if (GlobalStatic.ExistPlugin == true && Config.PluginAvailableWarn == true)
+			{
+				console.PrintSingleLine(trsl.PluginAvailable.Text);
+			}
 
 			//ERH読込
-			if (!hLoader.LoadHeaderFiles(Program.ErbDir, Config.DisplayReport))
+			if (!await Task.Run(() => hLoader.LoadHeaderFiles(Program.ErbDir, Config.DisplayReport)))
 			{
 				ParserMediator.FlushWarningList();
 				console.PrintSystemLine("");
 				return false;
 			}
 			LexicalAnalyzer.UseMacro = idDic.UseMacro();
+			logWriter?.WriteLine($"Proc:Init:ERH:End {stopWatch.ElapsedMilliseconds}ms");
 
 			//TODO:ユーザー定義変数用のcsvの適用
 
 			//ERB読込
+			logWriter?.WriteLine($"Proc:Init:ERB:Start {stopWatch.ElapsedMilliseconds}ms");
 			var loader = new ErbLoader(console, exm, this);
-			if (analysisMode)
-				noError = loader.loadErbs(Program.AnalysisFiles, labelDic);
+			if (Program.AnalysisMode)
+				noError = await loader.LoadErbList(Program.AnalysisFiles, labelDic);
 			else
-				noError = loader.LoadErbFiles(Program.ErbDir, Config.DisplayReport, labelDic);
+				noError = await loader.LoadErbDir(Program.ErbDir, Config.DisplayReport, labelDic);
+			logWriter?.WriteLine($"Proc:Init:ERB:End {stopWatch.ElapsedMilliseconds}ms");
+
 			initSystemProcess();
 			initialiing = false;
+
+			logWriter?.WriteLine($"Proc:Init:End {stopWatch.ElapsedMilliseconds}ms");
 		}
 		catch (Exception e)
 		{
@@ -200,33 +245,35 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 			return false;
 		}
 		state.Begin(BeginType.TITLE);
-		GC.Collect();
 		return true;
 	}
 
-	public void ReloadErb()
+	public async Task ReloadErb()
 	{
+		await Preload.Load(Program.ErbDir);
+		await Preload.Load(Program.CsvDir);
 		saveCurrentState(false);
 		state.SystemState = SystemStateCode.System_Reloaderb;
 		ErbLoader loader = new(console, exm, this);
-		loader.LoadErbFiles(Program.ErbDir, false, labelDic);
+		await loader.LoadErbDir(Program.ErbDir, false, labelDic);
 		console.ReadAnyKey();
 	}
 
-	public void ReloadPartialErb(List<string> path)
+	public async Task ReloadPartialErb(List<string> paths)
 	{
 		saveCurrentState(false);
 		state.SystemState = SystemStateCode.System_Reloaderb;
-		ErbLoader loader = new(console, exm, this);
-		loader.loadErbs(path, labelDic);
+		await Preload.Load(paths);
+		var loader = new ErbLoader(console, exm, this);
+		await loader.LoadErbList(paths, labelDic);
 		console.ReadAnyKey();
 	}
 
-	public void SetCommnds(Int64 count)
+	public void SetCommnds(long count)
 	{
 		coms = new List<long>((int)count);
 		isCTrain = true;
-		Int64[] selectcom = vEvaluator.SELECTCOM_ARRAY;
+		long[] selectcom = vEvaluator.SELECTCOM_ARRAY;
 		if (count >= selectcom.Length)
 		{
 			throw new CodeEE(trerror.CalltrainArgMoreThanSelectcom.Text);
@@ -243,7 +290,7 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 		count = 0;
 		isCTrain = false;
 		skipPrint = true;
-		return (callFunction("CALLTRAINEND", false, false));
+		return callFunction("CALLTRAINEND", false, false);
 	}
 	#region EE_INPUTMOUSEKEYのボタン対応
 	// public void InputResult5(int r0, int r1, int r2, int r3, int r4)
@@ -258,36 +305,39 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 		result[5] = r5;
 	}
 	#endregion
-	public void InputInteger(Int64 i)
+	public void InputInteger(long i)
 	{
+		GlobalStatic.ctrlZ.Add(i.ToString());
 		vEvaluator.RESULT = i;
 	}
 	#region EM_私家版_INPUT系機能拡張
-	public void InputInteger(Int64 idx, Int64 i)
+	public void InputInteger(long idx, long i)
 	{
 		if (idx < vEvaluator.RESULT_ARRAY.Length)
 			vEvaluator.RESULT_ARRAY[idx] = i;
 	}
-	public void InputString(Int64 idx, string i)
+	public void InputString(long idx, string i)
 	{
 		if (idx < vEvaluator.RESULT_ARRAY.Length)
 			vEvaluator.RESULTS_ARRAY[idx] = i;
 	}
 	#endregion
-	public void InputSystemInteger(Int64 i)
+	public void InputSystemInteger(long i)
 	{
+		GlobalStatic.ctrlZ.Add(i.ToString());
 		systemResult = i;
 	}
 	public void InputString(string s)
 	{
+		GlobalStatic.ctrlZ.Add(s);
 		vEvaluator.RESULTS = s;
 	}
 
-	private int startTime = 0;
+	readonly Stopwatch startTime = new();
 
 	public void DoScript()
 	{
-		startTime = DateTime.Now.Millisecond;
+		startTime.Restart();
 		state.lineCount = 0;
 		bool systemProcRunning = true;
 		try
@@ -325,7 +375,7 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 
 	public void UpdateCheckInfiniteLoopState()
 	{
-		startTime = DateTime.Now.Millisecond;
+		startTime.Restart();
 		state.lineCount = 0;
 	}
 
@@ -342,8 +392,8 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 		//    console.ReadAnyKey();
 		//    return;
 		//}
-		var time = DateTime.Now.Millisecond - startTime;
-		if (time < Config.InfiniteLoopAlertTime)
+		var elapsedTime = startTime.ElapsedMilliseconds;
+		if (elapsedTime < Config.InfiniteLoopAlertTime)
 			return;
 		LogicalLine currentLine = state.CurrentLine;
 		if ((currentLine == null) || (currentLine is NullLine))
@@ -362,11 +412,11 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 		else
 		{
 			state.lineCount = 0;
-			startTime = DateTime.Now.Millisecond;
+			startTime.Restart();
 		}
 	}
 
-	int methodStack = 0;
+	int methodStack;
 	public SingleTerm GetValue(SuperUserDefinedMethodTerm udmt)
 	{
 		methodStack++;
@@ -391,7 +441,7 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 		finally
 		{
 			if (udmt.Call.TopLabel.hasPrivDynamicVar)
-				udmt.Call.TopLabel.Out();
+				udmt.Call.TopLabel.ScopeOut();
 			//1756beta2+v3:こいつらはここにないとデバッグコンソールで式中関数が事故った時に大事故になる
 			state.currentMin = temp_current;
 			methodStack--;
@@ -409,7 +459,7 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 		return methodStack;
 	}
 
-	public ScriptPosition GetRunningPosition()
+	public ScriptPosition? GetRunningPosition()
 	{
 		LogicalLine line = state.ErrorLine;
 		if (line == null)
@@ -425,14 +475,14 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 				return state.Scope;
 			}
 	*/
-	public LogicalLine scaningLine = null;
+	public LogicalLine scaningLine;
 	internal LogicalLine GetScaningLine()
 	{
 		if (scaningLine != null)
 			return scaningLine;
 		LogicalLine line = state.ErrorLine;
 		if (line == null)
-			return null;
+			return default;
 		return line;
 	}
 
@@ -442,17 +492,17 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 		console.ThrowError(playSound);
 		if (exc is CodeEE)
 		{
-			console.PrintError(string.Format(trerror.FuncEndError.Text, Sys.ExeName));
+			console.PrintError(string.Format(trerror.FuncEndError.Text, AssemblyData.EmueraVersionText));
 			console.PrintError(exc.Message);
 		}
 		else if (exc is ExeEE)
 		{
-			console.PrintError(string.Format(trerror.FuncEndEmueraError.Text, Sys.ExeName));
+			console.PrintError(string.Format(trerror.FuncEndEmueraError.Text, AssemblyData.EmueraVersionText));
 			console.PrintError(exc.Message);
 		}
 		else
 		{
-			console.PrintError(string.Format(trerror.FuncEndUnexpectedError.Text, Sys.ExeName));
+			console.PrintError(string.Format(trerror.FuncEndUnexpectedError.Text, AssemblyData.EmueraVersionText));
 			console.PrintError(exc.GetType().ToString() + ":" + exc.Message);
 			string[] stack = (exc.StackTrace ?? string.Empty).Split('\n');
 			for (int i = 0; i < stack.Length; i++)
@@ -465,7 +515,7 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 	private void handleException(Exception exc, LogicalLine current, bool playSound)
 	{
 		console.ThrowError(playSound);
-		ScriptPosition position = null;
+		ScriptPosition? position = null;
 		if ((exc is EmueraException ee) && (ee.Position != null))
 			position = ee.Position;
 		else if ((current != null) && (current.Position != null))
@@ -473,15 +523,15 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 		string posString = "";
 		if (position != null)
 		{
-			if (position.LineNo >= 0)
-				posString = string.Format(trerror.ErrorFileAndLine.Text, position.Filename, position.LineNo.ToString());
+			if (position.Value.LineNo >= 0)
+				posString = string.Format(trerror.ErrorFileAndLine.Text, position.Value.Filename, position.Value.LineNo.ToString());
 			else
-				posString = string.Format(trerror.ErrorFile.Text, position.Filename);
+				posString = string.Format(trerror.ErrorFile.Text, position.Value.Filename);
 
 		}
 		if (exc is CodeEE)
 		{
-			if (position != null)
+			if (position != default)
 			{
 				if (current is InstructionLine procline && procline.FunctionCode == FunctionCode.THROW)
 				{
@@ -491,11 +541,11 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 				}
 				else
 				{
-					console.PrintErrorButton(string.Format(trerror.HasError.Text, posString, Sys.ExeName), position);
+					console.PrintErrorButton(string.Format(trerror.HasError.Text, posString, AssemblyData.EmueraVersionText), position);
 					printRawLine(position);
 					console.PrintError(string.Format(trerror.ErrorMessage.Text, exc.Message));
 				}
-				console.PrintError(string.Format(trerror.ErrorInFunc.Text, current.ParentLabelLine.LabelName, current.ParentLabelLine.Position.Filename, current.ParentLabelLine.Position.LineNo.ToString()));
+				console.PrintError(string.Format(trerror.ErrorInFunc.Text, current.ParentLabelLine.LabelName, current.ParentLabelLine.Position.Value.Filename, current.ParentLabelLine.Position.Value.LineNo.ToString()));
 				console.PrintError(trerror.FuncCallStack.Text);
 				LogicalLine parent;
 				int depth = 0;
@@ -503,24 +553,24 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 				{
 					if (parent.Position != null)
 					{
-						console.PrintErrorButton(string.Format(trerror.ErrorFuncStack.Text, parent.Position.Filename, parent.Position.LineNo.ToString(), parent.ParentLabelLine.LabelName), parent.Position);
+						console.PrintErrorButton(string.Format(trerror.ErrorFuncStack.Text, parent.Position.Value.Filename, parent.Position.Value.LineNo.ToString(), parent.ParentLabelLine.LabelName), parent.Position);
 					}
 				}
 			}
 			else
 			{
-				console.PrintError(string.Format(trerror.HasError.Text, posString, Sys.ExeName));
+				console.PrintError(string.Format(trerror.HasError.Text, posString, AssemblyData.EmueraVersionText));
 				console.PrintError(exc.Message);
 			}
 		}
 		else if (exc is ExeEE)
 		{
-			console.PrintError(string.Format(trerror.HasEmueraError.Text, posString, Sys.ExeName));
+			console.PrintError(string.Format(trerror.HasEmueraError.Text, posString, AssemblyData.EmueraVersionText));
 			console.PrintError(exc.Message);
 		}
 		else
 		{
-			console.PrintError(string.Format(trerror.HasUnexpectedError.Text, posString, Sys.ExeName));
+			console.PrintError(string.Format(trerror.HasUnexpectedError.Text, posString, AssemblyData.EmueraVersionText));
 			console.PrintError(exc.GetType().ToString() + ":" + exc.Message);
 			string[] stack = (exc.StackTrace ?? string.Empty).Split('\n');
 			for (int i = 0; i < stack.Length; i++)
@@ -530,26 +580,26 @@ internal sealed partial class Process(EmueraConsole view, bool analysisMode)
 		}
 	}
 
-	public void printRawLine(ScriptPosition position)
+	public void printRawLine(ScriptPosition? position)
 	{
 		string str = getRawTextFormFilewithLine(position);
-		if (str != "")
+		if (!string.IsNullOrEmpty(str))
 			console.PrintError(str);
 	}
 
-	public string getRawTextFormFilewithLine(ScriptPosition position)
+	public static string getRawTextFormFilewithLine(ScriptPosition? position)
 	{
-		string extents = position.Filename.Substring(position.Filename.Length - 4).ToLower();
+		string extents = position.Value.Filename[^4..].ToLower();
 		if (extents == ".erb")
 		{
-			return File.Exists(Program.ErbDir + position.Filename)
-				? position.LineNo > 0 ? File.ReadLines(Program.ErbDir + position.Filename, EncodingHandler.DetectEncoding(Program.ErbDir + position.Filename)).Skip(position.LineNo - 1).First() : ""
+			return File.Exists(Program.ErbDir + position.Value.Filename)
+				? position.Value.LineNo > 0 ? File.ReadLines(Program.ErbDir + position.Value.Filename, EncodingHandler.DetectEncoding(Program.ErbDir + position.Value.Filename)).Skip(position.Value.LineNo - 1).First() : ""
 				: "";
 		}
 		else if (extents == ".csv")
 		{
-			return File.Exists(Program.CsvDir + position.Filename)
-				? position.LineNo > 0 ? File.ReadLines(Program.CsvDir + position.Filename, EncodingHandler.DetectEncoding(Program.ErbDir + position.Filename)).Skip(position.LineNo - 1).First() : ""
+			return File.Exists(Program.CsvDir + position.Value.Filename)
+				? position.Value.LineNo > 0 ? File.ReadLines(Program.CsvDir + position.Value.Filename, EncodingHandler.DetectEncoding(Program.ErbDir + position.Value.Filename)).Skip(position.Value.LineNo - 1).First() : ""
 				: "";
 		}
 		else

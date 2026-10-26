@@ -1,9 +1,5 @@
-﻿using MinorShift.Emuera.GameData.Expression;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MinorShift.Emuera.GameProc;
+using MinorShift.Emuera.GameData.Expression;
 
 namespace MinorShift.Emuera.GameProc.PluginSystem
 {
@@ -15,7 +11,7 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 			strValue = initialValue;
 		}
 
-		public PluginMethodParameter(Int64 initialValue)
+		public PluginMethodParameter(long initialValue)
 		{
 			isString = false;
 			intValue = initialValue;
@@ -23,7 +19,7 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 
 		public bool isString;
 		public string strValue;
-		public Int64 intValue;
+		public long intValue;
 	}
 
 	internal static class PluginMethodParameterBuilder
@@ -33,7 +29,8 @@ namespace MinorShift.Emuera.GameProc.PluginSystem
 			if (term.IsString)
 			{
 				return new PluginMethodParameter(term.GetStrValue(exm));
-			} else
+			}
+			else
 			{
 				return new PluginMethodParameter(term.GetIntValue(exm));
 

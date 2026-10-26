@@ -1,6 +1,9 @@
-﻿using System.Text;
-using System.Drawing;
+using MinorShift.Emuera.Sub;
+using MinorShift.Emuera.GameProc.PluginSystem;
+using System.Text;
+using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System;
 using MinorShift._Library;
@@ -16,7 +19,7 @@ internal static class Config
 	#region config
 	public static Encoding Encode = EncodingHandler.UTF8BOMEncoding;
 	public static Encoding SaveEncode = EncodingHandler.UTF8BOMEncoding;
-	private static Dictionary<ConfigCode, string> nameDic = null;
+	private static Dictionary<ConfigCode, string> nameDic;
 	public static string GetConfigName(ConfigCode code)
 	{
 		return nameDic[code];
@@ -26,21 +29,15 @@ internal static class Config
 	{
 		nameDic = instance.GetConfigNameDic();
 		IgnoreCase = instance.GetConfigValue<bool>(ConfigCode.IgnoreCase);
-		CompatiFunctionNoignoreCase = instance.GetConfigValue<bool>(ConfigCode.CompatiFunctionNoignoreCase);
-		ICFunction = IgnoreCase && !CompatiFunctionNoignoreCase;
-		ICVariable = IgnoreCase;
 		if (IgnoreCase)
 		{
-			if (CompatiFunctionNoignoreCase)
-				SCFunction = StringComparison.Ordinal;
-			else
-				SCFunction = StringComparison.OrdinalIgnoreCase;
-			SCVariable = StringComparison.OrdinalIgnoreCase;
+			StringComparison = StringComparison.OrdinalIgnoreCase;
+			StrComper = StringComparer.OrdinalIgnoreCase;
 		}
 		else
 		{
-			SCFunction = StringComparison.Ordinal;
-			SCVariable = StringComparison.Ordinal;
+			StringComparison = StringComparison.Ordinal;
+			StrComper = StringComparer.Ordinal;
 		}
 		UseRenameFile = instance.GetConfigValue<bool>(ConfigCode.UseRenameFile);
 		UseReplaceFile = instance.GetConfigValue<bool>(ConfigCode.UseReplaceFile);
@@ -136,7 +133,12 @@ internal static class Config
 		#region EE_重複定義の確認
 		CheckDuplicateIdentifier = instance.GetConfigValue<bool>(ConfigCode.CheckDuplicateIdentifier);
 		#endregion
-
+		#region EE_行連結の改行コード置換
+		ReplaceContinuationBR = instance.GetConfigValue<string>(ConfigCode.ReplaceContinuationBR);
+		#endregion
+		#region EE_CALLSHARP注意
+		PluginAvailableWarn = instance.GetConfigValue<bool>(ConfigCode.PluginAvailableWarn);
+		#endregion
 
 		#region EM_私家版_LoadText＆SaveText機能拡張
 		ValidExtension = instance.GetConfigValue<List<string>>(ConfigCode.ValidExtension);
@@ -174,6 +176,8 @@ internal static class Config
 		RikaiColorText = instance.GetConfigValue<Color>(ConfigCode.RikaiColorText);
 		RikaiUseSeparateBoxes = instance.GetConfigValue<bool>(ConfigCode.RikaiUseSeparateBoxes);
 		#endregion
+
+		Ctrl_Z_Enabled = instance.GetConfigValue<bool>(ConfigCode.Ctrl_Z_Enabled);
 
 
 		UseLanguage lang = instance.GetConfigValue<UseLanguage>(ConfigCode.useLanguage);
@@ -213,6 +217,11 @@ internal static class Config
 		{
 			GlobalStatic.Dialogs?.ShowInfoAsync(trmb.TooSmallLogSize.Text, trmb.ConfigError.Text).GetAwaiter().GetResult();
 			MaxLog = 500;
+		}
+		if (TextDrawingMode == TextDrawingMode.WINAPI)
+		{
+			MessageBox.Show(trmb.DoNotSupportWINAPI.Text);
+			TextDrawingMode = TextDrawingMode.TEXTRENDERER;
 		}
 
 		DrawingParam_ShapePositionShift = 0;
@@ -273,6 +282,9 @@ internal static class Config
 		}
 		return font;
 	}
+	#endregion
+
+	public static EngineFont DefaultFont => Font;
 
 	public static void ClearFont()
 	{
@@ -315,8 +327,8 @@ internal static class Config
 		#region eee_カレントディレクトリー
 		// bool existGlobal = File.Exists(Program.ExeDir + "global.sav");
 		// string[] savFiles = Directory.GetFiles(Program.ExeDir, "save*.sav", SearchOption.TopDirectoryOnly);
-		bool existGlobal = File.Exists(Program.WorkingDir + "global.sav");
-		string[] savFiles = Directory.GetFiles(Program.WorkingDir, "save*.sav", SearchOption.TopDirectoryOnly);
+		bool existGlobal = File.Exists(Program.ExeDir + "global.sav");
+		string[] savFiles = Directory.GetFiles(Program.ExeDir, "save*.sav", SearchOption.TopDirectoryOnly);
 		#endregion
 		if (!existGlobal && savFiles.Length == 0)
 			return;
@@ -336,9 +348,9 @@ internal static class Config
 			//if (File.Exists(Program.ExeDir + "global.sav"))
 			//	File.Move(Program.ExeDir + "global.sav", SavDir + "global.sav");
 			//savFiles = Directory.GetFiles(Program.ExeDir, "save*.sav", SearchOption.TopDirectoryOnly);
-			if (File.Exists(Program.WorkingDir + "global.sav"))
-				File.Move(Program.WorkingDir + "global.sav", SavDir + "global.sav");
-			savFiles = Directory.GetFiles(Program.WorkingDir, "save*.sav", SearchOption.TopDirectoryOnly);
+			if (File.Exists(Program.ExeDir + "global.sav"))
+				File.Move(Program.ExeDir + "global.sav", SavDir + "global.sav");
+			savFiles = Directory.GetFiles(Program.ExeDir, "save*.sav", SearchOption.TopDirectoryOnly);
 			#endregion
 			foreach (string oldpath in savFiles)
 				File.Move(oldpath, SavDir + Path.GetFileName(oldpath));
@@ -377,10 +389,10 @@ internal static class Config
 		long[] writetimes = new long[erbFiles.Length + csvFiles.Length];
 		for (int i = 0; i < erbFiles.Length; i++)
 			if (Path.GetExtension(erbFiles[i]).Equals(".ERB", StringComparison.OrdinalIgnoreCase))
-				writetimes[i] = System.IO.File.GetLastWriteTime(erbFiles[i]).ToBinary();
+				writetimes[i] = File.GetLastWriteTime(erbFiles[i]).ToBinary();
 		for (int i = 0; i < csvFiles.Length; i++)
 			if (Path.GetExtension(csvFiles[i]).Equals(".CSV", StringComparison.OrdinalIgnoreCase))
-				writetimes[i + erbFiles.Length] = System.IO.File.GetLastWriteTime(csvFiles[i]).ToBinary();
+				writetimes[i + erbFiles.Length] = File.GetLastWriteTime(csvFiles[i]).ToBinary();
 		long key = 0;
 		for (int i = 0; i < writetimes.Length; i++)
 		{
@@ -398,86 +410,68 @@ internal static class Config
 		return getFiles(rootdir, rootdir, pattern, !SearchSubdirectory, SortWithFilename);
 	}
 
-	private sealed class StrIgnoreCaseComparer : IComparer<string>
+	public static List<KeyValuePair<string, string>> GetFiles(string dir, string rootdir, string pattern)
 	{
-		public int Compare(string x, string y)
-		{
-			return string.Compare(x, y, StringComparison.OrdinalIgnoreCase);
-		}
+		return getFiles(dir, rootdir, pattern, !SearchSubdirectory, SortWithFilename);
 	}
-	static readonly StrIgnoreCaseComparer ignoreCaseComparer = new StrIgnoreCaseComparer();
 
 	//KeyValuePair<相対パス, 完全パス>のリストを返す。
 	private static List<KeyValuePair<string, string>> getFiles(string dir, string rootdir, string pattern, bool toponly, bool sort)
 	{
-		StringComparison strComp = StringComparison.OrdinalIgnoreCase;
-		List<KeyValuePair<string, string>> retList = new List<KeyValuePair<string, string>>();
+		List<KeyValuePair<string, string>> retList = [];
+
+		string RelativePath;//相対ディレクトリ名
+		if (string.Equals(dir, rootdir, StringComparison.OrdinalIgnoreCase))//現在のパスが検索ルートパスに等しい
+			RelativePath = "";
+		else
+		{
+			if (!dir.StartsWith(rootdir, StringComparison.OrdinalIgnoreCase))
+				RelativePath = dir;
+			else
+				RelativePath = dir[rootdir.Length..];//前方が検索ルートパスと一致するならその部分を切り取る
+			if (!RelativePath.EndsWith('\\') && !RelativePath.EndsWith('/'))
+				RelativePath += "\\";//末尾が\又は/で終わるように。後でFile名を直接加算できるようにしておく
+		}
+		//filepathsは完全パスである
+		string[] filepaths = PathHelper.GetFilesIgnoreCase(dir, pattern, SearchOption.TopDirectoryOnly);
+		if (sort)
+			Array.Sort(filepaths);
+		for (int i = 0; i < filepaths.Length; i++)
+			if (Path.GetExtension(filepaths[i]).Length <= 4)//".erb"や".csv"であること。放置すると".erb*"等を拾う。
+				retList.Add(new KeyValuePair<string, string>(Path.Combine(RelativePath, Path.GetFileName(filepaths[i])), filepaths[i]));
+
 		if (!toponly)
 		{//サブフォルダ内の検索
 			string[] dirList = Directory.GetDirectories(dir, "*", SearchOption.TopDirectoryOnly);
 			if (dirList.Length > 0)
 			{
 				if (sort)
-					Array.Sort(dirList, ignoreCaseComparer);
+					Array.Sort(dirList);
 				for (int i = 0; i < dirList.Length; i++)
 					retList.AddRange(getFiles(dirList[i], rootdir, pattern, toponly, sort));
 			}
 		}
-		string RelativePath;//相対ディレクトリ名
-		if (string.Equals(dir, rootdir, strComp))//現在のパスが検索ルートパスに等しい
-			RelativePath = "";
-		else
-		{
-			if (!dir.StartsWith(rootdir, strComp))
-				RelativePath = dir;
-			else
-				RelativePath = dir.Substring(rootdir.Length);//前方が検索ルートパスと一致するならその部分を切り取る
-			if (!RelativePath.EndsWith("\\") && !RelativePath.EndsWith("/"))
-				RelativePath += "\\";//末尾が\又は/で終わるように。後でFile名を直接加算できるようにしておく
-		}
-		//filepathsは完全パスである
-		string[] filepaths = PathHelper.GetFilesIgnoreCase(dir, pattern, SearchOption.TopDirectoryOnly);
-		if (sort)
-			Array.Sort(filepaths, ignoreCaseComparer);
-		for (int i = 0; i < filepaths.Length; i++)
-			if (Path.GetExtension(filepaths[i]).Length <= 4)//".erb"や".csv"であること。放置すると".erb*"等を拾う。
-				retList.Add(new KeyValuePair<string, string>(RelativePath + Path.GetFileName(filepaths[i]), filepaths[i]));
+
 		return retList;
 	}
-
-
-	/// <summary>
-	/// IgnoreCaseはprivateに。代わりにICFunctionかICVariableを使う。
-	/// </summary>
-	private static bool IgnoreCase { get; set; }
-	private static bool CompatiFunctionNoignoreCase { get; set; }
-
 
 	/// <summary>
 	/// 関数名・属性名的な名前のIgnoreCaseフラグ
 	/// 関数・属性・BEGINのキーワード 
 	/// どうせeramaker用の互換処理なのでEmuera専用構文については適当に。
 	/// </summary>
-	public static bool ICFunction { get; private set; }
-
-	/// <summary>
-	/// 変数名、命令名的な名前のIgnoreCaseフラグ 
-	/// 変数・命令・$ラベル名、GOTOの引数 
-	/// </summary>
-	public static bool ICVariable { get; private set; }
+	public static bool IgnoreCase { get; private set; }
 
 	/// <summary>
 	/// 関数名・属性名的な名前の比較フラグ
 	/// </summary>
-	public static StringComparison SCFunction { get; private set; }
-	/// <summary>
-	/// 変数名、命令名的な名前の比較フラグ
-	/// </summary>
-	public static StringComparison SCVariable { get; private set; }
+	public static StringComparison StringComparison { get; private set; }
+
 	/// <summary>
 	/// ファイル名的な名前の比較フラグ
 	/// </summary>
 	public const StringComparison SCIgnoreCase = StringComparison.OrdinalIgnoreCase;
+
 	/// <summary>
 	/// 式中での文字列比較フラグ
 	/// </summary>
@@ -615,12 +609,12 @@ internal static class Config
 		TitleMenuString0 = instance.GetConfigValue<string>(ConfigCode.TitleMenuString0);
 		TitleMenuString1 = instance.GetConfigValue<string>(ConfigCode.TitleMenuString1);
 		ComAbleDefault = instance.GetConfigValue<int>(ConfigCode.ComAbleDefault);
-		StainDefault = instance.GetConfigValue<List<Int64>>(ConfigCode.StainDefault);
+		StainDefault = instance.GetConfigValue<List<long>>(ConfigCode.StainDefault);
 		TimeupLabel = instance.GetConfigValue<string>(ConfigCode.TimeupLabel);
-		ExpLvDef = instance.GetConfigValue<List<Int64>>(ConfigCode.ExpLvDef);
-		PalamLvDef = instance.GetConfigValue<List<Int64>>(ConfigCode.PalamLvDef);
-		PbandDef = instance.GetConfigValue<Int64>(ConfigCode.pbandDef);
-		RelationDef = instance.GetConfigValue<Int64>(ConfigCode.RelationDef);
+		ExpLvDef = instance.GetConfigValue<List<long>>(ConfigCode.ExpLvDef);
+		PalamLvDef = instance.GetConfigValue<List<long>>(ConfigCode.PalamLvDef);
+		PbandDef = instance.GetConfigValue<long>(ConfigCode.pbandDef);
+		RelationDef = instance.GetConfigValue<long>(ConfigCode.RelationDef);
 	}
 
 	public static string MoneyLabel { get; private set; }
@@ -633,13 +627,15 @@ internal static class Config
 	public static string TitleMenuString0 { get; private set; }
 	public static string TitleMenuString1 { get; private set; }
 	public static int ComAbleDefault { get; private set; }
-	public static List<Int64> StainDefault { get; private set; }
+	public static List<long> StainDefault { get; private set; }
 	public static string TimeupLabel { get; private set; }
-	public static List<Int64> ExpLvDef { get; private set; }
-	public static List<Int64> PalamLvDef { get; private set; }
-	public static Int64 PbandDef { get; private set; }
-	public static Int64 RelationDef { get; private set; }
+	public static List<long> ExpLvDef { get; private set; }
+	public static List<long> PalamLvDef { get; private set; }
+	public static long PbandDef { get; private set; }
+	public static long RelationDef { get; private set; }
 	#endregion
+
+	public static StringComparer StrComper = StringComparer.OrdinalIgnoreCase;
 
 	#region EE版_UPDATECHECK
 	public static bool ForbidUpdateCheck { get; private set; }
@@ -652,6 +648,12 @@ internal static class Config
 	#endregion
 	#region EE_重複定義の確認
 	public static bool CheckDuplicateIdentifier { get; private set; }
+	#endregion
+	#region EE_行連結の改行コード置換
+	public static string ReplaceContinuationBR { get; private set; }
+	#endregion
+	#region EE_CALLSHARP注意
+	public static bool PluginAvailableWarn { get; private set; }
 	#endregion
 	#region EM_私家版_LoadText＆SaveText機能拡張
 	public static List<string> ValidExtension { get; private set; }
@@ -689,4 +691,6 @@ internal static class Config
 	public static Color RikaiColorText { get; private set; }
 	public static bool RikaiUseSeparateBoxes { get; private set; }
 	#endregion
+
+	public static bool Ctrl_Z_Enabled { get; private set; }
 }

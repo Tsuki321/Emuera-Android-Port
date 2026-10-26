@@ -1,4 +1,4 @@
-﻿using MinorShift.Emuera.Sub;
+using MinorShift.Emuera.Sub;
 using System;
 using System.Collections.Generic;
 using System.Drawing;

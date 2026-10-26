@@ -1,12 +1,13 @@
-﻿using System;
-using System.Text;
-using MinorShift.Emuera.GameData.Expression;
 using MinorShift.Emuera.GameData.Variable;
 using MinorShift.Emuera.Sub;
-using MinorShift._Library;
+using MinorShift.Emuera.GameProc;
+using MinorShift.Emuera.GameData.Expression;
 using MinorShift.Emuera.GameData.Function;
+using MinorShift.Emuera.GameData.Variable;
+using MinorShift.Emuera.Sub;
 using System.Collections.Generic;
-using EvilMask.Emuera;
+using System.Runtime.CompilerServices;
+using System.Text;
 using trerror = EvilMask.Emuera.Lang.Error;
 
 namespace MinorShift.Emuera.GameData;
@@ -14,18 +15,18 @@ namespace MinorShift.Emuera.GameData;
 internal sealed class StrForm
 {
 	private StrForm() { }
-	string[] strs = null;//terms.Length + 1
-	IOperandTerm[] terms = null;
+	string[] strs;//terms.Count + 1
+	IOperandTerm[] terms;
 
 	#region static
-	static FormattedStringMethod formatCurlyBrace = null;
-	static FormattedStringMethod formatPercent = null;
-	static FormattedStringMethod formatYenAt = null;
-	static FunctionMethodTerm NameTarget = null;// "***"
-	static FunctionMethodTerm CallnameMaster = null;// "+++"
-	static FunctionMethodTerm CallnamePlayer = null;// "==="
-	static FunctionMethodTerm NameAssi = null;// "///"
-	static FunctionMethodTerm CallnameTarget = null;// "$$$"
+	static FormattedStringMethod formatCurlyBrace;
+	static FormattedStringMethod formatPercent;
+	static FormattedStringMethod formatYenAt;
+	static FunctionMethodTerm NameTarget;// "***"
+	static FunctionMethodTerm CallnameMaster;// "+++"
+	static FunctionMethodTerm CallnamePlayer;// "==="
+	static FunctionMethodTerm NameAssi;// "///"
+	static FunctionMethodTerm CallnameTarget;// "$$$"
 	public static void Initialize()
 	{
 		formatCurlyBrace = new FormatCurlyBrace();
@@ -33,22 +34,22 @@ internal sealed class StrForm
 		formatYenAt = new FormatYenAt();
 		VariableToken nameID = GlobalStatic.VariableData.GetSystemVariableToken("NAME");
 		VariableToken callnameID = GlobalStatic.VariableData.GetSystemVariableToken("CALLNAME");
-		IOperandTerm[] zeroArg = new IOperandTerm[] { new SingleTerm(0) };
-		VariableTerm target = new VariableTerm(GlobalStatic.VariableData.GetSystemVariableToken("TARGET"), zeroArg);
-		VariableTerm master = new VariableTerm(GlobalStatic.VariableData.GetSystemVariableToken("MASTER"), zeroArg);
-		VariableTerm player = new VariableTerm(GlobalStatic.VariableData.GetSystemVariableToken("PLAYER"), zeroArg);
-		VariableTerm assi = new VariableTerm(GlobalStatic.VariableData.GetSystemVariableToken("ASSI"), zeroArg);
+		IOperandTerm[] zeroArg = [new SingleLongTerm(0)];
+		VariableTerm target = new(GlobalStatic.VariableData.GetSystemVariableToken("TARGET"), zeroArg);
+		VariableTerm master = new(GlobalStatic.VariableData.GetSystemVariableToken("MASTER"), zeroArg);
+		VariableTerm player = new(GlobalStatic.VariableData.GetSystemVariableToken("PLAYER"), zeroArg);
+		VariableTerm assi = new(GlobalStatic.VariableData.GetSystemVariableToken("ASSI"), zeroArg);
 
-		VariableTerm nametarget = new VariableTerm(nameID, new IOperandTerm[] { target });
-		VariableTerm callnamemaster = new VariableTerm(callnameID, new IOperandTerm[] { master });
-		VariableTerm callnameplayer = new VariableTerm(callnameID, new IOperandTerm[] { player });
-		VariableTerm nameassi = new VariableTerm(nameID, new IOperandTerm[] { assi });
-		VariableTerm callnametarget = new VariableTerm(callnameID, new IOperandTerm[] { target });
-		NameTarget = new FunctionMethodTerm(formatPercent, new IOperandTerm[] { nametarget, null, null });
-		CallnameMaster = new FunctionMethodTerm(formatPercent, new IOperandTerm[] { callnamemaster, null, null });
-		CallnamePlayer = new FunctionMethodTerm(formatPercent, new IOperandTerm[] { callnameplayer, null, null });
-		NameAssi = new FunctionMethodTerm(formatPercent, new IOperandTerm[] { nameassi, null, null });
-		CallnameTarget = new FunctionMethodTerm(formatPercent, new IOperandTerm[] { callnametarget, null, null });
+		VariableTerm nametarget = new(nameID, [target]);
+		VariableTerm callnamemaster = new(callnameID, [master]);
+		VariableTerm callnameplayer = new(callnameID, [player]);
+		VariableTerm nameassi = new(nameID, [assi]);
+		VariableTerm callnametarget = new(callnameID, [target]);
+		NameTarget = new FunctionMethodTerm(formatPercent, [nametarget, null, null]);
+		CallnameMaster = new FunctionMethodTerm(formatPercent, [callnamemaster, null, null]);
+		CallnamePlayer = new FunctionMethodTerm(formatPercent, [callnameplayer, null, null]);
+		NameAssi = new FunctionMethodTerm(formatPercent, [nameassi, null, null]);
+		CallnameTarget = new FunctionMethodTerm(formatPercent, [callnametarget, null, null]);
 	}
 
 	public static StrForm FromWordToken(StrFormWord wt)
@@ -61,8 +62,7 @@ internal sealed class StrForm
 		for (int i = 0; i < wt.SubWords.Length; i++)
 		{
 			SubWord SWT = wt.SubWords[i];
-			TripleSymbolSubWord tSymbol = SWT as TripleSymbolSubWord;
-			if (tSymbol != null)
+			if (SWT is TripleSymbolSubWord tSymbol)
 			{
 				switch (tSymbol.Code)
 				{
@@ -97,14 +97,14 @@ internal sealed class StrForm
 						throw new CodeEE(trerror.AbnormalFirstOperand.Text);
 				}
 				else
-					operand = new SingleTerm(0);
-				IOperandTerm left = new StrFormTerm(StrForm.FromWordToken(yenat.Left));
+					operand = new SingleLongTerm(0);
+				IOperandTerm left = new StrFormTerm(FromWordToken(yenat.Left));
 				IOperandTerm right;
 				if (yenat.Right == null)
-					right = new SingleTerm("");
+					right = new SingleStrTerm("");
 				else
-					right = new StrFormTerm(StrForm.FromWordToken(yenat.Right));
-				termArray[i] = new FunctionMethodTerm(formatYenAt, new IOperandTerm[] { operand, left, right });
+					right = new StrFormTerm(FromWordToken(yenat.Right));
+				termArray[i] = new FunctionMethodTerm(formatYenAt, [operand, left, right]);
 				continue;
 			}
 			wc = SWT.Words;
@@ -126,12 +126,11 @@ internal sealed class StrForm
 				wc.ShiftNext();
 				if (!wc.EOL)
 				{
-					IdentifierWord id = wc.Current as IdentifierWord;
-					if (id == null)
+					if (wc.Current is not IdentifierWord id)
 						throw new CodeEE(trerror.NotSpecifiedLR.Text);
-					if (string.Equals(id.Code, "LEFT", Config.SCVariable))//標準RIGHT
-						third = new SingleTerm(1);
-					else if (!string.Equals(id.Code, "RIGHT", Config.SCVariable))
+					if (string.Equals(id.Code, "LEFT", Config.StringComparison))//標準RIGHT
+						third = new SingleLongTerm(1);
+					else if (!string.Equals(id.Code, "RIGHT", Config.StringComparison))
 						throw new CodeEE(trerror.OtherThanLR.Text);
 					wc.ShiftNext();
 				}
@@ -140,14 +139,14 @@ internal sealed class StrForm
 			}
 			if (SWT is CurlyBraceSubWord)
 			{
-				if (operand.GetOperandType() != typeof(Int64))
+				if (operand.GetOperandType() != typeof(long))
 					throw new CodeEE(trerror.IsNotNumericBrace.Text);
-				termArray[i] = new FunctionMethodTerm(formatCurlyBrace, new IOperandTerm[] { operand, second, third });
+				termArray[i] = new FunctionMethodTerm(formatCurlyBrace, [operand, second, third]);
 				continue;
 			}
 			if (operand.GetOperandType() != typeof(string))
 				throw new CodeEE(trerror.IsNotStringPer.Text);
-			termArray[i] = new FunctionMethodTerm(formatPercent, new IOperandTerm[] { operand, second, third });
+			termArray[i] = new FunctionMethodTerm(formatPercent, [operand, second, third]);
 		}
 		ret.terms = termArray;
 		return ret;
@@ -162,9 +161,9 @@ internal sealed class StrForm
 		}
 	}
 
-	public IOperandTerm GetIOperandTerm()
+	public IOperandTerm GetAExpression()
 	{
-		if ((strs.Length == 2) && (strs[0].Length == 0) && (strs[1].Length == 0))
+		if (strs.Length == 2 && strs[0].Length == 0 && strs[1].Length == 0)
 			return terms[0];
 		return null;
 	}
@@ -184,10 +183,8 @@ internal sealed class StrForm
 		}
 		if (!canRestructure)
 			return;
-		List<string> strList = [];
-		List<IOperandTerm> termList = [];
-		strList.AddRange(strs);
-		termList.AddRange(terms);
+		List<string> strList = [.. strs];
+		List<IOperandTerm> termList = [.. terms];
 		for (int i = 0; i < termList.Count; i++)
 		{
 			if (termList[i] is SingleTerm)
@@ -199,25 +196,22 @@ internal sealed class StrForm
 				i--;
 			}
 		}
-		strs = new string[strList.Count];
-		terms = new IOperandTerm[termList.Count];
-		strList.CopyTo(strs);
-		termList.CopyTo(terms);
+		strs = [.. strList];
+		terms = [.. termList];
 		return;
 	}
-
 	public string GetString(ExpressionMediator exm)
 	{
+		var handler = new DefaultInterpolatedStringHandler(strs.Length + terms.Length, 0);
 		if (strs.Length == 1)
 			return strs[0];
-		StringBuilder builder = new(100);
 		for (int i = 0; i < strs.Length - 1; i++)
 		{
-			builder.Append(strs[i]);
-			builder.Append(terms[i].GetStrValue(exm));
+			handler.AppendLiteral(strs[i]);
+			handler.AppendLiteral(terms[i].GetStrValue(exm));
 		}
-		builder.Append(strs[strs.Length - 1]);
-		return builder.ToString();
+		handler.AppendLiteral(strs[^1]);
+		return handler.ToString();
 	}
 
 	#region FormattedStringMethod 書式付文字列の内部
@@ -229,14 +223,14 @@ internal sealed class StrForm
 			ReturnType = typeof(string);
 			argumentTypeArray = null;
 		}
-		public override string CheckArgumentType(string name, IOperandTerm[] arguments) { throw new ExeEE("型チェックは呼び出し元が行うこと"); }
-		public override Int64 GetIntValue(ExpressionMediator exm, IOperandTerm[] arguments) { throw new ExeEE("戻り値の型が違う"); }
-		public override SingleTerm GetReturnValue(ExpressionMediator exm, IOperandTerm[] arguments) { return new SingleTerm(GetStrValue(exm, arguments)); }
+		public override string CheckArgumentType(string name, List<IOperandTerm> arguments) { throw new ExeEE("型チェックは呼び出し元が行うこと"); }
+		public override long GetIntValue(ExpressionMediator exm, List<IOperandTerm> arguments) { throw new ExeEE("戻り値の型が違う"); }
+		public override SingleTerm GetReturnValue(ExpressionMediator exm, List<IOperandTerm> arguments) { return new SingleStrTerm(GetStrValue(exm, arguments)); }
 	}
 
 	private sealed class FormatCurlyBrace : FormattedStringMethod
 	{
-		public override string GetStrValue(ExpressionMediator exm, IOperandTerm[] arguments)
+		public override string GetStrValue(ExpressionMediator exm, List<IOperandTerm> arguments)
 		{
 			string ret = arguments[0].GetIntValue(exm).ToString();
 			if (arguments[1] == null)
@@ -251,7 +245,7 @@ internal sealed class StrForm
 
 	private sealed class FormatPercent : FormattedStringMethod
 	{
-		public override string GetStrValue(ExpressionMediator exm, IOperandTerm[] arguments)
+		public override string GetStrValue(ExpressionMediator exm, List<IOperandTerm> arguments)
 		{
 			string ret = arguments[0].GetStrValue(exm);
 			if (arguments[1] == null)
@@ -271,9 +265,9 @@ internal sealed class StrForm
 
 	private sealed class FormatYenAt : FormattedStringMethod
 	{//Operator のTernaryIntStrStrとやってることは同じ
-		public override string GetStrValue(ExpressionMediator exm, IOperandTerm[] arguments)
+		public override string GetStrValue(ExpressionMediator exm, List<IOperandTerm> arguments)
 		{
-			return (arguments[0].GetIntValue(exm) != 0) ? arguments[1].GetStrValue(exm) : arguments[2].GetStrValue(exm);
+			return arguments[0].GetIntValue(exm) != 0 ? arguments[1].GetStrValue(exm) : arguments[2].GetStrValue(exm);
 		}
 	}
 

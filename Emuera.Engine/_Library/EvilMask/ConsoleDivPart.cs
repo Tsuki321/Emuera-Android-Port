@@ -1,4 +1,4 @@
-﻿using EvilMask.Emuera;
+using EvilMask.Emuera;
 using System;
 using System.Collections.Generic;
 using System.Drawing;

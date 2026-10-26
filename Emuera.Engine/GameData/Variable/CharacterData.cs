@@ -1,51 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using MinorShift.Emuera.GameData.Variable;
+using MinorShift.Emuera.GameData;
 using MinorShift.Emuera.Sub;
-using MinorShift.Emuera.GameProc;
+using System;
+using System.Collections.Generic;
 using trerror = EvilMask.Emuera.Lang.Error;
 
 namespace MinorShift.Emuera.GameData.Variable;
 
 internal sealed class CharacterData : IDisposable
 {
-	readonly Int64[] dataInteger;
+	readonly long[] dataInteger;
 	readonly string[] dataString;
-	readonly Int64[][] dataIntegerArray;
+	readonly long[][] dataIntegerArray;
 	readonly string[][] dataStringArray;
-	readonly Int64[][,] dataIntegerArray2D;
+	readonly long[][,] dataIntegerArray2D;
 	readonly string[][,] dataStringArray2D;
-	public Int64[] DataInteger { get { return dataInteger; } }
+	public long[] DataInteger { get { return dataInteger; } }
 	public string[] DataString { get { return dataString; } }
-	public Int64[][] DataIntegerArray { get { return dataIntegerArray; } }
+	public long[][] DataIntegerArray { get { return dataIntegerArray; } }
 	public string[][] DataStringArray { get { return dataStringArray; } }
-	public Int64[][,] DataIntegerArray2D { get { return dataIntegerArray2D; } }
+	public long[][,] DataIntegerArray2D { get { return dataIntegerArray2D; } }
 	public string[][,] DataStringArray2D { get { return dataStringArray2D; } }
 
 	public List<object> UserDefCVarDataList { get; set; }
 
 	public CharacterData(ConstantData constant, VariableData varData)
 	{
-		dataInteger = new Int64[(int)VariableCode.__COUNT_CHARACTER_INTEGER__];
+		dataInteger = new long[(int)VariableCode.__COUNT_CHARACTER_INTEGER__];
 		dataString = new string[(int)VariableCode.__COUNT_CHARACTER_STRING__];
-		dataIntegerArray = new Int64[(int)VariableCode.__COUNT_CHARACTER_INTEGER_ARRAY__][];
+		dataIntegerArray = new long[(int)VariableCode.__COUNT_CHARACTER_INTEGER_ARRAY__][];
 		dataStringArray = new string[(int)VariableCode.__COUNT_CHARACTER_STRING_ARRAY__][];
-		dataIntegerArray2D = new Int64[(int)VariableCode.__COUNT_CHARACTER_INTEGER_ARRAY_2D__][,];
-		dataStringArray2D = new string[(int)VariableCode.__COUNT_CHARACTER_STRING_ARRAY_2D__][,];
+		dataIntegerArray2D = new long[(int)VariableCode.__COUNT_CHARACTER_INTEGER_ARRAY_2D__][,];
+		dataStringArray2D = [];
 		for (int i = 0; i < dataIntegerArray.Length; i++)
-			dataIntegerArray[i] = new Int64[constant.CharacterIntArrayLength[i]];
+			dataIntegerArray[i] = new long[constant.CharacterIntArrayLength[i]];
 		for (int i = 0; i < dataStringArray.Length; i++)
 			dataStringArray[i] = new string[constant.CharacterStrArrayLength[i]];
 		for (int i = 0; i < dataIntegerArray2D.Length; i++)
 		{
-			Int64 length64 = constant.CharacterIntArray2DLength[i];
+			long length64 = constant.CharacterIntArray2DLength[i];
 			int length = (int)(length64 >> 32);
 			int length2 = (int)(length64 & 0x7FFFFFFF);
-			dataIntegerArray2D[i] = new Int64[length, length2];
+			dataIntegerArray2D[i] = new long[length, length2];
 		}
 		for (int i = 0; i < dataStringArray2D.Length; i++)
 		{
-			Int64 length64 = constant.CharacterStrArray2DLength[i];
+			long length64 = constant.CharacterStrArray2DLength[i];
 			int length = (int)(length64 >> 32);
 			int length2 = (int)(length64 & 0x7FFFFFFF);
 			dataStringArray2D[i] = new string[length, length2];
@@ -75,13 +75,13 @@ internal sealed class CharacterData : IDisposable
 				switch (d.Dimension)
 				{
 					case 1:
-						array = new Int64[d.Lengths[0]];
+						array = new long[d.Lengths[0]];
 						break;
 					case 2:
-						array = new Int64[d.Lengths[0], d.Lengths[1]];
+						array = new long[d.Lengths[0], d.Lengths[1]];
 						break;
 					case 3:
-						array = new Int64[d.Lengths[0], d.Lengths[1], d.Lengths[2]];
+						array = new long[d.Lengths[0], d.Lengths[1], d.Lengths[2]];
 						break;
 				}
 			}
@@ -101,39 +101,39 @@ internal sealed class CharacterData : IDisposable
 		dataString[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.CALLNAME] = tmpl.Callname;
 		dataString[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.NICKNAME] = tmpl.Nickname;
 		dataString[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.MASTERNAME] = tmpl.Mastername;
-		Int64[] array, array2;
+		long[] array, array2;
 		array = dataIntegerArray[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.MAXBASE];
 		array2 = dataIntegerArray[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.BASE];
-		foreach (KeyValuePair<int, Int64> pair in tmpl.Maxbase)
+		foreach (KeyValuePair<int, long> pair in tmpl.Maxbase)
 		{
 			array[pair.Key] = pair.Value;
 			array2[pair.Key] = pair.Value;
 		}
 		array = dataIntegerArray[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.MARK];
-		foreach (KeyValuePair<int, Int64> pair in tmpl.Mark)
+		foreach (KeyValuePair<int, long> pair in tmpl.Mark)
 			array[pair.Key] = pair.Value;
 		array = dataIntegerArray[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.EXP];
-		foreach (KeyValuePair<int, Int64> pair in tmpl.Exp)
+		foreach (KeyValuePair<int, long> pair in tmpl.Exp)
 			array[pair.Key] = pair.Value;
 		array = dataIntegerArray[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.ABL];
-		foreach (KeyValuePair<int, Int64> pair in tmpl.Abl)
+		foreach (KeyValuePair<int, long> pair in tmpl.Abl)
 			array[pair.Key] = pair.Value;
 		array = dataIntegerArray[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.TALENT];
-		foreach (KeyValuePair<int, Int64> pair in tmpl.Talent)
+		foreach (KeyValuePair<int, long> pair in tmpl.Talent)
 			array[pair.Key] = pair.Value;
 		array = dataIntegerArray[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.RELATION];
 		for (int i = 0; i < array.Length; i++)
 			array[i] = Config.RelationDef;
-		foreach (KeyValuePair<int, Int64> pair in tmpl.Relation)
+		foreach (KeyValuePair<int, long> pair in tmpl.Relation)
 			array[pair.Key] = pair.Value;
 		array = dataIntegerArray[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.CFLAG];
-		foreach (KeyValuePair<int, Int64> pair in tmpl.CFlag)
+		foreach (KeyValuePair<int, long> pair in tmpl.CFlag)
 			array[pair.Key] = pair.Value;
 		array = dataIntegerArray[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.EQUIP];
-		foreach (KeyValuePair<int, Int64> pair in tmpl.Equip)
+		foreach (KeyValuePair<int, long> pair in tmpl.Equip)
 			array[pair.Key] = pair.Value;
 		array = dataIntegerArray[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.JUEL];
-		foreach (KeyValuePair<int, Int64> pair in tmpl.Juel)
+		foreach (KeyValuePair<int, long> pair in tmpl.Juel)
 			array[pair.Key] = pair.Value;
 		string[] arrays = dataStringArray[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.CSTR];
 		foreach (KeyValuePair<int, string> pair in tmpl.CStr)
@@ -178,7 +178,7 @@ internal sealed class CharacterData : IDisposable
 		{
 			case VariableCode.__STRING__:
 			case VariableCode.__INTEGER__:
-				ret = new int[0];
+				ret = [];
 				break;
 			case VariableCode.__INTEGER__ | VariableCode.__ARRAY_1D__:
 				ret = new int[1];
@@ -249,7 +249,7 @@ internal sealed class CharacterData : IDisposable
 					{
 						int length = ((string[])UserDefCVarDataList[var.ArrayIndex]).GetLength(0);
 						for (int i = 0; i < length; i++)
-							((string[])other.UserDefCVarDataList[var.ArrayIndex])[i] = ((string[])(UserDefCVarDataList[var.ArrayIndex]))[i];
+							((string[])other.UserDefCVarDataList[var.ArrayIndex])[i] = ((string[])UserDefCVarDataList[var.ArrayIndex])[i];
 					}
 					else if (var.IsArray2D)
 					{
@@ -264,17 +264,17 @@ internal sealed class CharacterData : IDisposable
 				{
 					if (var.IsArray1D)
 					{
-						int length = ((Int64[])UserDefCVarDataList[var.ArrayIndex]).GetLength(0);
+						int length = ((long[])UserDefCVarDataList[var.ArrayIndex]).GetLength(0);
 						for (int i = 0; i < length; i++)
-							((Int64[])other.UserDefCVarDataList[var.ArrayIndex])[i] = ((Int64[])UserDefCVarDataList[var.ArrayIndex])[i];
+							((long[])other.UserDefCVarDataList[var.ArrayIndex])[i] = ((long[])UserDefCVarDataList[var.ArrayIndex])[i];
 					}
 					else if (var.IsArray2D)
 					{
-						int length1 = ((Int64[,])UserDefCVarDataList[var.ArrayIndex]).GetLength(0);
-						int length2 = ((Int64[,])UserDefCVarDataList[var.ArrayIndex]).GetLength(1);
+						int length1 = ((long[,])UserDefCVarDataList[var.ArrayIndex]).GetLength(0);
+						int length2 = ((long[,])UserDefCVarDataList[var.ArrayIndex]).GetLength(1);
 						for (int i = 0; i < length1; i++)
 							for (int j = 0; j < length2; j++)
-								((Int64[,])other.UserDefCVarDataList[var.ArrayIndex])[i, j] = ((Int64[,])UserDefCVarDataList[var.ArrayIndex])[i, j];
+								((long[,])other.UserDefCVarDataList[var.ArrayIndex])[i, j] = ((long[,])UserDefCVarDataList[var.ArrayIndex])[i, j];
 					}
 				}
 			}
@@ -355,11 +355,11 @@ internal sealed class CharacterData : IDisposable
 	public void LoadFromStreamExtended(EraDataReader reader)
 	{
 		Dictionary<string, string> strDic = reader.ReadStringExtended();
-		Dictionary<string, Int64> intDic = reader.ReadInt64Extended();
+		Dictionary<string, long> intDic = reader.ReadInt64Extended();
 		Dictionary<string, List<string>> strListDic = reader.ReadStringArrayExtended();
-		Dictionary<string, List<Int64>> intListDic = reader.ReadInt64ArrayExtended();
+		Dictionary<string, List<long>> intListDic = reader.ReadInt64ArrayExtended();
 		Dictionary<string, List<string[]>> str2DListDic = reader.ReadStringArray2DExtended();
-		Dictionary<string, List<Int64[]>> int2DListDic = reader.ReadInt64Array2DExtended();
+		Dictionary<string, List<long[]>> int2DListDic = reader.ReadInt64Array2DExtended();
 
 		List<VariableCode> codeList;
 
@@ -400,9 +400,9 @@ internal sealed class CharacterData : IDisposable
 	public void LoadFromStreamExtended_Old1802(EraDataReader reader)
 	{
 		Dictionary<string, string> strDic = reader.ReadStringExtended();
-		Dictionary<string, Int64> intDic = reader.ReadInt64Extended();
+		Dictionary<string, long> intDic = reader.ReadInt64Extended();
 		Dictionary<string, List<string>> strListDic = reader.ReadStringArrayExtended();
-		Dictionary<string, List<Int64>> intListDic = reader.ReadInt64ArrayExtended();
+		Dictionary<string, List<long>> intListDic = reader.ReadInt64ArrayExtended();
 
 		List<VariableCode> codeList;
 
@@ -534,7 +534,7 @@ internal sealed class CharacterData : IDisposable
 					break;
 				case EraSaveDataType.IntArray:
 					if (userDefineData && array != null)
-						reader.ReadIntArray(array as Int64[], true);
+						reader.ReadIntArray(array as long[], true);
 					else if (vToken == null || !vToken.IsInteger || vToken.Dimension != 1)
 						reader.ReadIntArray(null, true);
 					else
@@ -550,7 +550,7 @@ internal sealed class CharacterData : IDisposable
 					break;
 				case EraSaveDataType.IntArray2D:
 					if (userDefineData && array != null)
-						reader.ReadIntArray2D(array as Int64[,], true);
+						reader.ReadIntArray2D(array as long[,], true);
 					else if (vToken == null || !vToken.IsInteger || vToken.Dimension != 2)
 						reader.ReadIntArray2D(null, true);
 					else
@@ -585,7 +585,7 @@ internal sealed class CharacterData : IDisposable
 	}
 
 
-	private void copyListToArray<T>(List<T> srcList, T[] destArray)
+	private static void copyListToArray<T>(List<T> srcList, T[] destArray)
 	{
 		int count = Math.Min(srcList.Count, destArray.Length);
 		srcList.CopyTo(0, destArray, 0, count);
@@ -594,7 +594,7 @@ internal sealed class CharacterData : IDisposable
 		//    destArray[i] = srcList[i];
 		//}
 	}
-	private void copyListToArray2D<T>(List<T[]> srcList, T[,] destArray)
+	private static void copyListToArray2D<T>(List<T[]> srcList, T[,] destArray)
 	{
 		int countX = Math.Min(srcList.Count, destArray.GetLength(0));
 		int dLength = destArray.GetLength(1);
@@ -609,7 +609,7 @@ internal sealed class CharacterData : IDisposable
 		}
 	}
 
-	public void setValueAll(int varInt, Int64 value)
+	public void setValueAll(int varInt, long value)
 	{
 		dataInteger[varInt] = value;
 	}
@@ -619,9 +619,9 @@ internal sealed class CharacterData : IDisposable
 		dataString[varInt] = value;
 	}
 
-	public void setValueAll1D(int varInt, Int64 value, int start, int end)
+	public void setValueAll1D(int varInt, long value, int start, int end)
 	{
-		Int64[] array = dataIntegerArray[varInt];
+		long[] array = dataIntegerArray[varInt];
 		for (int i = start; i < end; i++)
 			array[i] = value;
 	}
@@ -633,9 +633,9 @@ internal sealed class CharacterData : IDisposable
 			array[i] = value;
 	}
 
-	public void setValueAll2D(int varInt, Int64 value)
+	public void setValueAll2D(int varInt, long value)
 	{
-		Int64[,] array = dataIntegerArray2D[varInt];
+		long[,] array = dataIntegerArray2D[varInt];
 		int a1 = array.GetLength(0);
 		int a2 = array.GetLength(1);
 		for (int i = 0; i < a1; i++)
@@ -666,11 +666,11 @@ internal sealed class CharacterData : IDisposable
 	}
 
 	#endregion
-	public Int64[] CFlag
+	public long[] CFlag
 	{
 		get { return dataIntegerArray[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.CFLAG]; }
 	}
-	public Int64 NO
+	public long NO
 	{
 		get { return dataInteger[(int)VariableCode.__LOWERCASE__ & (int)VariableCode.NO]; }
 	}
@@ -694,7 +694,7 @@ internal sealed class CharacterData : IDisposable
 		return x.temp_CurrentOrder.CompareTo(y.temp_CurrentOrder);
 	}
 
-	public void SetSortKey(VariableToken sortkey, Int64 elem64)
+	public void SetSortKey(VariableToken sortkey, long elem64)
 	{
 		//チェック済み
 		//if (!sortkey.IsCharacterData)
@@ -738,7 +738,7 @@ internal sealed class CharacterData : IDisposable
 			if (sortkey.IsArray2D)
 			{
 				long[,] array = sortkey is UserDefinedCharaVariableToken token
-					? (Int64[,])UserDefCVarDataList[token.ArrayIndex]
+					? (long[,])UserDefCVarDataList[token.ArrayIndex]
 					: dataIntegerArray2D[sortkey.CodeInt];
 				int elem1 = (int)(elem64 >> 32);
 				int elem2 = (int)(elem64 & 0x7FFFFFFF);
@@ -749,7 +749,7 @@ internal sealed class CharacterData : IDisposable
 			else if (sortkey.IsArray1D)
 			{
 				long[] array = sortkey is UserDefinedCharaVariableToken token
-					? (Int64[])UserDefCVarDataList[token.ArrayIndex]
+					? (long[])UserDefCVarDataList[token.ArrayIndex]
 					: dataIntegerArray[sortkey.CodeInt];
 				if (elem64 < 0 || elem64 >= array.Length)
 					throw new CodeEE(trerror.OoRSortKey.Text);

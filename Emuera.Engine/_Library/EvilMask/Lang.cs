@@ -1,23 +1,23 @@
-﻿
-using MinorShift.Emuera;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
+using System.Globalization;
 using System.IO;
-using System.Runtime.InteropServices;
-using System.Text;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Xml;
+using MinorShift.Emuera.Runtime.Config;
 
 namespace EvilMask.Emuera;
 
-internal sealed class Lang
+internal sealed partial class Lang
 {
 	public sealed class TranslatableString
 	{
 		public TranslatableString(string text)
 		{
 			this.text = text;
-			this.tr = null;
+			tr = null;
 		}
 
 		public void Clear()
@@ -60,6 +60,7 @@ internal sealed class Lang
 			{
 				public static string Text { get { return trClass[typeof(File)].Text; } }
 				[Managed] public static TranslatableString Restart { get; } = new TranslatableString("再起動(&R)");
+				[Managed] public static TranslatableString RestartDebug { get; } = new TranslatableString("デバッグモードで再起動");
 				[Managed] public static TranslatableString SaveLog { get; } = new TranslatableString("ログを保存する...(&S)");
 				[Managed] public static TranslatableString CopyLogToClipboard { get; } = new TranslatableString("ログをクリップボードにコピー(&C)");
 				[Managed] public static TranslatableString BackToTitle { get; } = new TranslatableString("タイトル画面へ戻る(&T)");
@@ -77,12 +78,26 @@ internal sealed class Lang
 				[Managed] public static TranslatableString OpenDebugWindow { get; } = new TranslatableString("デバッグウインドウを開く");
 				[Managed] public static TranslatableString UpdateDebugInfo { get; } = new TranslatableString("デバッグ情報の更新");
 			}
+			
+			[Translate("ツール"), Managed]
+			public sealed class Tools
+			{
+				public static string Text { get { return trClass[typeof(Tools)].Text; } }
+				[Managed] public static TranslatableString LockWindowWidth { get; } = new TranslatableString("ウィンドウ幅のロック変更");
+				[Managed] public static TranslatableString CopyToClipboard { get; } = new TranslatableString("クリップボードにコピー");
+			}
 
 			[Translate("ヘルプ(&H)"), Managed]
 			public sealed class Help
 			{
 				public static string Text { get { return trClass[typeof(Help)].Text; } }
 				[Managed] public static TranslatableString Config { get; } = new TranslatableString("設定(&C)");
+			}
+			
+			[Translate("言語 (&L)"), Managed]
+			public sealed class Language
+			{
+				public static string Text { get { return trClass[typeof(Language)].Text; } }
 			}
 
 			[Managed]
@@ -323,6 +338,14 @@ internal sealed class Lang
 				[Managed] public static TranslatableString RikaiSeparateBox { get; } = new TranslatableString("翻訳中の語句を強調表示する");
 				[Managed] public static TranslatableString RikaiLink { get; } = new TranslatableString("Dictionaryファイルは下記リンクからDLできます");
 				[Managed] public static TranslatableString OtherEDICT1 { get; } = new TranslatableString("上記以外のEDICT1形式のファイルも使用可能です");
+			}
+			[Translate("DotNet"), Managed]
+			public sealed class DotNet
+			{
+				public static string Text { get { return trClass[typeof(DotNet)].Text; } }
+				[Managed] public static TranslatableString UseButtonFocusColor { get; } = new TranslatableString("ボタンにカーソルを合わせた時にボタンの背景色を変更する");
+				[Managed] public static TranslatableString UseNewRandom { get; } = new TranslatableString("新しい高速な乱数アルゴリズムを使う");
+				[Managed] public static TranslatableString UseVAR { get; } = new TranslatableString("VAR系命令を利用可能にする");
 			}
 			[Managed] public static TranslatableString ChangeWontTakeEffectUntilRestart { get; } = new TranslatableString("※変更は再起動するまで反映されません");
 			[Managed] public static TranslatableString Save { get; } = new TranslatableString("保存");
@@ -1064,10 +1087,6 @@ internal sealed class Lang
 		[Managed] public static TranslatableString CanNotOmitMacroArg { get; } = new TranslatableString("関数形式のマクロ{0}の引数を省略することはできません");
 		[Managed] public static TranslatableString NotFoundCorresponding { get; } = new TranslatableString("\'{0}\'が使われましたが対応する\'{1}\'が見つかりません");
 		[Managed] public static TranslatableString OoRSumArray { get; } = new TranslatableString("命令ARRAYSORTの第３引数({0})と第4変数({1})の和が配列\"{2}\"の範囲を超えています");
-		//[Managed] public static TranslatableString { get; } = new TranslatableString("");
-		//[Managed] public static TranslatableString { get; } = new TranslatableString("");
-		//[Managed] public static TranslatableString { get; } = new TranslatableString("");
-		//[Managed] public static TranslatableString { get; } = new TranslatableString("");
 		[Managed] public static TranslatableString CannotRecommendCallLocalVar { get; } = new TranslatableString("コード中でローカル変数を@付きで呼ぶことは推奨されません(代わりに*.ERHファイルの利用を検討してください)");
 
 		[Managed] public static TranslatableString LabelNameMissing { get; } = new TranslatableString("ラベル名がありません");
@@ -1175,6 +1194,16 @@ internal sealed class Lang
 		[Managed] public static TranslatableString IsDefinedErdVariable { get; } = new TranslatableString("変数名\"{0}\"は既にERD変数\"{1}\"の定義に使われており、予期せぬ配列参照を引き起こす場合があります");
 		[Managed] public static TranslatableString CanNotParseStringToIntTooltipImg { get; } = new TranslatableString("\"{0}\"を数値型に変換できません（文字列型として使う場合はTOOLTIP_IMGをオフにしてください）");
 		[Managed] public static TranslatableString ImcompatibleSoundFile { get; } = new TranslatableString("非対応のサウンドファイルが指定されました");
+		[Managed] public static TranslatableString IgnoreRandomize { get; } = new TranslatableString("新しい乱数アルゴリズムではRANDOMIZEは無視されます");
+		[Managed] public static TranslatableString CanNotUseInitrand { get; } = new TranslatableString("新しい乱数アルゴリズムではINITRANDは機能しません");
+		[Managed] public static TranslatableString CanNotUseDumprand { get; } = new TranslatableString("新しい乱数アルゴリズムではDUMPRANDは機能しません");
+		[Managed] public static TranslatableString CanNotUseVAR { get; } = new TranslatableString("{0}命令は現在の設定では使用できません");
+		[Managed] public static TranslatableString AbnormalEncode { get; } = new TranslatableString("文字コード異常。文字コードを確認してください（SJIS,UTF-8推奨）");
+		[Managed] public static TranslatableString FileUsingOtherProcess { get; } = new TranslatableString("ファイル:{0}は別のプロセスで使用されています（文字コードチェックができないためUTF-8 BOMで読み込みます）");
+		[Managed] public static TranslatableString TimeLogFileLocked { get; } = new TranslatableString("time.logファイルが別のプロセスで使用されているため、起動時間の記録ができません");
+		[Managed] public static TranslatableString MethodNotFound { get; } = new TranslatableString("\"[0]\"メソッドが見つかりません");
+		//[Managed] public static TranslatableString { get; } = new TranslatableString("");
+		//[Managed] public static TranslatableString { get; } = new TranslatableString("");
 	}
 	[Managed]
 	public sealed class MessageBox
@@ -1225,6 +1254,7 @@ internal sealed class Lang
 		[Managed] public static TranslatableString UnableChangeSetting { get; } = new TranslatableString("設定変更不可");
 		[Managed] public static TranslatableString ReloadResourceAsk { get; } = new TranslatableString("リソースフォルダを読み直します");
 		[Managed] public static TranslatableString ReloadResource { get; } = new TranslatableString("リソースフォルダを読み直します");
+		[Managed] public static TranslatableString DoNotSupportWINAPI { get; } = new TranslatableString("WINAPIモードはサポートされていません");
 		//[Managed] public static TranslatableString { get; } = new TranslatableString("");
 		//[Managed] public static TranslatableString { get; } = new TranslatableString("");
 		//[Managed] public static TranslatableString { get; } = new TranslatableString("");
@@ -1264,6 +1294,8 @@ internal sealed class Lang
 		[Managed] public static TranslatableString ErhLoadingError { get; } = new TranslatableString("ERHの読み込み中にエラーが発生したため処理を終了しました");
 		[Managed] public static TranslatableString DebugTraceCall { get; } = new TranslatableString("CALL :@{0}:{1}:{2}行目");
 		[Managed] public static TranslatableString DebugTraceJump { get; } = new TranslatableString("JUMP :@{0}:{1}:{2}行目");
+		[Managed] public static TranslatableString DebugTraceCall2 { get; } = new TranslatableString("CALL :@{0}:{1}:{2}行目 Called :{3}行目");
+		[Managed] public static TranslatableString DebugTraceJump2 { get; } = new TranslatableString("JUMP :@{0}:{1}:{2}行目 Jumped :{3}行目");
 		[Managed] public static TranslatableString AnalysisCompleted { get; } = new TranslatableString("ファイル解析終了：Analysis.logに出力します");
 		[Managed] public static TranslatableString PressEnterOrClick { get; } = new TranslatableString("エンターキーもしくはクリックで終了します");
 		[Managed] public static TranslatableString ExitBecauseCanNotInterpreted1 { get; } = new TranslatableString("ERBコードに解釈不可能な行があるためEmueraを終了します");
@@ -1287,44 +1319,84 @@ internal sealed class Lang
 		[Managed] public static TranslatableString LogFileHasBeenCreated { get; } = new TranslatableString("※※※ログファイルを{0}に出力しました※※※");
 		[Managed] public static TranslatableString MinusWontWork { get; } = new TranslatableString("整数型最小値({0})は-を取っても値は変化しません");
 		[Managed] public static TranslatableString ReloadResourceMessage { get; } = new TranslatableString("リソースフォルダを読み直しました");
+		[Managed] public static TranslatableString EnvironmentInformation { get; } = new TranslatableString("# 環境情報");
+		[Managed] public static TranslatableString PatchVersion { get; } = new TranslatableString("# パッチバージョン");
+		[Managed] public static TranslatableString Log { get; } = new TranslatableString("# ログ");
+		[Managed] public static TranslatableString CreateFromCSV { get; } = new TranslatableString("ファイル「{0}」からスプライト「{1}」を生成・・・");
+		[Managed] public static TranslatableString Variant { get; } = new TranslatableString("# バリアント");
+		[Managed] public static TranslatableString NotDefinedGameBase { get; } = new TranslatableString("GameBase未定義");
+		[Managed] public static TranslatableString PluginAvailable { get; } = new TranslatableString("注意：外部プラグイン機能が有効になっています。この機能で生じた不具合等はEmueraのサポート対象外となります");
 		//[Managed] public static TranslatableString { get; } = new TranslatableString("");
 		//[Managed] public static TranslatableString { get; } = new TranslatableString("");
 
 	}
 
+	[GeneratedRegex(@".*emuera.*\.xml")]
+	private static partial Regex LangFileRegex();
+	
+	private static void AddLanguageFile(string path)
+	{
+		XmlDocument xml = LoadXmlFile(path);
+		var langName = xml.SelectSingleNode("/lang/name")?.InnerText.Trim();
+		var culture = xml.SelectSingleNode("/lang/culture")?.InnerText.Trim();
+		if (langName == null)
+			return;
+		langList.TryAdd(langName, path);
+		if(culture != null)
+			localeList.TryAdd(culture, langName);
+	}
 
-	static public void LoadLanguageFile()
+	public static void LoadLanguageFiles()
 	{
 		foreach (var pair in trItems) pair.Value.Clear();
 		if (Directory.Exists(langDir))
 		{
 			foreach (var path in Directory.EnumerateFiles(langDir, "emuera.*.xml", SearchOption.TopDirectoryOnly))
 			{
-				XmlDocument xml = new XmlDocument();
-				try
-				{
-					xml.Load(path);
-				}
-				catch
-				{
-					continue;
-				}
-				var node = xml.SelectSingleNode("/lang/name");
-				if (node != null)
-				{
-					var langName = node.InnerText.Trim();
-					if (langName.IndexOf('\n', StringComparison.Ordinal) < 0 && !langList.ContainsKey(langName))
-					{
-						langList.Add(langName, path);
-						var fontName = node.InnerText.Trim();
-						if (Config.EmueraLang == langName)
-							loadLangXML(xml);
-					}
-				}
+				AddLanguageFile(path);
 			}
+		}
+		
+		var assembly = Assembly.GetExecutingAssembly();
+		var resources = assembly.GetManifestResourceNames();
+		
+		foreach (var path in resources)
+		{
+			if(!LangFileRegex().IsMatch(path))
+				continue;
+			AddLanguageFile(path);
 		}
 		langNames = new string[langList.Count];
 		langList.Keys.CopyTo(langNames, 0);
+	}
+
+	public static void SetLanguage()
+	{
+		if (Config.Config.EmueraLang == DefaultLanguage)
+        	return;
+
+		if (CurrentCulture.Name.StartsWith(("ja-")))
+		{
+			Config.Config.SetLanguageSetting(ConfigData.Instance, DefaultLanguage);
+			return;
+		}
+
+		if (langList.TryGetValue(Config.Config.EmueraLang, out string lang))
+		{
+			loadLangXML(LoadXmlFile(lang));
+			return;
+		}
+
+		foreach (var culture in localeList)
+		{
+			if (CurrentCulture.Name.StartsWith(culture.Key))
+			{
+				Config.Config.SetLanguageSetting(ConfigData.Instance, culture.Value);
+				loadLangXML(LoadXmlFile(langList[culture.Value]));
+				return;
+			}
+		}
+		Config.Config.SetLanguageSetting(ConfigData.Instance, DefaultLanguage);
 	}
 	static void loadLangXML(XmlDocument xml)
 	{
@@ -1341,27 +1413,46 @@ internal sealed class Lang
 				trItems[attr.Value].Set(nodes[i].InnerText);
 		}
 	}
-	static public void ReloadLang()
+	
+	public static void ReloadLang()
 	{
-		if (Config.EmueraLang == string.Empty)
+		if (Config.Config.EmueraLang == DefaultLanguage)
 		{
 			foreach (var item in trItems) item.Value.Clear();
 			return;
 		}
-		if (langList.ContainsKey(Config.EmueraLang))
+
+		if (!langList.TryGetValue(Config.Config.EmueraLang, out string path))
+			return;
+
+		XmlDocument xml;
+		try
 		{
-			var path = langList[Config.EmueraLang];
-			XmlDocument xml = new XmlDocument();
-			try
-			{
-				xml.Load(path);
-			}
-			catch
-			{
-				return;
-			}
-			loadLangXML(xml);
+			xml = LoadXmlFile(path);
 		}
+		catch
+		{
+			return;
+		}
+		loadLangXML(xml);
+	}
+
+	private static XmlDocument LoadXmlFile(string path)
+	{
+		XmlDocument xml = new();
+		if (path.StartsWith("MinorShift"))
+		{
+			var assembly = Assembly.GetExecutingAssembly();
+			using var stream = assembly.GetManifestResourceStream(path);
+			if (stream == null)
+				throw new FileNotFoundException(path);
+			xml.Load(stream);
+		}
+		else
+		{
+			xml.Load(path);
+		}
+		return xml;
 	}
 	static public string[] GetLangList()
 	{
@@ -1372,16 +1463,18 @@ internal sealed class Lang
 	{
 		if (!Directory.Exists(langDir))
 			Directory.CreateDirectory(langDir);
-		FileStream fs = new FileStream(langDir + "emuera-default-lang.xml", FileMode.Create);
-		XmlWriterSettings settings = new XmlWriterSettings();
-		settings.Indent = true;
-		settings.IndentChars = "\t";
+		FileStream fs = new(langDir + "emuera-default-lang.xml", FileMode.Create);
+		XmlWriterSettings settings = new()
+		{
+			Indent = true,
+			IndentChars = "\t"
+		};
 		XmlWriter writer = XmlWriter.Create(fs, settings);
-		XmlDocument xml = new XmlDocument();
+		XmlDocument xml = new();
 		var root = xml.CreateElement("lang");
 		xml.AppendChild(root);
 		var name = xml.CreateElement("name");
-		name.InnerText = "日本語";
+		name.InnerText = DefaultLanguage;
 		root.AppendChild(name);
 		foreach (var item in trItems)
 		{
@@ -1396,12 +1489,14 @@ internal sealed class Lang
 		writer.Flush();
 	}
 
-	static readonly string langDir = "lang/";
-	static readonly Dictionary<string, string> langList = new Dictionary<string, string>();
+	static readonly string langDir = Path.Combine(Program.ExeDir, "lang") + Path.DirectorySeparatorChar;
+
+	static readonly Dictionary<string, string> langList = [];
+	static readonly Dictionary<string, string> localeList = [];
 	public static string MFont { get; private set; }
 	static string[] langNames;
-	static readonly Dictionary<string, TranslatableString> trItems = new Dictionary<string, TranslatableString>();
-	static readonly Dictionary<Type, TranslatableString> trClass = new Dictionary<Type, TranslatableString>();
+	static readonly Dictionary<string, TranslatableString> trItems = [];
+	static readonly Dictionary<Type, TranslatableString> trClass = [];
 
 	static Lang()
 	{
@@ -1445,4 +1540,7 @@ internal sealed class Lang
 			}
 		}
 	}
+
+	private static CultureInfo CurrentCulture => Thread.CurrentThread.CurrentUICulture;
+	public const string DefaultLanguage = "日本語";
 }

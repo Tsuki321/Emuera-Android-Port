@@ -1,4 +1,4 @@
-﻿/*
+/*
 このファイルはSFMTアルゴリズムによって擬似乱数を作成するためのクラスライブラリです。
 このファイルはRei HOBARAさんが
 http://www.rei.to/random.html

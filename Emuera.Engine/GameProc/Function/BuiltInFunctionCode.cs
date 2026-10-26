@@ -1,10 +1,8 @@
-﻿namespace MinorShift.Emuera.GameProc.Function;
+namespace MinorShift.Emuera.GameProc.Function;
 
 /// <summary>
 /// 命令コード
 /// </summary>
-//難読化用属性。enum.ToString()やenum.Parse()を行うなら(Exclude=true)にすること。
-[global::System.Reflection.Obfuscation(Exclude = true)]
 enum FunctionCode
 {//数値不要
  //FunctionCodeを定義したらstatic FunctionIdentifier()内でaddFunctionすること。
@@ -78,7 +76,7 @@ enum FunctionCode
 
 	PUTFORM,//@SAVEINFO関数でのみ使用可能。PRINTFORMと同様の書式でセーブデータに概要をつける。
 	QUIT,//ゲームを終了
-	OUTPUTLOG,
+	//OUTPUTLOG,
 
 	BEGIN,//システム関数の実行。実行するとCALLの呼び出し元などを忘れてしまう。
 
@@ -379,13 +377,29 @@ enum FunctionCode
 	TOOLTIP_CUSTOM,
 	TOOLTIP_FORMAT,
 	TOOLTIP_IMG,
-	FLOWINPUT,
 	SKIPLOG,
 	BINPUT,
 	BINPUTS,
+	ONEBINPUT,
+	ONEBINPUTS,
+	BREAKBUTTON,
 	#endregion
 
 	#region EM
 	DT_COLUMN_OPTIONS,
 	#endregion
+
+	#region Emuera.NET
+	VARI,
+	VARS,
+	HTML_PRINT_ISLAND,
+	HTML_PRINT_ISLAND_CLEAR,
+
+	PRINTN,//改行をしないで入力待ち
+	PRINTVN,
+	PRINTSN,
+	PRINTFORMN,
+	PRINTFORMSN,
+	#endregion
+
 }

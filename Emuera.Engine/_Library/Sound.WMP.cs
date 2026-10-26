@@ -1,4 +1,4 @@
-﻿using WMPLib;
+using WMPLib;
 
 namespace MinorShift._Library;
 

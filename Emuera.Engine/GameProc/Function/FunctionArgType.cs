@@ -1,11 +1,8 @@
-﻿
 namespace MinorShift.Emuera.GameProc.Function;
 
 /// <summary>
 /// 命令の引数タイプ
 /// </summary>
-//難読化用属性。enum.ToString()やenum.Parse()を行うなら(Exclude=true)にすること。
-[global::System.Reflection.Obfuscation(Exclude = false)]
 enum FunctionArgType
 {//数値不要
 	__NULL__ = 0x0000,//未設定。エラー。引数がないならばVOIDを指定すること。

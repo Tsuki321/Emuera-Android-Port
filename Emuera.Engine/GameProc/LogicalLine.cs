@@ -1,11 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MinorShift.Emuera.Sub;
+using MinorShift.Emuera.GameData.Variable;
+using MinorShift.Emuera.GameProc;
+using MinorShift.Emuera.GameProc.Function;
 using MinorShift.Emuera.GameData;
+using MinorShift.Emuera.Sub;
 using MinorShift.Emuera.GameData.Expression;
 using MinorShift.Emuera.GameData.Variable;
-using MinorShift.Emuera.GameProc.Function;
+using MinorShift.Emuera.Sub;
+using System;
+using System.Collections.Generic;
 
 namespace MinorShift.Emuera.GameProc;
 
@@ -14,13 +16,13 @@ namespace MinorShift.Emuera.GameProc;
 /// </summary>
 internal abstract class LogicalLine
 {
-	protected ScriptPosition position;
+	protected ScriptPosition? scriptPosition;
 
 	//LogicalLine prevLine;
 	LogicalLine nextLine;
-	public ScriptPosition Position
+	public ScriptPosition? Position
 	{
-		get { return position; }
+		get { return scriptPosition; }
 	}
 
 	public FunctionLabelLine ParentLabelLine { get; set; }
@@ -31,9 +33,9 @@ internal abstract class LogicalLine
 	}
 	public override string ToString()
 	{
-		if (position == null)
+		if (scriptPosition == null)
 			return base.ToString();
-		return string.Format("{0}:{1}:{2}", position.Filename, position.LineNo, GlobalStatic.Process.getRawTextFormFilewithLine(position));
+		return string.Format("{0}:{1}:{2}", scriptPosition.Value.Filename, scriptPosition.Value.LineNo, Process.getRawTextFormFilewithLine(scriptPosition));
 	}
 
 	protected bool isError;
@@ -56,7 +58,7 @@ internal abstract class LogicalLine
 ///// </summary>
 //internal sealed class CommentLine : LogicalLine
 //{
-//    public CommentLine(ScriptPosition thePosition, string str)
+//    public CommentLine(ScriptPosition? thePosition, string str)
 //    {
 //        base.position = thePosition;
 //        //comment = str;
@@ -73,9 +75,9 @@ internal abstract class LogicalLine
 /// </summary>
 internal sealed class InvalidLine : LogicalLine
 {
-	public InvalidLine(ScriptPosition thePosition, string err)
+	public InvalidLine(ScriptPosition? thePosition, string err)
 	{
-		base.position = thePosition;
+		scriptPosition = thePosition;
 		errMes = err;
 	}
 	public override bool IsError
@@ -89,27 +91,27 @@ internal sealed class InvalidLine : LogicalLine
 /// </summary>
 internal sealed class InstructionLine : LogicalLine
 {
-	public InstructionLine(ScriptPosition thePosition, FunctionIdentifier theFunc, StringStream theArgPrimitive)
+	public InstructionLine(ScriptPosition? thePosition, FunctionIdentifier theFunc, StringStream theArgPrimitive)
 	{
-		base.position = thePosition;
-		this.func = theFunc;
-		this.argprimitive = theArgPrimitive;
+		scriptPosition = thePosition;
+		func = theFunc;
+		argprimitive = theArgPrimitive;
 	}
 
-	public InstructionLine(ScriptPosition thePosition, FunctionIdentifier functionIdentifier, OperatorCode assignOP, WordCollection dest, StringStream theArgPrimitive)
+	public InstructionLine(ScriptPosition? thePosition, FunctionIdentifier functionIdentifier, OperatorCode assignOP, WordCollection dest, StringStream theArgPrimitive)
 	{
-		base.position = thePosition;
+		scriptPosition = thePosition;
 		func = functionIdentifier;
 		AssignOperator = assignOP;
 		assigndest = dest;
-		this.argprimitive = theArgPrimitive;
+		argprimitive = theArgPrimitive;
 	}
 	readonly FunctionIdentifier func;
 	StringStream argprimitive;
 
 	WordCollection assigndest;
 	public OperatorCode AssignOperator { get; private set; }
-	Int64 subData = 0;
+	long subData;
 	public FunctionCode FunctionCode
 	{
 		get { return func.Code; }
@@ -135,7 +137,7 @@ internal sealed class InstructionLine : LogicalLine
 	/// <summary>
 	/// 繰り返しの終了を記憶する
 	/// </summary>
-	public Int64 LoopEnd
+	public long LoopEnd
 	{
 		get { return subData; }
 		set { subData = value; }
@@ -151,24 +153,24 @@ internal sealed class InstructionLine : LogicalLine
 		set { cnt = value; }
 	}
 
-	Int64 step;
+	long step;
 	/// <summary>
 	/// 繰り返しのたびに増加する値を記憶する
 	/// </summary>
-	public Int64 LoopStep
+	public long LoopStep
 	{
 		get { return step; }
 		set { step = value; }
 	}
 
-	private LogicalLine jumpto = null;
-	private LogicalLine jumptoendcatch = null;
+	private LogicalLine jumpto;
+	private LogicalLine jumptoendcatch;
 	//IF文とSELECT文のみが使う。
-	public List<InstructionLine> IfCaseList = null;
+	public LinkedList<InstructionLine> IfCaseList;
 	//PRINTDATA文のみが使う。
-	public List<List<InstructionLine>> dataList = null;
+	public List<List<InstructionLine>> dataList;
 	//TRYCALLLIST系が使う
-	public List<InstructionLine> callList = null;
+	public List<InstructionLine> callList;
 
 	public LogicalLine JumpTo
 	{
@@ -194,9 +196,9 @@ internal sealed class NullLine : LogicalLine { }
 /// </summary>
 internal sealed class InvalidLabelLine : FunctionLabelLine
 {
-	public InvalidLabelLine(ScriptPosition thePosition, string labelname, string err)
+	public InvalidLabelLine(ScriptPosition? thePosition, string labelname, string err)
 	{
-		base.position = thePosition;
+		scriptPosition = thePosition;
 		LabelName = labelname;
 		errMes = err;
 		IsSingle = false;
@@ -217,9 +219,9 @@ internal sealed class InvalidLabelLine : FunctionLabelLine
 internal class FunctionLabelLine : LogicalLine, IComparable<FunctionLabelLine>
 {
 	protected FunctionLabelLine() { }
-	public FunctionLabelLine(ScriptPosition thePosition, string labelname, WordCollection wc)
+	public FunctionLabelLine(ScriptPosition? thePosition, string labelname, WordCollection wc)
 	{
-		base.position = thePosition;
+		scriptPosition = thePosition;
 		LabelName = labelname;
 		IsSingle = false;
 		hasPrivDynamicVar = false;
@@ -276,13 +278,13 @@ internal class FunctionLabelLine : LogicalLine, IComparable<FunctionLabelLine>
 		if (FileIndex != other.FileIndex)
 			return FileIndex.CompareTo(other.FileIndex);
 		//position == nullであるLine(デバッグコマンドなど)をSortすることはないはず
-		if (position.LineNo != other.position.LineNo)
-			return position.LineNo.CompareTo(other.position.LineNo);
+		if (Position.Value.LineNo != other.Position.Value.LineNo)
+			return Position.Value.LineNo.CompareTo(other.Position.Value.LineNo);
 		return Index.CompareTo(other.Index);
 	}
 	#endregion
 	#region private変数
-	readonly Dictionary<string, UserDefinedVariableToken> privateVar = [];
+	readonly Dictionary<string, UserDefinedVariableToken> privateVar = new(Config.StrComper);
 	internal bool AddPrivateVariable(UserDefinedVariableData data)
 	{
 		if (privateVar.ContainsKey(data.Name))
@@ -303,23 +305,23 @@ internal class FunctionLabelLine : LogicalLine, IComparable<FunctionLabelLine>
 	/// <summary>
 	/// 引数の値の確定後、引数の代入より前に呼ぶこと
 	/// </summary>
-	internal void In()
+	internal void ScopeIn()
 	{
 #if DEBUG
 		GlobalStatic.StackList.Add(this);
 #endif
 		foreach (UserDefinedVariableToken var in privateVar.Values)
 			if (!var.IsStatic)
-				var.In();
+				var.ScopeIn();
 	}
-	internal void Out()
+	internal void ScopeOut()
 	{
 #if DEBUG
 		GlobalStatic.StackList.Remove(this);
 #endif
 		foreach (UserDefinedVariableToken var in privateVar.Values)
 			if (!var.IsStatic)
-				var.Out();
+				var.ScopeOut();
 	}
 	#endregion
 
@@ -330,9 +332,9 @@ internal class FunctionLabelLine : LogicalLine, IComparable<FunctionLabelLine>
 /// </summary>
 internal sealed class GotoLabelLine : LogicalLine, IEqualityComparer<GotoLabelLine>
 {
-	public GotoLabelLine(ScriptPosition thePosition, string labelname)
+	public GotoLabelLine(ScriptPosition? thePosition, string labelname)
 	{
-		base.position = thePosition;
+		scriptPosition = thePosition;
 		this.labelname = labelname;
 	}
 	readonly string labelname = "";
@@ -345,9 +347,9 @@ internal sealed class GotoLabelLine : LogicalLine, IEqualityComparer<GotoLabelLi
 
 	public bool Equals(GotoLabelLine x, GotoLabelLine y)
 	{
-		if ((x == null) || (y == null))
+		if (x == null || y == null)
 			return false;
-		return (x.ParentLabelLine == y.ParentLabelLine) && (x.labelname == y.labelname);
+		return x.ParentLabelLine == y.ParentLabelLine && x.labelname == y.labelname;
 	}
 
 	public int GetHashCode(GotoLabelLine obj)

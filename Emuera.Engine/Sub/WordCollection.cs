@@ -1,7 +1,6 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using MinorShift.Emuera.GameData.Expression;
+using System.Linq;
+using System.Reflection;
 
 namespace MinorShift.Emuera.Sub;
 
@@ -11,16 +10,35 @@ namespace MinorShift.Emuera.Sub;
 /// </summary>
 internal sealed class WordCollection
 {
-	public List<Word> Collection = [];
-	public int Pointer = 0;
+	public WordCollection()
+	{
+		Collection = new();
+		Pointer = Collection.First;
+	}
+
+	public LinkedList<Word> Collection;
+	public LinkedListNode<Word> Pointer;
+	int index = 0;
 	private static Word nullToken = new NullWord();
+
+	public void PointerReset()
+	{
+		index = 0;
+		Pointer = Collection.First;
+	}
+
 	public void Add(Word token)
 	{
-		Collection.Add(token);
+		Collection.AddLast(token);
+		Pointer ??= Collection.First;
 	}
 	public void Add(WordCollection wc)
 	{
-		Collection.AddRange(wc.Collection);
+		foreach (var word in wc.Collection)
+		{
+			Collection.AddLast(word);
+		}
+		Pointer ??= Collection.First;
 	}
 
 	public void Clear()
@@ -28,14 +46,40 @@ internal sealed class WordCollection
 		Collection.Clear();
 	}
 
-	public void ShiftNext() { Pointer++; }
+	public void ShiftNext()
+	{
+		if (Pointer == null)
+		{
+			if (index == 0)
+			{
+				Pointer = Collection.First;
+			}
+			else
+			{
+			}
+		}
+		else
+		{
+
+			Pointer = Pointer.Next;
+		}
+
+		index++;
+	}
 	public Word Current
 	{
 		get
 		{
-			if (Pointer >= Collection.Count)
+			if (Pointer == null)
 				return nullToken;
-			return Collection[Pointer];
+			return Pointer.Value;
+		}
+	}
+	public bool EOL
+	{
+		get
+		{
+			return Pointer == null;
 		}
 	}
 	#region EM_私家版_HTMLパラメータ拡張
@@ -43,25 +87,69 @@ internal sealed class WordCollection
 	{
 		get
 		{
-			if (Pointer + 1 >= Collection.Count)
+			if (index + 1 >= Collection.Count)
 				return nullToken;
-			return Collection[Pointer + 1];
+			var nextPoint = Pointer.Next;
+			return nextPoint.Value;
 		}
 	}
 	#endregion
-	public bool EOL { get { return Pointer >= Collection.Count; } }
 
 	public void Insert(Word w)
 	{
-		Collection.Insert(Pointer, w);
+		if (Pointer == null)
+		{
+			if (Collection.Count == 0)
+			{
+				Collection.AddFirst(w);
+				Pointer = Collection.First;
+			}
+			else
+			{
+				Collection.AddLast(w);
+				Pointer = Collection.Last;
+			}
+		}
+		else
+		{
+			Collection.AddAfter(Pointer, w);
+		}
 	}
 	public void InsertRange(WordCollection wc)
 	{
-		Collection.InsertRange(Pointer, wc.Collection);
+		var pointer = Pointer?.Previous;
+		LinkedListNode<Word> lastPointer = null;
+		foreach (var word in wc.Collection)
+		{
+			if (pointer == null)
+			{
+				if (index == 0)
+				{
+					pointer = Collection.AddFirst(word);
+				}
+				else
+				{
+
+					pointer = Collection.AddLast(word);
+				}
+				Pointer = pointer;
+			}
+			else
+			{
+
+				pointer = Collection.AddAfter(pointer, word);
+			}
+
+			lastPointer ??= pointer;
+		}
+
+		Pointer = lastPointer;
 	}
 	public void Remove()
 	{
-		Collection.RemoveAt(Pointer);
+		var next = Pointer.Next;
+		Collection.Remove(Pointer);
+		Pointer = next;
 	}
 
 	public void SetIsMacro()
@@ -74,26 +162,23 @@ internal sealed class WordCollection
 
 	public WordCollection Clone()
 	{
-		WordCollection ret = new();
-		for (int i = 0; i < this.Collection.Count; i++)
-		{
-			ret.Collection.Add(this.Collection[i]);
-		}
-		return ret;
-	}
-	public WordCollection Clone(int start, int count)
-	{
-		WordCollection ret = new();
-		if (start > this.Collection.Count)
-			return ret;
-		int end = start + count;
-		if (end > this.Collection.Count)
-			end = this.Collection.Count;
-		for (int i = start; i < end; i++)
-		{
-			ret.Collection.Add(this.Collection[i]);
-		}
+		var ret = new WordCollection();
+		ret.Add(this);
 		return ret;
 	}
 
+	// public WordCollection Clone(int start, int count)
+	// {
+	//     WordCollection ret = new();
+	//     if (start > Collection.Count)
+	//         return ret;
+	//     int end = start + count;
+	//     if (end > Collection.Count)
+	//         end = Collection.Count;
+	//     for (int i = start; i < end; i++)
+	//     {
+	//         ret.Collection.Add(Collection[i]);
+	//     }
+	//     return ret;
+	// }
 }
